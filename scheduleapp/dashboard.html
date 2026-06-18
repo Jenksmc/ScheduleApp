@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <title>Home Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
@@ -55,7 +55,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .btn-primary:hover{opacity:0.85;color:var(--bg)}
 .home-date{font-family:"DM Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:0.5px}
 .home-time{font-size:52px;font-weight:300;letter-spacing:-2px;line-height:1;margin:10px 0 24px}
-.task-row{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);border-radius:6px;cursor:pointer;user-select:none;position:relative}
+.task-row{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);border-radius:6px;cursor:pointer;user-select:none;position:relative;touch-action:manipulation}
 .task-row:last-child{border-bottom:none}.task-row.done .task-title{text-decoration:line-through;opacity:0.4}.task-row.dragging{opacity:0.3}
 .cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .task-row.done .cb{background:var(--check);border-color:var(--check)}
@@ -122,14 +122,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .day-cell.today .day-num{color:var(--today-text)}
 .add-dot{font-size:13px;opacity:0}.day-cell:hover .add-dot{opacity:1}
 .day-events{flex:1;min-height:0}
-.task-pill{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-pill{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:none}
 .task-pill.done-pill{opacity:0.4;text-decoration:line-through}.task-pill.dragging-pill{opacity:0.3}
 .timed-pill{font-size:11px;padding:2px 7px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill-edit{font-size:11px;margin-left:auto;flex-shrink:0;opacity:0.7;cursor:pointer}
 .daily-wrap{display:grid;grid-template-columns:1fr 220px;gap:10px;align-items:start}
 .daily-scroll-outer{overflow-y:auto;max-height:560px;border:1px solid var(--border);border-radius:10px}
 .hourly-col{border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;cursor:default}
-.span-event{position:absolute;border-radius:6px;padding:4px 8px;font-size:11px;overflow:hidden;cursor:pointer;z-index:2;display:flex;flex-direction:column;justify-content:center;left:54px;right:4px}
+.span-event{position:absolute;border-radius:6px;padding:4px 8px;font-size:11px;overflow:hidden;cursor:pointer;z-index:2;display:flex;flex-direction:column;justify-content:center;left:54px;right:4px;touch-action:none;user-select:none}
 .span-event-title{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .span-event-time{font-size:10px;opacity:0.8;font-family:"DM Mono",monospace;margin-top:2px}
 .span-resize-handle{position:absolute;bottom:0;left:0;right:0;height:8px;cursor:ns-resize;background:transparent;border-radius:0 0 6px 6px}
@@ -881,6 +881,74 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 <script>
+/* ── TOUCH → DRAG POLYFILL ──────────────────────────────────────
+   Makes HTML5 draggable elements work with touch on iPad/iPhone.
+   Translates touchstart/touchmove/touchend into dragstart/dragover/drop.
+─────────────────────────────────────────────────────────────── */
+(function(){
+  let dragging=null,lastTarget=null,clone=null;
+
+  function getTarget(x,y){
+    if(clone)clone.style.display="none";
+    const el=document.elementFromPoint(x,y);
+    if(clone)clone.style.display="";
+    return el;
+  }
+
+  function fireEvent(name,el,touch){
+    const evt=new DragEvent(name,{
+      bubbles:true,cancelable:true,
+      clientX:touch.clientX,clientY:touch.clientY,
+      dataTransfer:dragging?dragging._dt:null
+    });
+    el.dispatchEvent(evt);
+  }
+
+  document.addEventListener("touchstart",e=>{
+    const el=e.target.closest("[draggable='true']");
+    if(!el)return;
+    dragging=el;
+    const dt={_data:{}};
+    dt.setData=(k,v)=>dt._data[k]=v;
+    dt.getData=(k)=>dt._data[k]||"";
+    dt.effectAllowed="move";
+    dragging._dt=dt;
+    // ghost clone
+    clone=el.cloneNode(true);
+    clone.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:0.7;margin:0;
+      width:${el.offsetWidth}px;top:${e.touches[0].clientY-20}px;left:${e.touches[0].clientX-20}px;`;
+    document.body.appendChild(clone);
+    fireEvent("dragstart",el,e.touches[0]);
+    e.preventDefault();
+  },{passive:false});
+
+  document.addEventListener("touchmove",e=>{
+    if(!dragging)return;
+    const t=e.touches[0];
+    if(clone){clone.style.top=(t.clientY-20)+"px";clone.style.left=(t.clientX-20)+"px";}
+    const target=getTarget(t.clientX,t.clientY);
+    if(target&&target!==lastTarget){
+      if(lastTarget)fireEvent("dragleave",lastTarget,t);
+      lastTarget=target;
+      fireEvent("dragover",target,t);
+    } else if(target){
+      fireEvent("dragover",target,t);
+    }
+    e.preventDefault();
+  },{passive:false});
+
+  document.addEventListener("touchend",e=>{
+    if(!dragging)return;
+    const t=e.changedTouches[0];
+    if(clone){clone.remove();clone=null;}
+    const target=getTarget(t.clientX,t.clientY);
+    if(target)fireEvent("drop",target,t);
+    fireEvent("dragend",dragging,t);
+    if(lastTarget)fireEvent("dragleave",lastTarget,t);
+    dragging=null;lastTarget=null;
+  },{passive:false});
+})();
+
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const ALL_TYPES=["chore","appointment","work","todo","shopping","vacation"];
@@ -1943,13 +2011,11 @@ function rDay(){
         <div class="span-resize-handle"></div>`;
       // DRAG — click anywhere on block body (not pencil, not handle)
       let dragStartY=0,origTop=0,origStartM=0,didDrag=false;
-      block.addEventListener("mousedown",e=>{
-        if(e.target.classList.contains("span-resize-handle"))return;
-        if(e.target.closest(".span-edit-btn"))return;
-        e.preventDefault();didDrag=false;
-        dragStartY=e.clientY;origTop=parseFloat(block.style.top);origStartM=tmMins(t.time);
+      function blockPointerDown(clientY){
+        dragStartY=clientY;origTop=parseFloat(block.style.top);origStartM=tmMins(t.time);didDrag=false;
         function onMove(ev){
-          const dy=ev.clientY-dragStartY;
+          const cy=ev.touches?ev.touches[0].clientY:ev.clientY;
+          const dy=cy-dragStartY;
           if(Math.abs(dy)>3)didDrag=true;
           const newTop=Math.max(0,Math.min(origTop+dy,totalH));
           const rawM=(newTop/HOUR_H)*60+START_H*60;
@@ -1958,27 +2024,47 @@ function rDay(){
           t.time=minsToTime(snapM);t.endtime=minsToTime(snapM+dur);
           block.style.top=((snapM-START_H*60)/60*HOUR_H)+"px";
           const tl=block.querySelector(".span-event-time");if(tl)tl.textContent=fmtTime(t.time)+" – "+fmtTime(t.endtime);
+          ev.preventDefault();
         }
-        function onUp(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);renderHome();}
-        document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
+        function onUp(){
+          document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
+          document.removeEventListener("touchmove",onMove);document.removeEventListener("touchend",onUp);
+          renderHome();
+        }
+        document.addEventListener("mousemove",onMove,{passive:false});document.addEventListener("mouseup",onUp);
+        document.addEventListener("touchmove",onMove,{passive:false});document.addEventListener("touchend",onUp);
+      }
+      block.addEventListener("mousedown",e=>{
+        if(e.target.classList.contains("span-resize-handle"))return;
+        if(e.target.closest(".span-edit-btn"))return;
+        e.preventDefault();didDrag=false;blockPointerDown(e.clientY);
+        dragStartY=e.clientY;origTop=parseFloat(block.style.top);origStartM=tmMins(t.time);
+        // handled by blockPointerDown
       });
       // RESIZE
       const handle=block.querySelector(".span-resize-handle");
-      handle.addEventListener("mousedown",e=>{
-        e.preventDefault();e.stopPropagation();
-        const startY=e.clientY;
+      function startResize(startY){
         const origEnd=t.endtime?tmMins(t.endtime):(tmMins(t.time)+30);
         function onMove(ev){
-          const dy=ev.clientY-startY;
+          const cy=ev.touches?ev.touches[0].clientY:ev.clientY;
+          const dy=cy-startY;
           const snapEnd=Math.round((origEnd+(dy/HOUR_H)*60)/SNAP)*SNAP;
           t.endtime=minsToTime(Math.max(tmMins(t.time)+SNAP,snapEnd));
           const newH=Math.max((tmMins(t.endtime)-tmMins(t.time))/60*HOUR_H,22);
           block.style.height=newH+"px";
           const tl=block.querySelector(".span-event-time");if(tl)tl.textContent=fmtTime(t.time)+" – "+fmtTime(t.endtime);
+          ev.preventDefault();
         }
-        function onUp(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);renderHome();}
-        document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
-      });
+        function onUp(){
+          document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
+          document.removeEventListener("touchmove",onMove);document.removeEventListener("touchend",onUp);
+          renderHome();
+        }
+        document.addEventListener("mousemove",onMove,{passive:false});document.addEventListener("mouseup",onUp);
+        document.addEventListener("touchmove",onMove,{passive:false});document.addEventListener("touchend",onUp);
+      }
+      handle.addEventListener("mousedown",e=>{e.preventDefault();e.stopPropagation();startResize(e.clientY);});
+      handle.addEventListener("touchstart",e=>{e.preventDefault();e.stopPropagation();startResize(e.touches[0].clientY);},{passive:false});
       // click-to-edit removed — use pencil icon instead
       col.appendChild(block);
     });
