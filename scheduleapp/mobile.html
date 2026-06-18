@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Home</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d0f;--surface:#16161a;--border:#242428;--text:#e8e8ec;
+  --muted:#6b6b78;--accent:#e8e8ec;--tag-bg:#1e1e24;--tag-text:#9090a0;
+  --britt:#e85d8a;--christian:#3db87a;--today:#378add;--todaybg:#0a1e35;
+  --check:#e8e8ec;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif}
+body{display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:env(safe-area-inset-top,16px) 16px 12px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0}
+.topbar-name{font-size:16px;font-weight:600}
+.topbar-date{font-size:11px;color:var(--muted);font-family:"DM Mono",monospace;margin-top:2px}
+.switch-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
+.switch-btn:active{background:var(--tag-bg)}
+
+/* PERSON SWITCHER */
+.person-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.person-tab{flex:1;padding:10px;border:none;background:none;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all 0.15s}
+.person-tab.active{color:var(--text);border-bottom-color:var(--today)}
+
+/* SCROLL CONTENT */
+.content{flex:1;overflow-y:auto;padding:0 0 env(safe-area-inset-bottom,20px);-webkit-overflow-scrolling:touch}
+
+/* DATE STRIP */
+.date-strip{display:flex;gap:6px;padding:12px 14px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);flex-shrink:0}
+.date-strip::-webkit-scrollbar{display:none}
+.day-pill{display:flex;flex-direction:column;align-items:center;padding:6px 10px;border-radius:10px;cursor:pointer;flex-shrink:0;background:none;border:1px solid transparent}
+.day-pill.today{background:var(--todaybg);border-color:var(--today)}
+.day-pill.has-tasks{border-color:var(--border)}
+.day-pill.active-day{background:var(--tag-bg);border-color:var(--muted)}
+.day-pill-dow{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase}
+.day-pill.today .day-pill-dow{color:var(--today)}
+.day-pill-num{font-size:17px;font-weight:600;color:var(--text);line-height:1.2}
+.day-pill.today .day-pill-num{color:var(--today)}
+.day-dot{width:4px;height:4px;border-radius:50%;background:var(--muted);margin-top:3px}
+.day-pill.today .day-dot{background:var(--today)}
+
+/* SECTION */
+.section{padding:14px 14px 0}
+.section-label{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-count{font-size:10px;padding:1px 6px;border-radius:10px;background:var(--tag-bg);color:var(--muted)}
+
+/* TASK ROW */
+.task-row{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:opacity 0.15s;position:relative}
+.task-row:active{opacity:0.7}
+.task-row.done{opacity:0.4}
+.task-row.done .task-title{text-decoration:line-through}
+.cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.task-row.done .cb{background:var(--check);border-color:var(--check)}
+.task-row.done .cb::after{content:"";width:9px;height:5px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block}
+.task-title{font-size:14px;flex:1;line-height:1.3}
+.task-meta{font-size:11px;color:var(--muted);display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.time-badge{font-family:"DM Mono",monospace;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--tag-bg);color:var(--muted);white-space:nowrap;flex-shrink:0}
+.type-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--tag-bg);color:var(--tag-text)}
+.recur-badge{font-size:10px;color:var(--muted);flex-shrink:0}
+
+/* APPOINTMENT CARD */
+.appt-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:7px;cursor:pointer}
+.appt-card:active{opacity:0.7}
+.appt-time{font-family:"DM Mono",monospace;font-size:12px;color:var(--today);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.appt-title{font-size:14px;font-weight:500;margin-bottom:3px}
+.appt-sub{font-size:12px;color:var(--muted)}
+
+/* SHOPPING */
+.shop-group-hdr{font-family:"DM Mono",monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:14px 14px 6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.shop-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.shop-row:active{background:var(--tag-bg)}
+.shop-row.done-shop{opacity:0.4}
+.shop-row.done-shop .shop-name{text-decoration:line-through}
+.shop-cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.shop-row.done-shop .shop-cb{background:var(--check);border-color:var(--check)}
+.shop-row.done-shop .shop-cb::after{content:"";width:9px;height:5px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block}
+.shop-name{font-size:14px;flex:1}
+.shop-qty-b{font-size:11px;color:var(--muted);padding:2px 6px;border-radius:4px;background:var(--tag-bg)}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
+.bnav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:"DM Sans",sans-serif;color:var(--muted);font-size:10px}
+.bnav-btn.active{color:var(--today)}
+.bnav-btn i{font-size:20px}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:10px;color:var(--muted)}
+.empty-state i{font-size:36px;opacity:0.3}
+.empty-state p{font-size:14px}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:14px;gap:8px}
+
+/* ONBOARDING */
+.onboard{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+.onboard-title{font-size:28px;font-weight:600;margin-bottom:8px;letter-spacing:-0.5px}
+.onboard-sub{font-size:14px;color:var(--muted);margin-bottom:40px;line-height:1.5}
+.onboard-members{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.onboard-card{padding:18px 20px;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;background:var(--surface);transition:border-color 0.15s,background 0.15s}
+.onboard-card:active{background:var(--tag-bg)}
+.onboard-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.onboard-name{font-size:17px;font-weight:600}
+.onboard-hint{font-size:12px;color:var(--muted);margin-top:2px}
+.onboard-note{font-size:12px;color:var(--muted);margin-top:28px;max-width:280px;line-height:1.5}
+
+/* ADD QUICK TASK */
+.fab{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom,0));right:16px;width:52px;height:52px;border-radius:50%;background:var(--today);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.4);z-index:50}
+.fab i{font-size:22px;color:#fff}
+
+/* QUICK ADD SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:none}
+.sheet-overlay.open{display:block}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0));z-index:101;transform:translateY(100%);transition:transform 0.3s ease;max-height:80vh;overflow-y:auto}
+.sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 16px}
+.sheet-title{font-size:16px;font-weight:600;margin-bottom:14px}
+.sheet-input{width:100%;font-size:16px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-family:"DM Sans",sans-serif;outline:none;margin-bottom:10px}
+.sheet-input:focus{border-color:var(--today)}
+.type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.type-chip{padding:6px 12px;border:1px solid var(--border);border-radius:20px;background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:"DM Sans",sans-serif}
+.type-chip.active{background:var(--tag-bg);color:var(--text);border-color:var(--muted)}
+.sheet-btn{width:100%;padding:14px;background:var(--today);border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif}
+.sheet-btn:active{opacity:0.85}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="user-avatar" id="user-avatar"></div>
+    <div>
+      <div class="topbar-name" id="user-name">Loading…</div>
+      <div class="topbar-date" id="today-date"></div>
+    </div>
+  </div>
+  <button class="switch-btn" onclick="switchView()">Switch</button>
+</div>
+
+<!-- PERSON TABS -->
+<div class="person-bar" id="person-bar"></div>
+
+<!-- DATE STRIP -->
+<div class="date-strip" id="date-strip"></div>
+
+<!-- SCROLL CONTENT -->
+<div class="content" id="content">
+  <div class="loading"><i class="ti ti-loader-2"></i> Loading…</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" id="bnav-tasks" onclick="setTab('tasks')"><i class="ti ti-check"></i>Tasks</button>
+  <button class="bnav-btn" id="bnav-calendar" onclick="setTab('calendar')"><i class="ti ti-calendar"></i>Calendar</button>
+  <button class="bnav-btn" id="bnav-shopping" onclick="setTab('shopping')"><i class="ti ti-shopping-cart"></i>Shopping</button>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openAddSheet()"><i class="ti ti-plus"></i></button>
+
+<!-- QUICK ADD SHEET -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Quick add</div>
+  <input class="sheet-input" id="qa-title" placeholder="What needs doing?" type="text"/>
+  <div class="type-row">
+    <button class="type-chip active" data-type="todo" onclick="pickQaType('todo',this)">To-do</button>
+    <button class="type-chip" data-type="chore" onclick="pickQaType('chore',this)">Chore</button>
+    <button class="type-chip" data-type="shopping" onclick="pickQaType('shopping',this)">Shopping</button>
+  </div>
+  <button class="sheet-btn" onclick="saveQuickAdd()">Add task</button>
+</div>
+
+<!-- ONBOARDING SCREEN -->
+<div class="onboard" id="onboard" style="display:none">
+  <div style="font-size:48px;margin-bottom:16px">🏠</div>
+  <div class="onboard-title">Who are you?</div>
+  <div class="onboard-sub">Pick your profile. You can always switch later.</div>
+  <div class="onboard-members" id="onboard-members"></div>
+  <div class="onboard-note">Your choice is saved to this device. The other person can pick their profile on their phone.</div>
+</div>
+
+<script>
+const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const SHOP_GROUPS=[
+  {key:"household",label:"Household"},
+  {key:"cats",label:"Cats"},
+  {key:"groceries",label:"Groceries"},
+  {key:"britt",label:"Brittni Personal"},
+  {key:"christian",label:"Christian Personal"},
+  {key:"other",label:"Other"},
+];
+
+// Determine who we are:
+// 1. URL path (/britt or /christian) overrides everything — useful for NFC tags later
+// 2. localStorage remembers the person's choice on this device
+// 3. If neither, show the onboarding screen to pick
+const pathPerson = (()=>{
+  const p=window.location.pathname.replace('/','').toLowerCase();
+  return(p==='britt'||p==='christian')?p:null;
+})();
+const savedPerson = localStorage.getItem('mobilePerson');
+let activePerson = pathPerson || savedPerson || null; // null = needs onboarding
+let needsOnboarding = !activePerson;
+if(pathPerson){
+  // URL-specified — save it
+  localStorage.setItem('mobilePerson', pathPerson);
+  activePerson = pathPerson;
+}
+let activeTab = 'tasks';
+let selectedDate = fd(new Date());
+let qaType = 'todo';
+let data = null; // full data from server
+let pollInterval = null;
+
+// ── PI SERVER URL ─────────────────────────────────────────────
+// Auto-detect: same host as current page
+const API = window.location.origin;
+
+function fd(d){return d.toISOString().slice(0,10)}
+function ad(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function fmtTime(t){if(!t)return'';const[h,m]=t.split(':').map(Number);const ap=h<12?'AM':'PM';const hh=h%12||12;return hh+':'+(m<10?'0':'')+m+' '+ap}
+function tmToday(){return fd(new Date())}
+
+// ── DATA SYNC ─────────────────────────────────────────────────
+async function fetchData(){
+  try{
+    const r=await fetch(`${API}/api/data`);
+    if(!r.ok)throw new Error('fetch failed');
+    data=await r.json();
+    localStorage.setItem('mobileDataCache',JSON.stringify(data));
+    if(!needsOnboarding)render();
+  }catch(e){
+    const cached=localStorage.getItem('mobileDataCache');
+    if(cached&&!data){data=JSON.parse(cached);if(!needsOnboarding)render();}
+    if(!needsOnboarding)
+      document.getElementById('content').innerHTML='<div class="loading" style="flex-direction:column;gap:4px"><i class="ti ti-wifi-off" style="font-size:28px"></i><span>Offline — showing cached data</span></div>';
+  }
+}
+
+async function saveData(){
+  if(!data)return;
+  localStorage.setItem('mobileDataCache',JSON.stringify(data));
+  try{
+    await fetch(`${API}/api/data`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  }catch(e){/* offline — cached locally */}
+}
+
+function startPolling(){
+  // Poll every 30s for updates from other devices
+  pollInterval=setInterval(async()=>{
+    try{
+      const r=await fetch(`${API}/api/updated`);
+      const {updated}=await r.json();
+      if(data&&updated>data.updated)fetchData();
+    }catch(e){}
+  },30000);
+}
+
+// ── MEMBERS ───────────────────────────────────────────────────
+function getMembers(){
+  if(!data||!data.members)return[{id:'britt',name:'Britt',baseColor:'#e85d8a'},{id:'christian',name:'Christian',baseColor:'#3db87a'}];
+  return data.members;
+}
+function getMember(id){return getMembers().find(m=>m.id===id)||{id,name:id,baseColor:'#888'};}
+function memberColor(id){const m=getMember(id);return m.baseColor||'#888';}
+
+function hexToRgba(hex,a){if(!hex||hex.length<7)return`rgba(100,100,100,${a})`;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+
+// ── UI INIT ───────────────────────────────────────────────────
+function initPersonBar(){
+  const members=getMembers();
+  const bar=document.getElementById('person-bar');
+  bar.innerHTML=members.map(m=>`<button class="person-tab${activePerson===m.id?' active':''}" onclick="setPerson('${m.id}')">${m.name}</button>`).join('');
+}
+
+function setPerson(id){
+  activePerson=id;
+  localStorage.setItem('mobilePerson',id);
+  initPersonBar();
+  updateAvatar();
+  render();
+}
+
+function updateAvatar(){
+  const m=getMember(activePerson);
+  const av=document.getElementById('user-avatar');
+  const nm=document.getElementById('user-name');
+  av.style.background=hexToRgba(m.baseColor,0.2);
+  av.style.color=m.baseColor;
+  av.textContent=m.name.charAt(0).toUpperCase();
+  nm.textContent=m.name;
+}
+
+function initDateStrip(){
+  const strip=document.getElementById('date-strip');
+  const tod=tmToday();
+  // Show 14 days: 3 past + today + 10 ahead
+  let html='';
+  for(let i=-3;i<=10;i++){
+    const d=ad(new Date(),i);
+    const ds=fd(d);
+    const isToday=ds===tod;
+    const isSelected=ds===selectedDate;
+    const hasTasks=data&&(data.tasks||[]).some(t=>t.date===ds&&t.person===activePerson&&t.type!=='work');
+    html+=`<button class="day-pill${isToday?' today':''}${isSelected&&!isToday?' active-day':''}${hasTasks?' has-tasks':''}" onclick="selectDate('${ds}')">
+      <span class="day-pill-dow">${DAYS[d.getDay()]}</span>
+      <span class="day-pill-num">${d.getDate()}</span>
+      ${hasTasks?'<div class="day-dot"></div>':''}
+    </button>`;
+  }
+  strip.innerHTML=html;
+  // Scroll today into view
+  const todayBtn=strip.querySelector('.today');
+  if(todayBtn)setTimeout(()=>todayBtn.scrollIntoView({inline:'center',behavior:'smooth'}),50);
+}
+
+function selectDate(ds){selectedDate=ds;initDateStrip();renderContent();}
+
+function setTab(tab){
+  activeTab=tab;
+  ['tasks','calendar','shopping'].forEach(t=>{
+    const btn=document.getElementById('bnav-'+t);
+    if(btn)btn.classList.toggle('active',t===tab);
+  });
+  renderContent();
+}
+
+function switchView(){
+  // Show the person picker (mini version of onboarding)
+  showOnboarding();
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render(){
+  if(needsOnboarding||!activePerson)return; // wait for onboarding
+  const now=new Date();
+  document.getElementById('today-date').textContent=
+    DAYS[now.getDay()]+', '+MONTHS[now.getMonth()]+' '+now.getDate();
+  initPersonBar();
+  updateAvatar();
+  initDateStrip();
+  renderContent();
+}
+
+function renderContent(){
+  const el=document.getElementById('content');
+  if(!data){el.innerHTML='<div class="loading"><i class="ti ti-loader-2"></i> Loading…</div>';return;}
+  if(activeTab==='tasks')el.innerHTML=renderTasks();
+  else if(activeTab==='calendar')el.innerHTML=renderCalendar();
+  else if(activeTab==='shopping')el.innerHTML=renderShopping();
+  // Attach toggle listeners
+  el.querySelectorAll('.task-row[data-id]').forEach(row=>{
+    row.addEventListener('click',()=>toggleTask(parseInt(row.dataset.id)));
+  });
+  el.querySelectorAll('.shop-row[data-id]').forEach(row=>{
+    row.addEventListener('click',()=>toggleShop(parseInt(row.dataset.id)));
+  });
+}
+
+// ── TASKS TAB ─────────────────────────────────────────────────
+function renderTasks(){
+  const tasks=(data.tasks||[]).filter(t=>t.date===selectedDate&&(t.person===activePerson||t.person==='unassigned')&&t.type!=='work'&&!t.skipped);
+  if(!tasks.length)return`<div class="empty-state"><i class="ti ti-check"></i><p>Nothing here for this day</p></div>`;
+
+  const groups=[
+    {label:'Appointments',types:['appointment'],icon:'ti-calendar'},
+    {label:'Chores',types:['chore'],icon:'ti-home'},
+    {label:'To-do',types:['todo'],icon:'ti-check'},
+    {label:'Shopping',types:['shopping'],icon:'ti-shopping-cart'},
+    {label:'Vacation',types:['vacation'],icon:'ti-beach'},
+  ];
+
+  let html='<div class="section" style="padding-bottom:80px">';
+  groups.forEach(g=>{
+    const gt=tasks.filter(t=>g.types.includes(t.type));
+    if(!gt.length)return;
+    const undone=gt.filter(t=>!t.done).length;
+    html+=`<div class="section-label"><i class="ti ${g.icon}"></i> ${g.label} <span class="section-count">${undone}/${gt.length}</span></div>`;
+    gt.forEach(t=>{
+      if(t.type==='appointment'){
+        html+=`<div class="appt-card" data-id="${t.id}">
+          ${t.time?`<div class="appt-time"><i class="ti ti-clock" style="font-size:12px"></i>${fmtTime(t.time)}${t.endtime?' – '+fmtTime(t.endtime):''}</div>`:''}
+          <div class="appt-title">${t.title}</div>
+          ${t.location?`<div class="appt-sub"><i class="ti ti-map-pin" style="font-size:11px;margin-right:3px"></i>${t.location}</div>`:''}
+          ${t.provider?`<div class="appt-sub"><i class="ti ti-user" style="font-size:11px;margin-right:3px"></i>${t.provider}</div>`:''}
+        </div>`;
+      } else {
+        const clr=memberColor(activePerson);
+        html+=`<div class="task-row${t.done?' done':''}" data-id="${t.id}" style="border-left:3px solid ${hexToRgba(clr,0.6)}">
+          <div class="cb"></div>
+          <div style="flex:1;min-width:0">
+            <div class="task-title">${t.title}</div>
+            <div class="task-meta">
+              ${t.time?`<span class="time-badge">${fmtTime(t.time)}</span>`:''}
+              ${t.recurGroupId?`<span class="recur-badge">↻ recurring</span>`:''}
+              ${t.priority==='high'?`<span class="type-badge" style="color:#e0a040">⚡ High</span>`:''}
+            </div>
+          </div>
+        </div>`;
+      }
+    });
+  });
+  html+='</div>';
+  return html;
+}
+
+// ── CALENDAR TAB ──────────────────────────────────────────────
+function renderCalendar(){
+  // Show this week + next week for this person, all tasks
+  const tod=tmToday();
+  const sun=new Date();sun.setDate(sun.getDate()-sun.getDay());
+  let html='<div style="padding-bottom:80px">';
+  for(let week=0;week<2;week++){
+    const wStart=new Date(sun);wStart.setDate(sun.getDate()+week*7);
+    const wEnd=fd(ad(wStart,6));
+    const wStartStr=fd(wStart);
+    const isThisWeek=week===0;
+    html+=`<div style="padding:12px 14px 6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">${isThisWeek?'This week':'Next week'}</div>`;
+    for(let i=0;i<7;i++){
+      const d=ad(wStart,i);const ds=fd(d);
+      const isToday=ds===tod;
+      const dayTasks=(data.tasks||[]).filter(t=>t.date===ds&&(t.person===activePerson||t.person==='unassigned')&&t.type!=='work'&&!t.skipped);
+      const workTasks=(data.tasks||[]).filter(t=>t.date===ds&&t.person===activePerson&&t.type==='work');
+      if(!dayTasks.length&&!workTasks.length&&!isToday)continue;
+      html+=`<div style="margin:0 14px 8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:600;color:${isToday?'var(--today)':'var(--text)'}">
+            ${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}
+          </div>
+          ${isToday?'<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--todaybg);color:var(--today)">Today</span>':''}
+        </div>`;
+      if(workTasks.length){
+        const w=workTasks[0];
+        html+=`<div style="font-size:12px;padding:6px 10px;border-radius:7px;background:rgba(80,80,95,0.2);color:#a0a0b8;margin-bottom:5px;display:flex;align-items:center;gap:6px">
+          <i class="ti ti-briefcase" style="font-size:13px"></i>${w.title}${w.time?' · '+fmtTime(w.time)+' – '+fmtTime(w.endtime):''}
+        </div>`;
+      }
+      dayTasks.forEach(t=>{
+        const clr=memberColor(activePerson);
+        html+=`<div class="task-row${t.done?' done':''}" data-id="${t.id}" style="border-left:3px solid ${hexToRgba(clr,0.6)};margin-bottom:5px">
+          <div class="cb"></div>
+          <div style="flex:1;min-width:0">
+            <div class="task-title">${t.title}</div>
+            ${t.time?`<div class="task-meta"><span class="time-badge">${fmtTime(t.time)}</span></div>`:''}
+          </div>
+        </div>`;
+      });
+      html+='</div>';
+    }
+  }
+  html+='</div>';
+  return html;
+}
+
+// ── SHOPPING TAB ──────────────────────────────────────────────
+function renderShopping(){
+  const list=data.shoppingList||[];
+  const thisWeek=getThisWeekStart();
+  if(!list.length)return`<div class="empty-state"><i class="ti ti-shopping-cart"></i><p>Shopping list is empty</p></div>`;
+  let html='<div style="padding-bottom:80px">';
+  SHOP_GROUPS.forEach(g=>{
+    const items=list.filter(i=>i.group===g.key);
+    if(!items.length)return;
+    const undone=items.filter(i=>!i.checked).length;
+    html+=`<div class="shop-group-hdr"><span>${g.label}</span>${undone?`<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--tag-bg);color:var(--muted)">${undone}</span>`:''}</div>`;
+    items.forEach(item=>{
+      const isNext=(item.weekStart||thisWeek)>thisWeek;
+      html+=`<div class="shop-row${item.checked?' done-shop':''}" data-id="${item.id}">
+        <div class="shop-cb"></div>
+        <span class="shop-name">${item.name}</span>
+        ${item.qty?`<span class="shop-qty-b">${item.qty}</span>`:''}
+        ${isNext?`<span class="shop-qty-b" style="opacity:0.6">next wk</span>`:''}
+      </div>`;
+    });
+  });
+  html+='</div>';
+  return html;
+}
+
+function getThisWeekStart(){
+  const sun=new Date();sun.setDate(sun.getDate()-sun.getDay());
+  return fd(sun);
+}
+
+// ── TOGGLE TASK ───────────────────────────────────────────────
+function toggleTask(id){
+  if(!data)return;
+  const t=(data.tasks||[]).find(x=>x.id===id);
+  if(t){t.done=!t.done;saveData();renderContent();}
+}
+
+function toggleShop(id){
+  if(!data)return;
+  const item=(data.shoppingList||[]).find(x=>x.id===id);
+  if(item){item.checked=!item.checked;saveData();renderContent();}
+}
+
+// ── QUICK ADD ─────────────────────────────────────────────────
+function openAddSheet(){
+  document.getElementById('qa-title').value='';
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheet-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('qa-title').focus(),300);
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheet-overlay').classList.remove('open');
+}
+function pickQaType(type,btn){
+  qaType=type;
+  document.querySelectorAll('.type-chip').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function saveQuickAdd(){
+  const title=document.getElementById('qa-title').value.trim();
+  if(!title||!data)return;
+  if(!data.tasks)data.tasks=[];
+  const nid=(data.nid||100)+1;data.nid=nid;
+  data.tasks.push({
+    id:nid,title,type:qaType,person:activePerson,
+    date:selectedDate,done:false,time:'',endtime:''
+  });
+  saveData();closeSheet();renderContent();initDateStrip();
+}
+
+// Enter key on quick add
+document.getElementById('qa-title').addEventListener('keydown',e=>{
+  if(e.key==='Enter')saveQuickAdd();
+});
+
+// ── ONBOARDING ───────────────────────────────────────────────
+function showOnboarding(){
+  const mems=getMembers();
+  const el=document.getElementById('onboard-members');
+  if(el){
+    el.innerHTML=mems.map(m=>`
+      <div class="onboard-card" onclick="completeOnboarding('${m.id}')">
+        <div class="onboard-avatar" style="background:${hexToRgba(m.baseColor,0.2)};color:${m.baseColor}">${m.name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="onboard-name">${m.name}</div>
+          <div class="onboard-hint">Set as my profile on this device</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('onboard').style.display='flex';
+}
+
+function completeOnboarding(memberId){
+  activePerson=memberId;
+  needsOnboarding=false;
+  localStorage.setItem('mobilePerson',memberId);
+  document.getElementById('onboard').style.display='none';
+  render();
+}
+
+// ── BOOT ─────────────────────────────────────────────────────
+if(needsOnboarding){
+  document.getElementById('onboard').style.display='flex';
+  showOnboarding(); // show with default members immediately
+}
+fetchData().then(()=>{
+  if(needsOnboarding)showOnboarding(); // refresh with real member names after load
+});
+startPolling();
+// Clock for date display
+setInterval(()=>{
+  const now=new Date();
+  document.getElementById('today-date').textContent=
+    DAYS[now.getDay()]+', '+MONTHS[now.getMonth()]+' '+now.getDate();
+},60000);
+</script>
+</body>
+</html>
