@@ -237,8 +237,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .rule-toggle.on::after{left:19px}
 .rule-section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:20px}
 .rule-section-label:first-of-type{margin-top:0}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:300}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;width:480px;max-width:94vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem 1.5rem 0;width:480px;max-width:94vw;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .modal-hdr h3{font-size:18px;font-weight:500;color:var(--text)}
 .close-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:21px;display:flex;padding:2px}
@@ -254,7 +254,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .badge{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:18px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
 .badge.active{background:var(--tag-bg);color:var(--text);border-color:var(--muted)}
 .sec{display:none}.sec.on{display:block}
-.mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:auto;padding:14px 0 1.5rem;flex-shrink:0;position:sticky;bottom:0;background:var(--surface)}
 .btn-save{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:8px 18px;font-size:18px;cursor:pointer;font-weight:600;font-family:"DM Sans",sans-serif}
 .btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
 .btn-danger{background:none;border:1px solid #7a2020;border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:#e05555;font-family:"DM Sans",sans-serif;margin-right:auto}
