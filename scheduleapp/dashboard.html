@@ -1541,18 +1541,7 @@ function applyColors(){syncLegacyColors();}
 function taskColor(t){return memberColor(t);}
 
 /* DATA */
-let tasks=[
-  {id:1,title:"Clean litter boxes",type:"chore",person:"britt",date:fd(new Date()),time:"",endtime:"",done:false},
-  {id:2,title:"Vacuum",type:"chore",person:"britt",date:fd(new Date()),time:"",endtime:"",done:false},
-  {id:3,title:"Take out trash",type:"chore",person:"christian",date:fd(new Date()),time:"",endtime:"",done:false},
-  {id:4,title:"Dishes",type:"chore",person:"christian",date:fd(ad(new Date(),1)),time:"",endtime:"",done:false},
-  {id:5,title:"Dentist appt",type:"appointment",person:"britt",date:fd(ad(new Date(),3)),time:"10:00",endtime:"11:00",done:false},
-  {id:6,title:"Cat food",type:"shopping",person:"britt",date:fd(ad(new Date(),2)),time:"",endtime:"",shopcat:"cats",done:false},
-  {id:7,title:"Study BGP flashcards",type:"todo",person:"britt",date:fd(new Date()),time:"",endtime:"",done:false},
-  {id:8,title:"Oil change",type:"appointment",person:"britt",date:fd(ad(new Date(),5)),time:"14:00",endtime:"15:00",done:false},
-  {id:9,title:"Mop floors",type:"chore",person:"unassigned",date:fd(new Date()),time:"",endtime:"",done:false},
-  {id:10,title:"Wipe counters",type:"chore",person:"unassigned",date:fd(new Date()),time:"",endtime:"",done:false},
-];
+let tasks=[];
 // Initialize default work schedules if none exist yet
 (function initDefaultWorkSchedules(){
   if(!workSchedules["britt"]){
@@ -1622,7 +1611,12 @@ let rules=[
 ];
 
 /* UTILS */
-function fd(d){return d.toISOString().slice(0,10)}
+function fd(d){
+  // Use LOCAL date components, not UTC — toISOString() converts to UTC first
+  // which can shift the date by one day depending on timezone and time of day.
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
 function ad(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
 function fmtTime(t){if(!t)return"";const[h,m]=t.split(":").map(Number);const ap=h<12?"AM":"PM";const hh=h%12||12;return hh+":"+(m<10?"0":"")+m+" "+ap}
 function tmMins(s){if(!s)return null;const[h,m]=s.split(":").map(Number);return h*60+m}
@@ -3027,6 +3021,26 @@ const _origSaveEdit=saveEdit;
 saveEdit=function(){_origSaveEdit();pushToServer();};
 const _origDeleteEditTask=deleteEditTask;
 deleteEditTask=function(){_origDeleteEditTask();pushToServer();};
+
+/* ── CATCH-ALL SYNC ─────────────────────────────────────────
+   Drag-and-drop (mouse AND touch) mutates the tasks array
+   directly in many places (calDrop, homeDrop, panelDrop,
+   _touchEndDrag, week-strip drag, daily-view drag/resize)
+   without going through saveTask/saveEdit/toggleDone.
+   Rather than patch every single one individually, patch
+   render() and renderHome() — virtually everything that
+   changes a task eventually calls one of these to redraw —
+   and debounce a push to server after any such call.
+ ──────────────────────────────────────────────────────────── */
+let _pushDebounceTimer=null;
+function _debouncedPush(){
+  clearTimeout(_pushDebounceTimer);
+  _pushDebounceTimer=setTimeout(()=>{pushToServer();},600);
+}
+const _origRender=render;
+render=function(){_origRender();_debouncedPush();};
+const _origRenderHome=renderHome;
+renderHome=function(){_origRenderHome();_debouncedPush();};
 
 // Initial pull then poll every 60s
 pullFromServer();fetchLastUpdated();
