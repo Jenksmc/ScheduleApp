@@ -176,6 +176,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .lights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(130px,100%),1fr));gap:10px;width:100%}
 .empty-group{font-size:19px;color:var(--muted);font-style:italic;padding:10px 0;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .light-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;user-select:none;position:relative;min-height:130px;display:flex;flex-direction:column;overflow:hidden;width:100%}
+.add-light-tile{align-items:center;justify-content:center;border:1.5px dashed var(--border);background:none;gap:8px}
+.add-light-tile:hover{border-color:var(--muted);background:var(--tag-bg)}
+.add-light-icon{width:32px;height:32px;border-radius:50%;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px}
+.add-light-tile:hover .add-light-icon{color:var(--text)}
+.add-light-label{font-size:14px;color:var(--muted);font-weight:500}
+.add-light-tile:hover .add-light-label{color:var(--text)}
 .light-card:hover{border-color:var(--muted)}.light-card.on{background:var(--lights-on-bg);border-color:var(--lights-on-border)}.light-card.offline{opacity:0.4;cursor:not-allowed}
 .light-icon-wrap{width:32px;height:32px;border-radius:8px;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:8px}
 .light-card.on .light-icon-wrap{background:var(--lights-on-border)}.light-icon-wrap i{font-size:19px;color:var(--muted)}.light-card.on .light-icon-wrap i{color:var(--lights-on-color)}
@@ -2900,6 +2906,12 @@ function renderLights(){
       if(!l.offline){card.addEventListener("mousedown",()=>startLightPress(l.id));card.addEventListener("mouseup",()=>endLightPress(l.id));card.addEventListener("mouseleave",cancelLightPress);card.addEventListener("touchstart",()=>startLightPress(l.id),{passive:true});card.addEventListener("touchend",()=>endLightPress(l.id));card.addEventListener("touchcancel",cancelLightPress);}
       grid.appendChild(card);
     });
+    // "+" tile to add a new light directly into this group
+    const addTile=document.createElement("div");
+    addTile.className="light-card add-light-tile";
+    addTile.innerHTML=`<div class="add-light-icon"><i class="ti ti-plus"></i></div><div class="add-light-label">Add light</div>`;
+    addTile.onclick=()=>openAddLight(g);
+    grid.appendChild(addTile);
   });
 }
 let lpId=null;
@@ -2914,7 +2926,7 @@ function openEditLight(id){editLightId=id;const l=lights.find(x=>x.id===id);docu
 function pickEditColor(c,dot){document.querySelectorAll("#el-colors .color-pick-dot").forEach(d=>d.classList.remove("active"));dot.classList.add("active");const l=lights.find(x=>x.id===editLightId);if(l)l.color=c;}
 function saveEditLight(){const l=lights.find(x=>x.id===editLightId);if(l){l.name=document.getElementById("el-name").value.trim()||l.name;l.group=document.getElementById("el-group").value;l.brightness=parseInt(document.getElementById("el-brightness").value);}closeModal("modal-edit-light");renderLights();renderHome();}
 function deleteLightFn(){if(!confirm("Remove this light?"))return;lights=lights.filter(x=>x.id!==editLightId);closeModal("modal-edit-light");renderLights();renderHome();}
-function openAddLight(){document.getElementById("al-name").value="";document.getElementById("al-group").innerHTML=lightGroups.map(g=>`<option value="${g}">${g}</option>`).join("")+'<option value="__new__">+ New room…</option>';document.getElementById("modal-add-light").style.display="block";setTimeout(()=>document.getElementById("al-name").focus(),50);}
+function openAddLight(defaultGroup){document.getElementById("al-name").value="";document.getElementById("al-group").innerHTML=lightGroups.map(g=>`<option value="${g}">${g}</option>`).join("")+'<option value="__new__">+ New room…</option>';if(defaultGroup)document.getElementById("al-group").value=defaultGroup;document.getElementById("modal-add-light").style.display="block";setTimeout(()=>document.getElementById("al-name").focus(),50);}
 function saveAddLight(){const name=document.getElementById("al-name").value.trim();if(!name)return;let group=document.getElementById("al-group").value;if(group==="__new__"){group=prompt("New room name:")||"Other";}if(!lightGroups.includes(group))lightGroups.push(group);lights.push({id:lnid++,name,group,on:false,brightness:80,color:"#ffffff",recentColors:["#ffffff","#ffe4a0","#ffb347","#7ab8f5"],type:document.getElementById("al-type").value,offline:false});closeModal("modal-add-light");renderLights();renderHome();}
 function openAddGroup(){document.getElementById("ag-name").value="";document.getElementById("ag-lights").innerHTML=lights.map(l=>`<div class="gci" onclick="this.querySelector('input').checked=!this.querySelector('input').checked"><input type="checkbox" value="${l.id}" onclick="event.stopPropagation()"/><span style="font-size:18px;flex:1">${l.name}</span><span style="font-size:15px;color:var(--muted)">${l.group}</span></div>`).join("");document.getElementById("modal-add-group").style.display="block";setTimeout(()=>document.getElementById("ag-name").focus(),50);}
 function saveAddGroup(){const name=document.getElementById("ag-name").value.trim();if(!name)return;if(!lightGroups.includes(name))lightGroups.push(name);[...document.querySelectorAll("#ag-lights input:checked")].forEach(i=>{const l=lights.find(x=>x.id===parseInt(i.value));if(l)l.group=name;});closeModal("modal-add-group");renderLights();}
