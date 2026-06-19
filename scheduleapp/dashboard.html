@@ -571,6 +571,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <button class="badge" data-v="daily" onclick="pick(this,'freq');showRecurFields()">Daily</button>
           <button class="badge" data-v="weekly" onclick="pick(this,'freq');showRecurFields()">Weekly</button>
           <button class="badge" data-v="monthly" onclick="pick(this,'freq');showRecurFields()">Monthly</button>
+          <button class="badge" data-v="nthweekday" onclick="pick(this,'freq');showRecurFields()">Specific weeks</button>
         </div></div>
         <div id="f-recur-days-wrap" style="display:none">
           <div class="field"><label id="f-recur-days-label">Repeat on</label>
@@ -583,6 +584,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
               <button class="badge active" data-v="fri" onclick="toggleRecurDay(this)">Fri</button>
               <button class="badge active" data-v="sat" onclick="toggleRecurDay(this)">Sat</button>
             </div>
+          </div>
+        </div>
+        <div id="f-nthweekday-wrap" style="display:none">
+          <div class="field"><label>Which weekday</label>
+            <div class="badges" id="b-nthwd">
+              <button class="badge active" data-v="0" onclick="pick(this,'nthwd')">Sun</button>
+              <button class="badge" data-v="1" onclick="pick(this,'nthwd')">Mon</button>
+              <button class="badge" data-v="2" onclick="pick(this,'nthwd')">Tue</button>
+              <button class="badge" data-v="3" onclick="pick(this,'nthwd')">Wed</button>
+              <button class="badge" data-v="4" onclick="pick(this,'nthwd')">Thu</button>
+              <button class="badge" data-v="5" onclick="pick(this,'nthwd')">Fri</button>
+              <button class="badge" data-v="6" onclick="pick(this,'nthwd')">Sat</button>
+            </div>
+          </div>
+          <div class="field"><label>Which occurrence(s) <span class="opt-label">(pick one or more)</span></label>
+            <div class="badges" id="b-nthocc">
+              <button class="badge active" data-v="1" onclick="toggleNthOcc(this)">1st</button>
+              <button class="badge" data-v="2" onclick="toggleNthOcc(this)">2nd</button>
+              <button class="badge active" data-v="3" onclick="toggleNthOcc(this)">3rd</button>
+              <button class="badge" data-v="4" onclick="toggleNthOcc(this)">4th</button>
+              <button class="badge" data-v="-1" onclick="toggleNthOcc(this)">Last</button>
+            </div>
+            <div style="font-size:14px;color:var(--muted);margin-top:6px">e.g. 1st + 3rd selected = twice a month</div>
           </div>
         </div>
         <div class="field" id="f-recur-end-wrap" style="display:none"><label>Repeat until <span class="opt-label">(end date)</span></label><input type="date" id="f-recur-end"/></div>
@@ -2170,7 +2194,9 @@ function showRecurFields(){
   const isRecur=freq!=="once";
   const dw=document.getElementById("f-recur-days-wrap");
   const ew=document.getElementById("f-recur-end-wrap");
+  const nw=document.getElementById("f-nthweekday-wrap");
   if(ew)ew.style.display=isRecur?"block":"none";
+  if(nw)nw.style.display=(freq==="nthweekday")?"block":"none";
   if(dw){
     dw.style.display=(freq==="daily"||freq==="weekly")?"block":"none";
     const lbl=document.getElementById("f-recur-days-label");
@@ -2186,6 +2212,7 @@ function showRecurFields(){
     }
   }
 }
+function toggleNthOcc(btn){btn.classList.toggle("active");}
 function toggleRecurDay(btn){
   const freq=bv.freq;
   if(freq==="weekly"){
@@ -2403,6 +2430,9 @@ function openAddModal(ds){
   const rdw=document.getElementById("f-recur-days-wrap");if(rdw)rdw.style.display="none";
   document.querySelectorAll("#b-recurdays .badge").forEach(b=>b.classList.add("active"));
   const sw=document.getElementById("f-shop-recur-wrap");if(sw)sw.style.display="none";
+  const nw2=document.getElementById("f-nthweekday-wrap");if(nw2)nw2.style.display="none";
+  document.querySelectorAll("#b-nthwd .badge").forEach(b=>b.classList.toggle("active",b.dataset.v==="0"));
+  document.querySelectorAll("#b-nthocc .badge").forEach(b=>b.classList.toggle("active",b.dataset.v==="1"||b.dataset.v==="3"));
   const wrw=document.getElementById("f-work-recur-wrap");if(wrw)wrw.style.display="none";
   const wc=document.getElementById("f-work-conflict");if(wc){wc.style.display="none";wc.textContent="";}
   const wre=document.getElementById("f-wrecur-end");if(wre)wre.value="";
@@ -2446,27 +2476,66 @@ function saveTask(){
     t.recurring=freq;
     if(freq!=="once"){
       t.recurGroupId=groupId;
-      // Get allowed weekdays
-      const allowedDays=[...document.querySelectorAll("#b-recurdays .badge.active")].map(b=>b.dataset.v);
-      t.allowedDays=allowedDays;
-      const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
-      if(recurEnd){
-        const endD=new Date(recurEnd+"T12:00:00");
-        let cur2=new Date(date+"T12:00:00");
-        let first=true;
-        while(cur2<=endD){
-          const dow=cur2.getDay();
-          const dowKey=DOW_KEYS[dow];
-          const isAllowed=allowedDays.includes(dowKey);
-          if(isAllowed){
-            if(!first)tasks.push({...t,id:nid++,date:fd(cur2),done:false,rolledFrom:null});
-            else first=false;
+      if(freq==="nthweekday"){
+        // "Specific weeks" — e.g. 1st & 3rd Sunday of each month
+        const targetDow=parseInt(document.getElementById("b-nthwd")?.querySelector(".badge.active")?.dataset.v??"0");
+        const occurrences=[...document.querySelectorAll("#b-nthocc .badge.active")].map(b=>parseInt(b.dataset.v));
+        t.nthWeekday=targetDow;t.nthOccurrences=occurrences;
+        if(recurEnd&&occurrences.length){
+          const endD=new Date(recurEnd+"T12:00:00");
+          const startD=new Date(date+"T12:00:00");
+          let first=true;
+          // walk month by month from the start date's month through the end date
+          let cursorMonth=new Date(startD.getFullYear(),startD.getMonth(),1);
+          const endMonthCap=new Date(endD.getFullYear(),endD.getMonth(),1);
+          while(cursorMonth<=endMonthCap){
+            const y=cursorMonth.getFullYear(),m=cursorMonth.getMonth();
+            occurrences.forEach(occ=>{
+              let occDate;
+              if(occ===-1){
+                // last occurrence of that weekday in the month
+                let d=new Date(y,m+1,0); // last day of month
+                while(d.getDay()!==targetDow)d.setDate(d.getDate()-1);
+                occDate=d;
+              } else {
+                let d=new Date(y,m,1),count=0;
+                while(d.getMonth()===m){
+                  if(d.getDay()===targetDow){count++;if(count===occ)break;}
+                  d.setDate(d.getDate()+1);
+                }
+                occDate=(d.getMonth()===m&&d.getDay()===targetDow)?d:null;
+              }
+              if(occDate&&occDate>=startD&&occDate<=endD){
+                if(!first)tasks.push({...t,id:nid++,date:fd(occDate),done:false,rolledFrom:null});
+                else first=false;
+              }
+            });
+            cursorMonth.setMonth(cursorMonth.getMonth()+1);
           }
-          // advance
-          if(freq==="daily")cur2=new Date(cur2.getTime()+86400000);
-          else if(freq==="weekly")cur2=new Date(cur2.getTime()+7*86400000);
-          else if(freq==="monthly"){cur2=new Date(cur2);cur2.setMonth(cur2.getMonth()+1);}
-          else break;
+        }
+      } else {
+        // Get allowed weekdays (daily/weekly/monthly)
+        const allowedDays=[...document.querySelectorAll("#b-recurdays .badge.active")].map(b=>b.dataset.v);
+        t.allowedDays=allowedDays;
+        const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
+        if(recurEnd){
+          const endD=new Date(recurEnd+"T12:00:00");
+          let cur2=new Date(date+"T12:00:00");
+          let first=true;
+          while(cur2<=endD){
+            const dow=cur2.getDay();
+            const dowKey=DOW_KEYS[dow];
+            const isAllowed=allowedDays.includes(dowKey);
+            if(isAllowed){
+              if(!first)tasks.push({...t,id:nid++,date:fd(cur2),done:false,rolledFrom:null});
+              else first=false;
+            }
+            // advance
+            if(freq==="daily")cur2=new Date(cur2.getTime()+86400000);
+            else if(freq==="weekly")cur2=new Date(cur2.getTime()+7*86400000);
+            else if(freq==="monthly"){cur2=new Date(cur2);cur2.setMonth(cur2.getMonth()+1);}
+            else break;
+          }
         }
       }
     }
