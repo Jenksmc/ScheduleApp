@@ -2990,13 +2990,20 @@ async function pullFromServer(){
     if(d.updated<=lastSyncedAt)return; // nothing new
     lastSyncedAt=d.updated;
     // Merge server data into local state
-    if(d.tasks&&d.tasks.length)tasks=d.tasks;
+    if(d.tasks&&d.tasks.length){
+      // Keep server's non-work tasks as-is (chores, appts, etc.)
+      // but NEVER trust server's work tasks — those get rebuilt fresh
+      // from workSchedules so stale/incorrect weekday data can't survive a sync.
+      tasks=d.tasks.filter(t=>t.type!=="work");
+    }
     if(d.shoppingList)shoppingList=d.shoppingList;
     if(d.customHolidays)customHolidays=d.customHolidays;
     if(d.members)members=d.members;
     if(d.workSchedules)workSchedules=d.workSchedules;
     if(d.nid>nid)nid=d.nid;
     if(d.shopNid>shopNid)shopNid=d.shopNid;
+    // Rebuild all work tasks fresh from the (possibly just-updated) schedules
+    members.forEach(m=>generateWorkTasksForMember(m.id));
     renderHome();
     if(document.getElementById("page-calendar").classList.contains("active"))render();
     renderHomeShopList();
