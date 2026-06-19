@@ -1565,6 +1565,75 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 <script>
+/* ── SERVER SYNC ─────────────────────────────────────────────── */
+const API_BASE = window.location.origin;
+
+async function pushToServer(){
+  try{
+    const payload={
+      tasks,
+      shoppingList,
+      customHolidays,
+      workSchedules,
+      members,
+      budgetData,
+      budgetNid,
+      nid,
+      shopNid,
+      wsNid,
+    };
+    await fetch(API_BASE+"/api/data",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+  }catch(e){console.warn("Push failed:",e);}
+}
+
+async function pullFromServer(){
+  try{
+    const r=await fetch(API_BASE+"/api/data");
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.tasks)tasks=d.tasks;
+    if(d.shoppingList)shoppingList=d.shoppingList;
+    if(d.customHolidays)customHolidays=d.customHolidays;
+    if(d.workSchedules)workSchedules=d.workSchedules;
+    if(d.members)members=d.members;
+    if(d.budgetData)budgetData=d.budgetData;
+    if(d.budgetNid)budgetNid=d.budgetNid;
+    if(d.nid)nid=d.nid;
+    if(d.shopNid)shopNid=d.shopNid;
+    if(d.wsNid)wsNid=d.wsNid;
+    // Sync to localStorage
+    localStorage.setItem("shoppingList",JSON.stringify(shoppingList));
+    localStorage.setItem("shopNid",JSON.stringify(shopNid));
+    localStorage.setItem("members",JSON.stringify(members));
+    localStorage.setItem("workSchedules",JSON.stringify(workSchedules));
+    localStorage.setItem("customHolidays",JSON.stringify(customHolidays));
+    if(budgetData)localStorage.setItem("budgetData",JSON.stringify(budgetData));
+    if(budgetNid)localStorage.setItem("budgetNid",String(budgetNid));
+    // Regenerate work tasks from loaded schedules
+    if(members)members.forEach(m=>generateWorkTasksForMember(m.id));
+    syncLegacyColors();
+  }catch(e){console.warn("Pull failed:",e);}
+}
+
+async function fetchLastUpdated(){
+  try{
+    const r=await fetch(API_BASE+"/api/updated");
+    if(!r.ok)return;
+    const d=await r.json();
+    const el=document.getElementById("last-updated-label");
+    if(el&&d.updated){
+      const dt=new Date(d.updated);
+      el.textContent="Synced "+dt.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+      el.style.display="block";
+    }
+  }catch(e){}
+}
+
+
 /* ── MODAL OPEN / CLOSE ──────────────────────────────────────── */
 function closeModal(id){
   const el=document.getElementById(id);
