@@ -95,6 +95,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .home-light-bubble .ln{font-size:18px;font-weight:500;color:var(--muted)}.home-light-bubble.on .ln{color:var(--lights-on-color)}
 .home-light-bubble .ls{font-size:19px;color:var(--muted);margin-top:2px}.home-light-bubble.on .ls{color:var(--lights-on-border)}
 
+/* LOCK CARD */
+.lock-card{display:flex;align-items:center;gap:16px;padding:16px}
+.lock-icon-wrap{width:56px;height:56px;border-radius:14px;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.lock-icon-wrap.locked{background:rgba(61,184,122,0.15)}
+.lock-icon-wrap.unlocked{background:rgba(224,85,85,0.15)}
+.lock-icon-wrap.jammed{background:rgba(224,160,64,0.15)}
+.lock-icon-wrap i{font-size:26px;color:var(--muted)}
+.lock-icon-wrap.locked i{color:#3db87a}
+.lock-icon-wrap.unlocked i{color:#e05555}
+.lock-icon-wrap.jammed i{color:#e0a040}
+.lock-info{flex:1;min-width:0}
+.lock-name{font-size:18px;font-weight:600;color:var(--text)}
+.lock-status{font-size:15px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+.lock-status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.lock-status.locked .lock-status-dot{background:#3db87a}
+.lock-status.unlocked .lock-status-dot{background:#e05555}
+.lock-status.jammed .lock-status-dot{background:#e0a040}
+.lock-battery{font-size:14px;color:var(--muted);margin-top:3px}
+.lock-toggle-btn{flex-shrink:0;padding:12px 22px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:"DM Sans",sans-serif}
+.lock-toggle-btn.to-lock{background:#3db87a;color:#0a1a10}
+.lock-toggle-btn.to-lock:hover{opacity:0.85}
+.lock-toggle-btn.to-unlock{background:#e05555;color:#1a0a0a}
+.lock-toggle-btn.to-unlock:hover{opacity:0.85}
+.lock-toggle-btn:disabled{opacity:0.4;cursor:not-allowed}
+.lock-offline-badge{font-size:14px;color:#e0a040;display:flex;align-items:center;gap:4px;margin-top:3px}
+
 .color-dot{width:14px;height:14px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}.color-dot.active{border-color:var(--text)}
 .size-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:18px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
 .size-btn.active{background:var(--tag-bg);color:var(--text)}
@@ -359,6 +385,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
     <div class="week-strip" id="week-strip"></div>
   </div>
+  <div class="card lock-card" id="lock-card" style="margin-bottom:12px"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="card">
       <div class="col-header" style="margin-bottom:12px"><i class="ti ti-bulb"></i> Lights</div>
@@ -1616,6 +1643,22 @@ let recurDays=new Set(["sun","mon","tue","wed","thu","fri","sat"]);
     });
   });
 })();let lightGroups=["Living Room","Bedroom","Bathroom","Entryway","Studio","Office","Dining Room","Kitchen"];
+/* ── SWITCHBOT LOCK ──────────────────────────────────────────
+   Mock data for now. When ready to go live:
+   - Set lock.connected = true
+   - Wire fetchLockStatus() to call SwitchBot's cloud API
+   - Wire sendLockCommand() to POST lock/unlock commands
+   - Add SWITCHBOT_TOKEN / SWITCHBOT_SECRET / SWITCHBOT_DEVICE_ID
+     to app.py as a proxy route (keeps credentials off the client)
+ ──────────────────────────────────────────────────────────── */
+let lock={
+  name:"Front Door",
+  status:"locked", // "locked" | "unlocked" | "jammed"
+  battery:78,
+  connected:false, // flip to true once real API is wired up
+  busy:false,
+};
+
 let lights=[
   {id:1,name:"Bath Left Bulb",group:"Bathroom",on:true,brightness:80,color:"#ffffff",recentColors:["#ffffff","#ffe4a0","#ffb347","#7ab8f5"],type:"bulb",offline:false},
   {id:2,name:"Bath Right Bulb",group:"Bathroom",on:true,brightness:80,color:"#ffffff",recentColors:["#ffffff","#ffe4a0","#ffb347","#7ab8f5"],type:"bulb",offline:false},
@@ -1831,7 +1874,75 @@ function renderHome(){
       <i class="ti ti-bulb li"></i><div class="ln">${l.name}</div><div class="ls">${l.on?"On":"Off"}</div>
     </div>`).join("");
   renderHomeShopList();
+  renderLockCard();
   attachTouchDraggables();
+}
+
+/* ── LOCK CARD ── */
+function renderLockCard(){
+  const el=document.getElementById("lock-card");if(!el)return;
+  const isLocked=lock.status==="locked";
+  const isJammed=lock.status==="jammed";
+  const statusLabel=isJammed?"Jammed":isLocked?"Locked":"Unlocked";
+  const iconClass=isJammed?"jammed":isLocked?"locked":"unlocked";
+  const lockIcon=isJammed?"ti-alert-triangle":isLocked?"ti-lock":"ti-lock-open";
+
+  el.innerHTML=`
+    <div class="lock-icon-wrap ${iconClass}"><i class="ti ${lockIcon}"></i></div>
+    <div class="lock-info">
+      <div class="lock-name">${lock.name}</div>
+      <div class="lock-status ${iconClass}"><span class="lock-status-dot"></span>${statusLabel}</div>
+      ${lock.connected?`<div class="lock-battery"><i class="ti ti-battery-2" style="font-size:13px;margin-right:3px"></i>${lock.battery}%</div>`:`<div class="lock-offline-badge"><i class="ti ti-plug-off" style="font-size:13px"></i> Not connected — set up in Settings</div>`}
+    </div>
+    <button class="lock-toggle-btn ${isLocked?"to-unlock":"to-lock"}" onclick="handleLockToggle()" ${lock.busy?"disabled":""}>
+      ${lock.busy?'<i class="ti ti-loader-2"></i>':isLocked?"Unlock":"Lock"}
+    </button>
+  `;
+}
+
+function handleLockToggle(){
+  if(lock.busy)return;
+  const isLocked=lock.status==="locked";
+  if(isLocked){
+    // Unlocking — requires confirmation since it's a security-sensitive action
+    if(!confirm(`Unlock ${lock.name}?`))return;
+    sendLockCommand("unlock");
+  } else {
+    // Locking — no confirmation needed, always safe to lock
+    sendLockCommand("lock");
+  }
+}
+
+async function sendLockCommand(action){
+  lock.busy=true;renderLockCard();
+  if(!lock.connected){
+    // MOCK MODE — simulate a short delay then flip status locally
+    await new Promise(r=>setTimeout(r,500));
+    lock.status=action==="lock"?"locked":"unlocked";
+    lock.busy=false;renderLockCard();
+    return;
+  }
+  // REAL MODE — once connected, this calls the Pi's proxy route,
+  // which forwards to SwitchBot's cloud API using stored credentials.
+  try{
+    const r=await fetch(API_BASE+"/api/lock/"+action,{method:"POST"});
+    const d=await r.json();
+    if(d.status)lock.status=d.status;
+  }catch(e){
+    alert("Couldn't reach the lock. Check your connection.");
+  }
+  lock.busy=false;renderLockCard();
+}
+
+async function fetchLockStatus(){
+  if(!lock.connected)return; // skip polling in mock mode
+  try{
+    const r=await fetch(API_BASE+"/api/lock/status");
+    const d=await r.json();
+    if(d.status)lock.status=d.status;
+    if(d.battery!=null)lock.battery=d.battery;
+    renderLockCard();
+  }catch(e){/* offline */}
 }
 
 /* TASK EDIT */
