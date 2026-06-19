@@ -11,6 +11,7 @@
 :root{--bg:#0d0d0f;--surface:#16161a;--border:#242428;--wb-bg:#1a1a22;--wb-pen:#e8e8ec;--text:#e8e8ec;--muted:#6b6b78;--accent:#e8e8ec;--check:#e8e8ec;--tag-bg:#1e1e24;--tag-text:#9090a0;--today-color:#378add;--today-bg:#0a1e35;--today-text:#7ab8f5;--holiday-color:#6a5acd;--holiday-text:#e8e4ff;--lights-on-bg:#1a1000;--lights-on-border:#6b3f0a;--lights-on-color:#e0a040;--britt-t:#e85d8a;--chris-t:#3db87a;--britt-1:rgba(232,93,138,0.15);--britt-2:rgba(232,93,138,0.3);--britt-3:rgba(232,93,138,0.55);--chris-1:rgba(61,184,122,0.15);--chris-2:rgba(61,184,122,0.3);--chris-3:rgba(61,184,122,0.55)}
 [data-theme="light"]{--bg:#f5f5f7;--surface:#fff;--border:#e0e0e5;--text:#1a1a1f;--muted:#9090a0;--accent:#1a1a1f;--check:#1a1a1f;--tag-bg:#ebebf0;--tag-text:#606070;--today-color:#378add;--today-bg:#ddeeff;--today-text:#185fa5;--lights-on-bg:#fff8e6;--lights-on-border:#e0a040;--lights-on-color:#8c5a00;--wb-bg:#ffffff;--wb-pen:#1a1a1f;--holiday-color:#7c68a8;--holiday-text:#2d1f5e}
 body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;transition:background 0.3s;display:flex;flex-direction:column}
+[data-drag-id]{user-select:none;-webkit-user-select:none;touch-action:none}
 /* TOP BAR */
 .topbar{display:flex;align-items:center;gap:12px;padding:0 16px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;position:sticky;top:0;z-index:100}
 .hamburger{background:none;border:none;cursor:pointer;color:var(--text);font-size:20px;display:flex;align-items:center;padding:4px;flex-shrink:0}
@@ -881,73 +882,127 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 <script>
-/* ── TOUCH → DRAG POLYFILL ──────────────────────────────────────
-   Makes HTML5 draggable elements work with touch on iPad/iPhone.
-   Translates touchstart/touchmove/touchend into dragstart/dragover/drop.
+/* ── iOS TOUCH DRAG SYSTEM ─────────────────────────────────────
+   iOS Safari does not support HTML5 drag-and-drop.
+   This implements long-press-to-drag with touch events directly.
+   - 300ms hold activates drag mode
+   - Ghost clone follows finger
+   - On release, detects drop target and fires the right action
 ─────────────────────────────────────────────────────────────── */
-(function(){
-  let dragging=null,lastTarget=null,clone=null;
+let _touchDragActive=false,_touchDragEl=null,_touchDragClone=null;
+let _touchDragId=null,_touchDragType=null; // type: "task" | "wsd"
+let _touchHoldTimer=null;
 
-  function getTarget(x,y){
-    if(clone)clone.style.display="none";
-    const el=document.elementFromPoint(x,y);
-    if(clone)clone.style.display="";
-    return el;
-  }
+function _touchGetEl(x,y){
+  if(_touchDragClone)_touchDragClone.style.display="none";
+  const el=document.elementFromPoint(x,y);
+  if(_touchDragClone)_touchDragClone.style.display="";
+  return el;
+}
 
-  function fireEvent(name,el,touch){
-    const evt=new DragEvent(name,{
-      bubbles:true,cancelable:true,
-      clientX:touch.clientX,clientY:touch.clientY,
-      dataTransfer:dragging?dragging._dt:null
-    });
-    el.dispatchEvent(evt);
-  }
+function _touchStartDrag(srcEl,id,type,touch){
+  _touchDragActive=true;_touchDragId=id;_touchDragType=type;_touchDragEl=srcEl;
+  // vibrate briefly if supported
+  if(navigator.vibrate)navigator.vibrate(30);
+  // ghost clone
+  const r=srcEl.getBoundingClientRect();
+  _touchDragClone=srcEl.cloneNode(true);
+  _touchDragClone.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:0.75;
+    width:${r.width}px;height:${r.height}px;
+    top:${touch.clientY-r.height/2}px;left:${touch.clientX-r.width/2}px;
+    border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.4);transform:scale(1.05);`;
+  document.body.appendChild(_touchDragClone);
+  srcEl.style.opacity="0.3";
+}
 
-  document.addEventListener("touchstart",e=>{
-    const el=e.target.closest("[draggable='true']");
-    if(!el)return;
-    dragging=el;
-    const dt={_data:{}};
-    dt.setData=(k,v)=>dt._data[k]=v;
-    dt.getData=(k)=>dt._data[k]||"";
-    dt.effectAllowed="move";
-    dragging._dt=dt;
-    // ghost clone
-    clone=el.cloneNode(true);
-    clone.style.cssText=`position:fixed;pointer-events:none;z-index:9999;opacity:0.7;margin:0;
-      width:${el.offsetWidth}px;top:${e.touches[0].clientY-20}px;left:${e.touches[0].clientX-20}px;`;
-    document.body.appendChild(clone);
-    fireEvent("dragstart",el,e.touches[0]);
-    e.preventDefault();
-  },{passive:false});
+function _touchEndDrag(touch){
+  if(!_touchDragActive)return;
+  _touchDragActive=false;
+  if(_touchDragEl)_touchDragEl.style.opacity="";
+  if(_touchDragClone){_touchDragClone.remove();_touchDragClone=null;}
+  
+  const target=_touchGetEl(touch.clientX,touch.clientY);
+  if(!target){_touchDragId=null;_touchDragType=null;_touchDragEl=null;return;}
 
-  document.addEventListener("touchmove",e=>{
-    if(!dragging)return;
-    const t=e.touches[0];
-    if(clone){clone.style.top=(t.clientY-20)+"px";clone.style.left=(t.clientX-20)+"px";}
-    const target=getTarget(t.clientX,t.clientY);
-    if(target&&target!==lastTarget){
-      if(lastTarget)fireEvent("dragleave",lastTarget,t);
-      lastTarget=target;
-      fireEvent("dragover",target,t);
-    } else if(target){
-      fireEvent("dragover",target,t);
+  if(_touchDragType==="task"||_touchDragType==="wsd"){
+    const id=_touchDragId;
+    // Check drop targets
+    // Home person drop zones
+    const homeZone=target.closest("#drop-britt,#drop-christian,#drop-unassigned");
+    if(homeZone){
+      const p=homeZone.id.replace("drop-","");
+      const t=tasks.find(x=>x.id===id);if(t)t.person=p;
+      renderHome();if(document.getElementById("page-calendar").classList.contains("active"))render();
+      _touchDragId=null;_touchDragEl=null;return;
     }
-    e.preventDefault();
-  },{passive:false});
+    // Calendar person panels
+    const panelMap={"panel-britt-wrap":"britt","panel-christian-wrap":"christian","panel-unassigned":"unassigned"};
+    const panel=target.closest("#panel-britt-wrap,#panel-christian-wrap,#panel-unassigned");
+    if(panel){
+      const p=panelMap[panel.id];
+      const t=tasks.find(x=>x.id===id);if(t&&p)t.person=p;
+      render();renderHome();
+      _touchDragId=null;_touchDragEl=null;return;
+    }
+    // Calendar day cells — reschedule
+    const dayCell=target.closest(".day-cell[data-date]");
+    if(dayCell){
+      const ds=dayCell.dataset.date;
+      const t=tasks.find(x=>x.id===id);if(t&&ds)t.date=ds;
+      render();renderHome();
+      _touchDragId=null;_touchDragEl=null;return;
+    }
+    // Week strip day columns — reschedule
+    const wsdCol=target.closest(".wsd[data-date]");
+    if(wsdCol){
+      const ds=wsdCol.dataset.date;
+      const t=tasks.find(x=>x.id===id);if(t&&ds)t.date=ds;
+      renderHome();if(document.getElementById("page-calendar").classList.contains("active"))render();
+      _touchDragId=null;_touchDragEl=null;return;
+    }
+  }
+  _touchDragId=null;_touchDragType=null;_touchDragEl=null;
+}
 
-  document.addEventListener("touchend",e=>{
-    if(!dragging)return;
-    const t=e.changedTouches[0];
-    if(clone){clone.remove();clone=null;}
-    const target=getTarget(t.clientX,t.clientY);
-    if(target)fireEvent("drop",target,t);
-    fireEvent("dragend",dragging,t);
-    if(lastTarget)fireEvent("dragleave",lastTarget,t);
-    dragging=null;lastTarget=null;
+// Attach to any element that should be touch-draggable
+function makeTouchDraggable(el,id,type){
+  el.setAttribute("draggable","false"); // disable HTML5 drag on iOS
+  el.addEventListener("touchstart",e=>{
+    const touch=e.touches[0];
+    _touchHoldTimer=setTimeout(()=>{
+      _touchStartDrag(el,id,type,touch);
+    },280);
+  },{passive:true});
+  el.addEventListener("touchmove",e=>{
+    if(!_touchDragActive){clearTimeout(_touchHoldTimer);return;}
+    e.preventDefault();
+    const touch=e.touches[0];
+    if(_touchDragClone){
+      _touchDragClone.style.top=(touch.clientY-30)+"px";
+      _touchDragClone.style.left=(touch.clientX-60)+"px";
+    }
+    // Highlight drop target
+    const target=_touchGetEl(touch.clientX,touch.clientY);
+    document.querySelectorAll(".drag-over").forEach(x=>x.classList.remove("drag-over"));
+    const dropTarget=target?.closest(".drop-zone,.day-cell,.wsd,.cal-person-panel,#panel-unassigned");
+    if(dropTarget)dropTarget.classList.add("drag-over");
   },{passive:false});
-})();
+  el.addEventListener("touchend",e=>{
+    clearTimeout(_touchHoldTimer);
+    document.querySelectorAll(".drag-over").forEach(x=>x.classList.remove("drag-over"));
+    if(!_touchDragActive)return;
+    _touchEndDrag(e.changedTouches[0]);
+  });
+  el.addEventListener("touchcancel",()=>{
+    clearTimeout(_touchHoldTimer);
+    document.querySelectorAll(".drag-over").forEach(x=>x.classList.remove("drag-over"));
+    if(_touchDragActive){
+      _touchDragActive=false;
+      if(_touchDragEl)_touchDragEl.style.opacity="";
+      if(_touchDragClone){_touchDragClone.remove();_touchDragClone=null;}
+    }
+  });
+}
 
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1651,7 +1706,7 @@ function toggleAll(){
 function taskRow(t){
   const {text}=taskColor(t);
   const tt=t.time?`<span class="time-tag">${fmtTime(t.time)}${t.endtime?" – "+fmtTime(t.endtime):""}</span>`:"";
-  return`<div class="task-row${t.done?" done":""}" draggable="true"
+  return`<div class="task-row${t.done?" done":""}" draggable="true" data-drag-id="${t.id}" data-drag-type="task"
     onclick="toggleDone(${t.id})" ondragstart="homeDragStart(event,${t.id})" ondragend="homeDragEnd(event)">
     <div class="cb"></div>
     <div class="task-title" style="color:${text}">${t.title}</div>${tt}
@@ -1715,7 +1770,7 @@ function renderWeekStrip(){
       const{bg,text}=taskColor(t);
       const tt=t.time?`<span class="wsd-time">${fmtTime(t.time)}</span>`:"";
       const done=t.done?"text-decoration:line-through;opacity:0.5":"";
-      h+=`<div class="wsd-ev-row" draggable="true" data-id="${t.id}" style="${done}">
+      h+=`<div class="wsd-ev-row" draggable="true" data-drag-id="${t.id}" data-drag-type="wsd" data-id="${t.id}" style="${done}">
         <div class="wsd-ev-pill" style="background:${bg};color:${text};flex:1">${t.title}${tt}</div>
         <button class="wsd-pencil" onclick="event.stopPropagation();openEditModal(${t.id})"><i class="ti ti-pencil"></i></button>
       </div>`;
@@ -1753,6 +1808,7 @@ function renderHome(){
       <i class="ti ti-bulb li"></i><div class="ln">${l.name}</div><div class="ls">${l.on?"On":"Off"}</div>
     </div>`).join("");
   renderHomeShopList();
+  attachTouchDraggables();
 }
 
 /* TASK EDIT */
@@ -1793,8 +1849,8 @@ function calPillHtml(t){
   const{bg,text}=taskColor(t);
   const done=t.done?"done-pill":"";
   const tt=t.time?`<span style="font-size:9px;padding:1px 3px;border-radius:2px;background:rgba(0,0,0,0.2);flex-shrink:0;font-family:'DM Mono',monospace">${fmtTime(t.time)}</span>`:"";
-  return`<div class="task-pill ${done}" style="background:${bg};color:${text}" draggable="true"
-    ondragstart="calDragStart(event,${t.id})" onclick="event.stopPropagation();toggleDone(${t.id})">
+  return`<div class="task-pill ${done}" style="background:${bg};color:${text}" data-drag-id="${t.id}" data-drag-type="task"
+    draggable="true" ondragstart="calDragStart(event,${t.id})" onclick="event.stopPropagation();toggleDone(${t.id})">
     <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${t.title}</span>${tt}
     <i class="ti ti-pencil pill-edit" onclick="event.stopPropagation();openEditModal(${t.id})"></i>
   </div>`;
@@ -1890,13 +1946,13 @@ function renderPersonPanels(){
 }
 
 /* RENDER */
-function render(){if(view==="week")rWeek();else if(view==="month")rMonth();else rDay();renderPersonPanels();}
+function render(){if(view==="week")rWeek();else if(view==="month")rMonth();else rDay();renderPersonPanels();attachTouchDraggables();}
 
 function dayCell(ds,d,extra){
   const it=ds===fd(new Date());
   const dt=tf(ds);
   const hb=dayHolidayHtml(ds);
-  return`<div class="day-cell${it?" today":""}${extra?" "+extra:""}"
+  return`<div class="day-cell${it?" today":""}${extra?" "+extra:""}" data-date="${ds}"
     onclick="openAddModal('${ds}')" ondragover="calDragOver(event,'${ds}')" ondragleave="calDragLeave(event)" ondrop="calDrop(event,'${ds}')">
     <div class="day-num">${d}<span class="add-dot">+</span></div>
     ${hb}
@@ -2315,6 +2371,17 @@ function goToRecurSettings(){
     const el=document.getElementById("recur-groups-list");
     if(el)el.closest(".card")?.scrollIntoView({behavior:"smooth",block:"start"});
   },150);
+}
+
+function attachTouchDraggables(){
+  // Wire up all drag-capable elements for iOS touch
+  document.querySelectorAll("[data-drag-id]").forEach(el=>{
+    if(el._touchWired)return; // don't double-wire
+    el._touchWired=true;
+    const id=parseInt(el.dataset.dragId);
+    const type=el.dataset.dragType||"task";
+    makeTouchDraggable(el,id,type);
+  });
 }
 
 function minsToTime(mins){
