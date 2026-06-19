@@ -1,16 +1,14 @@
 from flask import Flask, send_file, request, jsonify
 from flask_cors import CORS
-import tasks_store, os
+import tasks_store, os, time
 
 app = Flask(__name__)
-CORS(app)  # allow cross-origin so dev tools work
+CORS(app)
 
-# ── Main dashboard (iPad wall display) ──────────────────────
 @app.route('/')
 def index():
     return send_file('dashboard.html')
 
-# ── Mobile views ─────────────────────────────────────────────
 @app.route('/britt')
 def mobile_britt():
     return send_file('mobile.html')
@@ -23,7 +21,6 @@ def mobile_christian():
 def mobile_home():
     return send_file('mobile.html')
 
-# ── Data API ─────────────────────────────────────────────────
 @app.route('/api/data', methods=['GET'])
 def get_data():
     return jsonify(tasks_store.get_all())
@@ -38,8 +35,13 @@ def save_data():
 
 @app.route('/api/updated', methods=['GET'])
 def get_updated():
-    """Lightweight poll endpoint — just returns the last-updated timestamp."""
-    return jsonify({"updated": tasks_store.get_updated()})
+    """Returns last data update + dashboard file modification time."""
+    dashboard_path = os.path.join(os.path.dirname(__file__), 'dashboard.html')
+    file_updated = int(os.path.getmtime(dashboard_path)) if os.path.exists(dashboard_path) else 0
+    return jsonify({
+        "updated": tasks_store.get_updated(),
+        "file_updated": file_updated
+    })
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
