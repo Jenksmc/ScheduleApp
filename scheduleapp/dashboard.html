@@ -238,8 +238,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .rule-section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:20px}
 .rule-section-label:first-of-type{margin-top:0}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem 1.5rem 0;width:480px;max-width:94vw;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;width:480px;max-width:94vw;max-height:88vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.5rem 0;flex-shrink:0}
 .modal-hdr h3{font-size:18px;font-weight:500;color:var(--text)}
 .close-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:21px;display:flex;padding:2px}
 .type-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
@@ -254,7 +254,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .badge{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:18px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
 .badge.active{background:var(--tag-bg);color:var(--text);border-color:var(--muted)}
 .sec{display:none}.sec.on{display:block}
-.mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:auto;padding:14px 0 1.5rem;flex-shrink:0;position:sticky;bottom:0;background:var(--surface)}
+.modal-body{flex:1;overflow-y:auto;padding:1.5rem 1.5rem 0;-webkit-overflow-scrolling:touch}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.mfooter{display:flex;gap:8px;justify-content:flex-end;padding:12px 1.5rem 1.5rem;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border)}
 .btn-save{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:8px 18px;font-size:18px;cursor:pointer;font-weight:600;font-family:"DM Sans",sans-serif}
 .btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
 .btn-danger{background:none;border:1px solid #7a2020;border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:#e05555;font-family:"DM Sans",sans-serif;margin-right:auto}
@@ -981,6 +984,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <h3 id="clear-heading">Clear tasks</h3>
         <button class="close-x" onclick="closeModal('modal-clear')"><i class="ti ti-x"></i></button>
       </div>
+<div class="modal-body">
       <!-- Step 1: confirm scope -->
       <div id="clear-step1">
         <div style="font-size:18px;color:var(--text);line-height:1.6;margin-bottom:18px" id="clear-msg"></div>
@@ -1006,6 +1010,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-shop')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
       <div class="modal-hdr"><h3>Add shopping item</h3><button class="close-x" onclick="closeModal('modal-add-shop')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Item</label><input type="text" id="si-name" placeholder="e.g. Oat milk, Dish soap"/></div>
       <div class="field"><label>Group</label>
         <select id="si-group">
@@ -1026,7 +1031,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </select>
         </div>
       </div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-shop')">Cancel</button><button class="btn-save" onclick="saveShopItem()">Add</button></div>
+      </div>
+</div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-shop')">Cancel</button><button class="btn-save" onclick="saveShopItem()">Add</button></div>
     </div>
   </div>
 </div>
@@ -1036,6 +1043,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-expense')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
       <div class="modal-hdr"><h3>Log Expense / Transfer</h3><button class="close-x" onclick="closeModal('modal-add-expense')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Amount</label><input type="number" step="0.01" id="exp-amount" placeholder="0.00" style="font-size:20px;font-weight:600"/></div>
       <div class="field"><label>Type</label>
         <div class="badges" id="exp-type-badges">
@@ -1065,7 +1073,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div class="field"><label>Date</label><input type="date" id="exp-date"/></div>
       <div class="field"><label>Note <span class="opt-label">(optional)</span></label><input type="text" id="exp-note" placeholder="e.g. Trader Joe's, Costco run"/></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-expense')">Cancel</button><button class="btn-save" onclick="saveExpenseFromModal()">Save</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-expense')">Cancel</button><button class="btn-save" onclick="saveExpenseFromModal()">Save</button></div>
     </div>
   </div>
 </div>
@@ -1075,6 +1084,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-income-source')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
       <div class="modal-hdr"><h3 id="mis-heading">Add Income Source</h3><button class="close-x" onclick="closeModal('modal-income-source')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
       <div class="two-col">
         <div class="field"><label>Hourly rate ($)</label><input type="number" step="0.01" id="mis-rate" placeholder="49.80"/></div>
@@ -1091,7 +1101,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <option value="0">Same week</option>
         </select>
       </div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-danger" id="mis-delete" style="display:none" onclick="deleteIncomeSource()"><i class="ti ti-trash"></i></button>
         <button class="btn-cancel" onclick="closeModal('modal-income-source')">Cancel</button>
         <button class="btn-save" onclick="saveIncomeSource()">Save</button>
@@ -1105,6 +1116,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-auto-transfer')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-hdr"><h3 id="mat-heading">Auto-Transfer</h3><button class="close-x" onclick="closeModal('modal-auto-transfer')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="mat-name" placeholder="e.g. Emergency Fund"/></div>
       <div class="field"><label>Amount per paycheck ($)</label><input type="number" step="0.01" id="mat-amount" placeholder="557"/></div>
       <div class="field"><label>Savings bucket</label>
@@ -1113,7 +1125,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <option value="personal">Personal</option>
         </select>
       </div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-danger" id="mat-delete" style="display:none" onclick="deleteAutoTransfer()"><i class="ti ti-trash"></i></button>
         <button class="btn-cancel" onclick="closeModal('modal-auto-transfer')">Cancel</button>
         <button class="btn-save" onclick="saveAutoTransfer()">Save</button>
@@ -1127,10 +1140,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-income-week')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
       <div class="modal-hdr"><h3>Edit Work Week</h3><button class="close-x" onclick="closeModal('modal-edit-income-week')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div style="font-size:14px;color:var(--muted);margin-bottom:12px" id="eiw-label"></div>
       <div class="field"><label>Hours worked</label><input type="number" step="0.5" id="eiw-hours" placeholder="40"/></div>
       <div style="font-size:15px;color:var(--muted);margin-top:4px">Calculated pay: <strong id="eiw-calc">$0.00</strong></div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-cancel" onclick="closeModal('modal-edit-income-week')">Cancel</button>
         <button class="btn-save" onclick="saveIncomeWeek()">Save</button>
       </div>
@@ -1143,6 +1158,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-adjust-var')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
       <div class="modal-hdr"><h3>Adjust Variable Budget</h3><button class="close-x" onclick="closeModal('modal-adjust-var')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div style="font-size:14px;color:var(--muted);margin-bottom:12px" id="avb-source-info"></div>
       <div class="field">
         <label>Total variable budget this week</label>
@@ -1159,7 +1175,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <span style="font-size:13px;color:var(--muted)">Remaining unallocated</span>
         <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="avb-remaining">$0</span>
       </div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-cancel" onclick="closeModal('modal-adjust-var')">Cancel</button>
         <button class="btn-save" onclick="saveAdjustVarBudget()">Save for this week</button>
       </div>
@@ -1170,8 +1187,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <!-- ADD EVENT MODAL -->
 <div id="modal-add" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-add')">
-    <div class="modal" onclick="event.stopPropagation()" style="width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column">
+    <div class="modal" onclick="event.stopPropagation()" style="width:600px;max-width:96vw">
       <div class="modal-hdr"><h3 id="mhdr">Add event</h3><button class="close-x" onclick="closeModal('modal-add')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="type-tabs">
         <button class="ttab active" data-type="chore" onclick="switchType('chore',this)">Chore</button>
         <button class="ttab" data-type="appointment" onclick="switchType('appointment',this)">Appt</button>
@@ -1301,7 +1319,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>End date <span class="opt-label">(optional)</span></label><input type="date" id="f-vacend"/></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-vacnotes"></textarea></div>
       </div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add')">Cancel</button><button class="btn-save" onclick="saveTask()">Save</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add')">Cancel</button><button class="btn-save" onclick="saveTask()">Save</button></div>
     </div>
   </div>
 </div>
@@ -1311,6 +1330,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Edit task</h3><button class="close-x" onclick="closeModal('modal-edit')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Title</label><input type="text" id="edit-title"/></div>
       <div class="field"><label>Date</label><input type="date" id="edit-date"/></div>
       <div class="field">
@@ -1326,7 +1346,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="person-opt" data-p="unassigned" onclick="selectPerson('unassigned')"><div class="avatar av-u"><i class="ti ti-user-question"></i></div><div style="font-size:18px;color:var(--text)">Unclaimed</div></div>
         </div>
       </div>
-      <div class="mfooter"><button class="btn-danger" onclick="deleteEditTask()"><i class="ti ti-trash"></i> Delete</button><button class="btn-cancel" onclick="closeModal('modal-edit')">Cancel</button><button class="btn-save" onclick="saveEdit()">Save</button></div>
+      </div>
+<div class="mfooter"><button class="btn-danger" onclick="deleteEditTask()"><i class="ti ti-trash"></i> Delete</button><button class="btn-cancel" onclick="closeModal('modal-edit')">Cancel</button><button class="btn-save" onclick="saveEdit()">Save</button></div>
     </div>
   </div>
 </div>
@@ -1336,11 +1357,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-light')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3 id="el-heading">Edit light</h3><button class="close-x" onclick="closeModal('modal-edit-light')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="el-name"/></div>
       <div class="field"><label>Room</label><select id="el-group"></select></div>
       <div class="field"><label>Brightness</label><input type="range" class="brightness-full" id="el-brightness" min="1" max="100"/><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:16px;color:var(--muted)">Dim</span><span style="font-size:16px;color:var(--muted)" id="el-brightness-label">80%</span><span style="font-size:16px;color:var(--muted)">Bright</span></div></div>
       <div class="field"><label>Color</label><div class="color-grid" id="el-colors"></div></div>
-      <div class="mfooter"><button class="btn-danger" onclick="deleteLightFn()"><i class="ti ti-trash"></i> Remove</button><button class="btn-cancel" onclick="closeModal('modal-edit-light')">Cancel</button><button class="btn-save" onclick="saveEditLight()">Save</button></div>
+      </div>
+<div class="mfooter"><button class="btn-danger" onclick="deleteLightFn()"><i class="ti ti-trash"></i> Remove</button><button class="btn-cancel" onclick="closeModal('modal-edit-light')">Cancel</button><button class="btn-save" onclick="saveEditLight()">Save</button></div>
     </div>
   </div>
 </div>
@@ -1350,10 +1373,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-light')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Add light</h3><button class="close-x" onclick="closeModal('modal-add-light')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="al-name" placeholder="e.g. Desk Lamp"/></div>
       <div class="field"><label>Room</label><select id="al-group"></select></div>
       <div class="field"><label>Type</label><select id="al-type"><option value="bulb">Bulb</option><option value="strip">LED Strip</option><option value="ceiling">Ceiling Light</option><option value="lamp">Floor / Table Lamp</option></select></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-light')">Cancel</button><button class="btn-save" onclick="saveAddLight()">Add</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-light')">Cancel</button><button class="btn-save" onclick="saveAddLight()">Add</button></div>
     </div>
   </div>
 </div>
@@ -1363,9 +1388,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-group')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Add group</h3><button class="close-x" onclick="closeModal('modal-add-group')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Group name</label><input type="text" id="ag-name" placeholder="e.g. Office"/></div>
       <div class="field"><label>Move lights into this group <span class="opt-label">(optional)</span></label><div class="group-check-list" id="ag-lights"></div></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-group')">Cancel</button><button class="btn-save" onclick="saveAddGroup()">Create</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-group')">Cancel</button><button class="btn-save" onclick="saveAddGroup()">Create</button></div>
     </div>
   </div>
 </div>
@@ -1375,6 +1402,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-rule')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Add rule</h3><button class="close-x" onclick="closeModal('modal-add-rule')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Rule name</label><input type="text" id="r-name" placeholder="e.g. Good morning routine"/></div>
       <div class="field"><label>Trigger</label>
         <div class="trigger-opts">
@@ -1403,7 +1431,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div class="field" id="r-group-field"><label>Light group</label><select id="r-light-group"></select></div>
       <div class="field" id="r-custom-field" style="display:none"><label>Describe the action</label><textarea id="r-custom"></textarea></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-rule')">Cancel</button><button class="btn-save" onclick="saveRule()">Save rule</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-rule')">Cancel</button><button class="btn-save" onclick="saveRule()">Save rule</button></div>
     </div>
   </div>
 </div>
@@ -1413,6 +1442,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-holiday')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Add holiday or birthday</h3><button class="close-x" onclick="closeModal('modal-add-holiday')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="type-tabs" style="margin-bottom:14px">
         <button class="ttab active" data-type="holiday" onclick="switchHolType('holiday',this)">Holiday</button>
         <button class="ttab" data-type="birthday" onclick="switchHolType('birthday',this)">Birthday</button>
@@ -1426,7 +1456,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <span style="font-size:19px;color:var(--muted)">Repeat every year on this date</span>
         </div>
       </div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-holiday')">Cancel</button><button class="btn-save" onclick="saveAddHoliday()">Add</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-holiday')">Cancel</button><button class="btn-save" onclick="saveAddHoliday()">Add</button></div>
     </div>
   </div>
 </div>
@@ -1436,6 +1467,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-recur')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3 id="er-heading">Edit recurring task</h3><button class="close-x" onclick="closeModal('modal-edit-recur')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div style="font-size:19px;color:var(--muted);margin-bottom:12px" id="er-subtitle">Changes apply to all future instances.</div>
       <div class="field"><label>Title</label><input type="text" id="er-title"/></div>
       <div class="field"><label>Assigned to</label>
@@ -1461,7 +1493,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <input type="date" id="er-end-date"/>
         <div style="font-size:16px;color:var(--muted);margin-top:4px" id="er-end-hint"></div>
       </div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-danger" onclick="deleteRecurGroup()"><i class="ti ti-trash"></i> Delete all</button>
         <button class="btn-cancel" onclick="closeModal('modal-edit-recur')">Cancel</button>
         <button class="btn-save" onclick="saveRecurGroup()">Save all</button>
@@ -1475,9 +1508,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-save-theme')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Save theme</h3><button class="close-x" onclick="closeModal('modal-save-theme')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div style="font-size:19px;color:var(--muted);margin-bottom:12px">Saves your current colors as a reusable theme.</div>
       <div class="field"><label>Theme name</label><input type="text" id="theme-name-input" placeholder="e.g. Midnight Pink"/></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-save-theme')">Cancel</button><button class="btn-save" onclick="saveThemeFn()">Save theme</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-save-theme')">Cancel</button><button class="btn-save" onclick="saveThemeFn()">Save theme</button></div>
     </div>
   </div>
 </div>
@@ -1487,10 +1522,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-member')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Add household member</h3><button class="close-x" onclick="closeModal('modal-add-member')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="am-name" placeholder="e.g. Mom, Grandma, Roommate"/></div>
       <div class="field"><label>Role</label><div class="badges" id="b-amrole"><button class="badge active" data-v="adult" onclick="pick(this,'amrole')">Adult</button><button class="badge" data-v="child" onclick="pick(this,'amrole')">Child</button><button class="badge" data-v="pet" onclick="pick(this,'amrole')">Pet (tasks only)</button></div></div>
       <div class="field"><label>Base color</label><div id="am-color-picker"></div></div>
-      <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-member')">Cancel</button><button class="btn-save" onclick="saveAddMember()">Add</button></div>
+      </div>
+<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-member')">Cancel</button><button class="btn-save" onclick="saveAddMember()">Add</button></div>
     </div>
   </div>
 </div>
@@ -1500,6 +1537,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-member')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3 id="em-heading">Edit member</h3><button class="close-x" onclick="closeModal('modal-edit-member')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="em-name"/></div>
       <div style="font-size:19px;color:var(--muted);margin-bottom:10px;margin-top:4px">Colors per event type</div>
       <div id="em-type-colors"></div>
@@ -1517,7 +1555,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <input type="checkbox" id="em-use-theme-defaults" style="width:16px;height:16px;accent-color:var(--today-color);cursor:pointer"/>
       </div>
-      <div class="mfooter">
+      </div>
+<div class="mfooter">
         <button class="btn-danger" id="em-delete-btn" onclick="deleteMember()"><i class="ti ti-trash"></i> Remove</button>
         <button class="btn-cancel" onclick="closeModal('modal-edit-member')">Cancel</button>
         <button class="btn-save" onclick="saveEditMember()">Save</button>
