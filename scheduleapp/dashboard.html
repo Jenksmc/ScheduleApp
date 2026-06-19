@@ -132,6 +132,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .timed-pill{font-size:18px;padding:2px 7px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pill-edit{font-size:18px;margin-left:auto;flex-shrink:0;opacity:0.7;cursor:pointer}
 .daily-wrap{display:grid;grid-template-columns:1fr 220px;gap:10px;align-items:start}
+.daily-wrap-full{width:100%}
 .daily-scroll-outer{overflow-y:auto;max-height:560px;border:1px solid var(--border);border-radius:10px}
 .hourly-col{border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;cursor:default}
 .span-event{position:absolute;border-radius:6px;padding:4px 8px;font-size:18px;overflow:hidden;cursor:pointer;z-index:2;display:flex;flex-direction:column;justify-content:center;left:54px;right:4px;touch-action:none;user-select:none}
@@ -2052,15 +2053,7 @@ function rDay(){
       </div>
     </div>`;
 
-  let sideHtml=`<div class="sidebar-todos"><div class="sidebar-heading">No specific time</div>`;
-  if(!untimed.length)sideHtml+=`<div class="empty-msg">All scheduled</div>`;
-  untimed.forEach(t=>{sideHtml+=`<div class="todo-row${t.done?" done":""}" onclick="toggleDone(${t.id})">
-    <div class="cb2"></div><div><div class="tt">${t.title}</div><div class="tsub">${t.type}${t.person&&t.person!=="unassigned"?" · "+t.person:""}</div></div>
-    <button class="edit-pencil" onclick="event.stopPropagation();openEditModal(${t.id})" style="opacity:1"><i class="ti ti-pencil"></i></button>
-  </div>`;});
-  sideHtml+=`<button class="cnav-btn" style="margin-top:10px;width:100%;justify-content:center" onclick="openAddModal('${ds}')"><i class="ti ti-plus"></i> Add</button></div>`;
-
-  document.getElementById("cal").innerHTML=`<div class="daily-wrap">${gridHtml}${sideHtml}</div>`;
+  document.getElementById("cal").innerHTML=`<div class="daily-wrap-full">${gridHtml}</div>`;
 
   function attachBlocks(colId,timedEvs){
     const col=document.getElementById(colId);if(!col)return;
