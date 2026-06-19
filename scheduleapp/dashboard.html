@@ -1247,6 +1247,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="field" id="f-recur-end-wrap" style="display:none"><label>Repeat until <span class="opt-label">(end date)</span></label><input type="date" id="f-recur-end"/></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-cnotes"></textarea></div>
+        <!-- Alternate assignment - only shown when recurring -->
+        <div id="f-alt-assign-wrap" style="display:none;background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:4px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="margin-bottom:0;font-size:15px;font-weight:500">Alternate assignment</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;color:var(--muted)">
+              <input type="checkbox" id="f-alt-enabled" style="accent-color:var(--today-color);width:15px;height:15px" onchange="toggleNewAltAssign()"/>
+              Enable
+            </label>
+          </div>
+          <div id="f-alt-fields" style="display:none">
+            <div class="field" style="margin-bottom:8px">
+              <label>Alternate with</label>
+              <select id="f-alt-person">
+                <option value="christian">Christian</option>
+                <option value="britt">Brittni</option>
+                <option value="unassigned">Unclaimed</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:4px">
+              <label>Switch every</label>
+              <div class="badges" id="f-alt-mode">
+                <button class="badge active" data-v="occurrence" onclick="pick(this,'f-alt-mode')">Occurrence</button>
+                <button class="badge" data-v="week" onclick="pick(this,'f-alt-mode')">Week</button>
+                <button class="badge" data-v="month" onclick="pick(this,'f-alt-mode')">Month</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="sec" id="sec-appointment">
         <div class="field"><label>Assigned to</label><select id="f-appt-person"><option value="unassigned" selected>Unclaimed</option><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
@@ -3070,12 +3098,22 @@ function updateAltHint(){
 }
 
 /* ── RECUR FIELDS ── */
+function toggleNewAltAssign(){
+  const enabled=document.getElementById("f-alt-enabled")?.checked;
+  const fields=document.getElementById("f-alt-fields");
+  if(fields)fields.style.display=enabled?"block":"none";
+}
+
 function showRecurFields(){
   const freq=bv.freq;
   const isRecur=freq!=="once";
   const dw=document.getElementById("f-recur-days-wrap");
   const ew=document.getElementById("f-recur-end-wrap");
   const nw=document.getElementById("f-nthweekday-wrap");
+  // Show alternate assignment option only when recurring
+  const aw=document.getElementById("f-alt-assign-wrap");
+  if(aw)aw.style.display=isRecur?"block":"none";
+  if(!isRecur){const ac=document.getElementById("f-alt-enabled");if(ac)ac.checked=false;const af=document.getElementById("f-alt-fields");if(af)af.style.display="none";}
   if(ew)ew.style.display=isRecur?"block":"none";
   if(nw)nw.style.display=(freq==="nthweekday")?"block":"none";
   if(dw){
@@ -3380,7 +3418,11 @@ function openAddModal(ds){
   const wc=document.getElementById("f-work-conflict");if(wc){wc.style.display="none";wc.textContent="";}
   const wre=document.getElementById("f-wrecur-end");if(wre)wre.value="";
   document.getElementById("f-person").value="unassigned";
-  bv={freq:"once",pri:"normal",vacwho:"britt",workwho:"britt",shopcat:"groceries",arrivewho:"britt"};
+  // Reset alt assignment
+  const altCbR=document.getElementById("f-alt-enabled");if(altCbR)altCbR.checked=false;
+  const altFR=document.getElementById("f-alt-fields");if(altFR)altFR.style.display="none";
+  const altWR=document.getElementById("f-alt-assign-wrap");if(altWR)altWR.style.display="none";
+  bv={freq:"once",pri:"normal",vacwho:"britt",workwho:"britt",shopcat:"groceries",arrivewho:"britt","f-alt-mode":"occurrence"};
   activeDays=new Set(["mon","tue","wed","thu","fri"]);
   document.querySelectorAll("#b-wdays .badge").forEach(b=>b.classList.toggle("active",activeDays.has(b.dataset.v)));
   document.querySelectorAll(".badge[data-v]").forEach(b=>{const g=b.closest(".badges")?.id?.replace("b-","");if(g&&bv[g]!==undefined&&g!=="wdays")b.classList.toggle("active",b.dataset.v===bv[g]);});
@@ -3470,8 +3512,21 @@ function saveTask(){
             const dowKey=DOW_KEYS[dow];
             const isAllowed=allowedDays.includes(dowKey);
             if(isAllowed){
-              if(!first)tasks.push({...t,id:nid++,date:fd(cur2),done:false,rolledFrom:null});
-              else first=false;
+              if(!first){
+                const altEnabled2=document.getElementById("f-alt-enabled")?.checked||false;
+                const altPerson2=document.getElementById("f-alt-person")?.value||"christian";
+                const altMode2=document.querySelector("#f-alt-mode .badge.active")?.dataset.v||"occurrence";
+                const thisIdx=tasks.filter(x=>x.recurGroupId===groupId).length;
+                let newPerson2=t.person;
+                if(altEnabled2){
+                  let flip=false;
+                  if(altMode2==="occurrence")flip=(thisIdx%2===1);
+                  else if(altMode2==="week"){const dd=new Date(fd(cur2)+"T12:00:00");const wk=Math.floor((dd-new Date(dd.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}
+                  else if(altMode2==="month"){const dd=new Date(fd(cur2)+"T12:00:00");flip=(dd.getMonth()%2===1);}
+                  newPerson2=flip?altPerson2:t.person;
+                }
+                tasks.push({...t,id:nid++,date:fd(cur2),done:false,rolledFrom:null,person:newPerson2,altAssign:altEnabled2,altAssignPerson:altPerson2,altAssignMode:altMode2});
+              } else first=false;
             }
             // advance
             if(freq==="daily")cur2=new Date(cur2.getTime()+86400000);
