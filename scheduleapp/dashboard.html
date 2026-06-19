@@ -3111,11 +3111,29 @@ render=function(){_origRender();_debouncedPush();};
 const _origRenderHome=renderHome;
 renderHome=function(){_origRenderHome();_debouncedPush();};
 
-// Initial pull then poll every 60s
-pullFromServer();fetchLastUpdated();
-setInterval(pullFromServer,60000);setInterval(fetchLastUpdated,300000);
+/* ── BOOT SEQUENCE (ORDER MATTERS) ───────────────────────────
+   Previously renderHome() ran synchronously right after calling
+   the async pullFromServer(), so the catch-all sync patch above
+   would push fresh/empty local state to the server BEFORE the
+   pull had finished — wiping out real saved data on every load.
+   Fix: wait for the initial pull to fully complete before doing
+   any local render or allowing pushes to fire.
+ ──────────────────────────────────────────────────────────── */
+let _bootComplete=false;
+const _origDebouncedPush=_debouncedPush;
+_debouncedPush=function(){
+  if(!_bootComplete)return; // never push during initial boot/pull
+  _origDebouncedPush();
+};
 
-renderHome();
+(async function boot(){
+  await pullFromServer(); // wait for real saved data first
+  fetchLastUpdated();
+  _bootComplete=true;
+  renderHome(); // now safe to render/push local state
+  setInterval(pullFromServer,60000);
+  setInterval(fetchLastUpdated,300000);
+})();
 </script>
 </body>
 </html>
