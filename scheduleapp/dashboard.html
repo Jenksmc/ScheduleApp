@@ -14,10 +14,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 [data-drag-id]{user-select:none;-webkit-user-select:none;touch-action:none}
 /* TOP BAR */
 .topbar{display:flex;align-items:center;gap:12px;padding:0 16px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;position:sticky;top:0;z-index:100}
-.hamburger{background:none;border:none;cursor:pointer;color:var(--text);font-size:20px;display:flex;align-items:center;padding:4px;flex-shrink:0}
-.topbar-title{font-size:16px;font-weight:500;color:var(--text);flex:1}
+.hamburger{background:none;border:none;cursor:pointer;color:var(--text);font-size:24px;display:flex;align-items:center;padding:4px;flex-shrink:0}
+.topbar-title{font-size:19px;font-weight:500;color:var(--text);flex:1}
 .theme-switcher{display:flex;align-items:center}
-.change-theme-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:16px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap}
+.change-theme-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:19px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s;white-space:nowrap}
 .change-theme-btn:hover{background:var(--tag-bg);color:var(--text)}
 /* SIDEBAR */
 .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:199;display:none;cursor:pointer}
@@ -25,15 +25,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .sidebar{position:fixed;top:0;left:-260px;width:240px;height:100vh;background:var(--surface);border-right:1px solid var(--border);z-index:200;transition:left 0.25s ease;display:flex;flex-direction:column;overflow-y:auto}
 .sidebar.open{left:0}
 .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);flex-shrink:0}
-.sidebar-logo{font-size:16px;font-weight:600;color:var(--text)}
-.sidebar-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;display:flex;padding:2px}
-.sidebar-section{padding:10px 8px 4px;font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-.nav-tab{width:100%;padding:10px 16px;border:none;background:none;color:var(--muted);font-size:15px;font-family:"DM Sans",sans-serif;cursor:pointer;display:flex;align-items:center;gap:10px;border-radius:8px;margin:1px 8px;width:calc(100% - 16px);text-align:left;transition:background 0.15s,color 0.15s}
+.sidebar-logo{font-size:19px;font-weight:600;color:var(--text)}
+.sidebar-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:21px;display:flex;padding:2px}
+.sidebar-section{padding:10px 8px 4px;font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.nav-tab{width:100%;padding:10px 16px;border:none;background:none;color:var(--muted);font-size:18px;font-family:"DM Sans",sans-serif;cursor:pointer;display:flex;align-items:center;gap:10px;border-radius:8px;margin:1px 8px;width:calc(100% - 16px);text-align:left;transition:background 0.15s,color 0.15s}
 .nav-tab:hover{background:var(--tag-bg);color:var(--text)}
 .nav-tab.active{background:var(--britt-1);color:var(--text)}
-.nav-tab i{font-size:16px;flex-shrink:0}
+.nav-tab i{font-size:19px;flex-shrink:0}
 .page{display:none;padding:20px 18px 40px;flex:1;overflow-y:auto}.page.active{display:block}
-.section-label{font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
 .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:12px;color:var(--muted)}
 /* SHOPPING LIST */
@@ -43,32 +43,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .shop-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
 .shop-item.checked .shop-cb{background:var(--check);border-color:var(--check)}
 .shop-item.checked .shop-cb::after{content:"";width:7px;height:4px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block}
-.shop-label{font-size:15px;color:var(--text);flex:1;line-height:1.3}
-.shop-qty{font-size:16px;color:var(--muted);padding:1px 5px;border-radius:3px;background:var(--tag-bg);white-space:nowrap;flex-shrink:0}
-.shop-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px;opacity:0;display:flex;align-items:center}
+.shop-label{font-size:18px;color:var(--text);flex:1;line-height:1.3}
+.shop-qty{font-size:19px;color:var(--muted);padding:1px 5px;border-radius:3px;background:var(--tag-bg);white-space:nowrap;flex-shrink:0}
+.shop-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:19px;padding:2px;opacity:0;display:flex;align-items:center}
 .shop-item:hover .shop-del{opacity:1}
-.shop-week-header{font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 4px 4px;display:flex;align-items:center;justify-content:space-between}
-.shop-group-header{font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:10px 4px 5px;border-bottom:1px solid var(--border);margin-bottom:2px}
-.placeholder i{font-size:40px;opacity:0.4}.placeholder p{font-size:16px}
-.btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:16px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s}
+.shop-week-header{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 4px 4px;display:flex;align-items:center;justify-content:space-between}
+.shop-group-header{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:10px 4px 5px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.placeholder i{font-size:40px;opacity:0.4}.placeholder p{font-size:19px}
+.btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:19px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s}
 .btn:hover{background:var(--surface);color:var(--text)}
 .btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
 .btn-primary:hover{opacity:0.85;color:var(--bg)}
-.home-date{font-family:"DM Mono",monospace;font-size:15px;color:var(--muted);letter-spacing:0.5px}
+.home-date{font-family:"DM Mono",monospace;font-size:18px;color:var(--muted);letter-spacing:0.5px}
 .home-time{font-size:56px;font-weight:300;letter-spacing:-2px;line-height:1;margin:10px 0 24px}
 .task-row{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);border-radius:6px;cursor:pointer;user-select:none;position:relative;touch-action:manipulation}
 .task-row:last-child{border-bottom:none}.task-row.done .task-title{text-decoration:line-through;opacity:0.4}.task-row.dragging{opacity:0.3}
 .cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .task-row.done .cb{background:var(--check);border-color:var(--check)}
 .task-row.done .cb::after{content:"";width:7px;height:4px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block}
-.task-title{font-size:15px;color:var(--text);flex:1;line-height:1.3}
-.edit-pencil{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:2px 4px;flex-shrink:0;display:flex;align-items:center;opacity:0}
+.task-title{font-size:18px;color:var(--text);flex:1;line-height:1.3}
+.edit-pencil{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 4px;flex-shrink:0;display:flex;align-items:center;opacity:0}
 .task-row:hover .edit-pencil{opacity:1}
-.time-tag{font-size:16px;padding:1px 5px;border-radius:3px;background:var(--tag-bg);color:var(--muted);flex-shrink:0;font-family:"DM Mono",monospace}
-.col-header{font-size:16px;font-weight:500;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.count-badge{font-size:15px;color:var(--muted);background:var(--tag-bg);padding:2px 7px;border-radius:10px}
-.empty{font-size:16px;color:var(--muted);font-style:italic;padding:6px 0}
-.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;flex-shrink:0}
+.time-tag{font-size:19px;padding:1px 5px;border-radius:3px;background:var(--tag-bg);color:var(--muted);flex-shrink:0;font-family:"DM Mono",monospace}
+.col-header{font-size:19px;font-weight:500;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.count-badge{font-size:18px;color:var(--muted);background:var(--tag-bg);padding:2px 7px;border-radius:10px}
+.empty{font-size:19px;color:var(--muted);font-style:italic;padding:6px 0}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:500;flex-shrink:0}
 .av-b{background:var(--britt-1);color:var(--britt-t)}.av-c{background:var(--chris-1);color:var(--chris-t)}.av-u{background:var(--tag-bg);color:var(--muted)}
 .drop-zone{border-radius:8px;min-height:40px;transition:background 0.15s}
 .drop-zone.drag-over{background:var(--tag-bg);outline:2px dashed var(--muted)}
@@ -76,151 +76,151 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .wsd{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 6px;min-height:100px}
 .wsd.today-col{border-color:var(--today-color);background:var(--today-bg)}
 
-.wsd-label{font-size:16px;font-weight:500;color:var(--muted);text-align:center;margin-bottom:2px}
-.wsd-num{font-size:16px;font-weight:600;color:var(--muted);text-align:center;margin-bottom:6px}
+.wsd-label{font-size:19px;font-weight:500;color:var(--muted);text-align:center;margin-bottom:2px}
+.wsd-num{font-size:19px;font-weight:600;color:var(--muted);text-align:center;margin-bottom:6px}
 .wsd.today-col .wsd-label,.wsd.today-col .wsd-num{color:var(--today-text)}
-.wsd-ev{font-size:13px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wsd-more{font-size:13px;color:var(--muted);text-align:center;margin-top:2px}
+.wsd-ev{font-size:16px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsd-more{font-size:16px;color:var(--muted);text-align:center;margin-top:2px}
 .wsd-scroll{overflow-y:visible}
 .wsd-ev-row{display:flex;align-items:center;gap:2px;margin-bottom:2px}
-.wsd-ev-pill{font-size:13px;padding:2px 4px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab;min-width:0}
-.wsd-time{font-size:10px;opacity:0.8;margin-left:3px;font-family:"DM Mono",monospace;white-space:nowrap}
-.wsd-pencil{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:1px 2px;flex-shrink:0;opacity:0;display:flex;align-items:center}
+.wsd-ev-pill{font-size:16px;padding:2px 4px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab;min-width:0}
+.wsd-time{font-size:13px;opacity:0.8;margin-left:3px;font-family:"DM Mono",monospace;white-space:nowrap}
+.wsd-pencil{background:none;border:none;cursor:pointer;color:var(--muted);font-size:19px;padding:1px 2px;flex-shrink:0;opacity:0;display:flex;align-items:center}
 .wsd-ev-row:hover .wsd-pencil{opacity:1}
 .wsd.drag-over{outline:2px dashed var(--muted);background:var(--tag-bg)}
 .home-light-bubble{background:var(--tag-bg);border:1px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none}
 .home-light-bubble:hover{border-color:var(--muted)}.home-light-bubble.on{background:var(--lights-on-bg);border-color:var(--lights-on-border)}
-.home-light-bubble .li{font-size:20px;color:var(--muted);display:block;margin-bottom:4px}.home-light-bubble.on .li{color:var(--lights-on-color)}
-.home-light-bubble .ln{font-size:15px;font-weight:500;color:var(--muted)}.home-light-bubble.on .ln{color:var(--lights-on-color)}
-.home-light-bubble .ls{font-size:16px;color:var(--muted);margin-top:2px}.home-light-bubble.on .ls{color:var(--lights-on-border)}
+.home-light-bubble .li{font-size:24px;color:var(--muted);display:block;margin-bottom:4px}.home-light-bubble.on .li{color:var(--lights-on-color)}
+.home-light-bubble .ln{font-size:18px;font-weight:500;color:var(--muted)}.home-light-bubble.on .ln{color:var(--lights-on-color)}
+.home-light-bubble .ls{font-size:19px;color:var(--muted);margin-top:2px}.home-light-bubble.on .ls{color:var(--lights-on-border)}
 
 .color-dot{width:14px;height:14px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}.color-dot.active{border-color:var(--text)}
-.size-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:15px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
+.size-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:18px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
 .size-btn.active{background:var(--tag-bg);color:var(--text)}
 .cal-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .nav-group{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
-.cnav-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text);font-size:15px;display:flex;align-items:center;gap:4px;font-family:"DM Sans",sans-serif}
+.cnav-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--text);font-size:18px;display:flex;align-items:center;gap:4px;font-family:"DM Sans",sans-serif}
 .cnav-btn:hover{background:var(--surface)}
-.period-label{font-size:16px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.today-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--muted);font-size:16px;font-family:"DM Sans",sans-serif}
+.period-label{font-size:19px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--muted);font-size:19px;font-family:"DM Sans",sans-serif}
 .today-btn:hover{background:var(--surface)}
-.cal-select{border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:15px;color:var(--text);background:var(--surface);cursor:pointer;font-family:"DM Sans",sans-serif}
-.fab-btn{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:7px 14px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;font-family:"DM Sans",sans-serif}
+.cal-select{border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:18px;color:var(--text);background:var(--surface);cursor:pointer;font-family:"DM Sans",sans-serif}
+.fab-btn{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:7px 14px;font-size:18px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;font-family:"DM Sans",sans-serif}
 .fab-btn:hover{opacity:0.85}
 .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
-.filter-btn{border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:16px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif;transition:all 0.15s}
+.filter-btn{border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:19px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif;transition:all 0.15s}
 .filter-btn.active{background:var(--surface);color:var(--text);border-color:var(--muted)}
 .filter-btn.f-all.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .week-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
-.dh{text-align:center;font-size:15px;color:var(--muted);padding:4px 0;font-weight:500}
+.dh{text-align:center;font-size:18px;color:var(--muted);padding:4px 0;font-weight:500}
 .week-grid,.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .day-cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 5px;min-height:90px;cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;flex-direction:column}
 .day-cell:hover{border-color:var(--muted)}.day-cell.today{border-color:var(--today-color);background:var(--today-bg)}
-.holiday-banner{font-size:13px;padding:2px 5px;border-radius:3px;margin-bottom:3px;background:var(--holiday-color);color:var(--holiday-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;flex-shrink:0}
+.holiday-banner{font-size:16px;padding:2px 5px;border-radius:3px;margin-bottom:3px;background:var(--holiday-color);color:var(--holiday-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;flex-shrink:0}
 .day-cell.other-month{opacity:0.35}
 .day-cell.drag-over{background:var(--tag-bg);border-color:var(--muted);outline:2px dashed var(--muted)}
-.day-num{font-size:15px;font-weight:500;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;flex-shrink:0}
+.day-num{font-size:18px;font-weight:500;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;flex-shrink:0}
 .day-cell.today .day-num{color:var(--today-text)}
-.add-dot{font-size:15px;opacity:0}.day-cell:hover .add-dot{opacity:1}
+.add-dot{font-size:18px;opacity:0}.day-cell:hover .add-dot{opacity:1}
 .day-events{flex:1;min-height:0}
-.task-pill{font-size:16px;padding:2px 5px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:none}
+.task-pill{font-size:19px;padding:2px 5px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:none}
 .task-pill.done-pill{opacity:0.4;text-decoration:line-through}.task-pill.dragging-pill{opacity:0.3}
-.timed-pill{font-size:15px;padding:2px 7px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pill-edit{font-size:15px;margin-left:auto;flex-shrink:0;opacity:0.7;cursor:pointer}
+.timed-pill{font-size:18px;padding:2px 7px;border-radius:4px;margin-bottom:2px;cursor:grab;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill-edit{font-size:18px;margin-left:auto;flex-shrink:0;opacity:0.7;cursor:pointer}
 .daily-wrap{display:grid;grid-template-columns:1fr 220px;gap:10px;align-items:start}
 .daily-scroll-outer{overflow-y:auto;max-height:560px;border:1px solid var(--border);border-radius:10px}
 .hourly-col{border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;cursor:default}
-.span-event{position:absolute;border-radius:6px;padding:4px 8px;font-size:15px;overflow:hidden;cursor:pointer;z-index:2;display:flex;flex-direction:column;justify-content:center;left:54px;right:4px;touch-action:none;user-select:none}
+.span-event{position:absolute;border-radius:6px;padding:4px 8px;font-size:18px;overflow:hidden;cursor:pointer;z-index:2;display:flex;flex-direction:column;justify-content:center;left:54px;right:4px;touch-action:none;user-select:none}
 .span-event-title{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.span-event-time{font-size:16px;opacity:0.8;font-family:"DM Mono",monospace;margin-top:2px}
+.span-event-time{font-size:19px;opacity:0.8;font-family:"DM Mono",monospace;margin-top:2px}
 .span-resize-handle{position:absolute;bottom:0;left:0;right:0;height:8px;cursor:ns-resize;background:transparent;border-radius:0 0 6px 6px}
 .span-resize-handle::after{content:"";display:block;margin:2px auto 0;width:24px;height:3px;border-radius:2px;background:currentColor;opacity:0.3}
 .span-event:hover .span-resize-handle::after{opacity:0.6}
 .sidebar-todos{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;position:sticky;top:0;max-height:520px;overflow-y:auto}
-.sidebar-heading{font-family:"DM Mono",monospace;font-size:16px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.sidebar-heading{font-family:"DM Mono",monospace;font-size:19px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
 .todo-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;position:relative}
 .todo-row:last-child{border-bottom:none}.todo-row.done .tt{text-decoration:line-through;opacity:0.4}
 .cb2{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center}
 .todo-row.done .cb2{background:var(--check);border-color:var(--check)}
 .todo-row.done .cb2::after{content:"";width:7px;height:4px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block}
-.tt{font-size:16px;color:var(--text);line-height:1.3;flex:1}.tsub{font-size:16px;color:var(--muted)}
-.empty-msg{font-size:16px;color:var(--muted);font-style:italic;padding:8px 0}
+.tt{font-size:19px;color:var(--text);line-height:1.3;flex:1}.tsub{font-size:19px;color:var(--muted)}
+.empty-msg{font-size:19px;color:var(--muted);font-style:italic;padding:8px 0}
 .cal-person-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
 .cal-person-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;transition:all 0.15s}
 .cal-person-panel.drag-over{border-color:var(--muted);background:var(--tag-bg);outline:2px dashed var(--muted)}
 .cal-panel-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.cal-panel-name{font-size:15px;font-weight:500}
+.cal-panel-name{font-size:18px;font-weight:500}
 .cal-panel-events{max-height:200px;overflow-y:auto;min-height:30px}
-.cal-panel-event{font-size:16px;padding:5px 8px;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;gap:6px;cursor:grab}
+.cal-panel-event{font-size:19px;padding:5px 8px;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;gap:6px;cursor:grab}
 .cal-panel-event:hover{opacity:0.8}.cal-panel-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .cal-unassigned-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:12px}
 .unassigned-drop{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;border-radius:8px;padding:6px;transition:background 0.15s}
 .unassigned-drop.drag-over{background:var(--tag-bg);outline:2px dashed var(--muted)}
 .lights-page-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.lights-page-title{font-size:20px;font-weight:600;letter-spacing:-0.3px}
-.lights-on-count{font-family:"DM Mono",monospace;font-size:15px;color:var(--muted);margin-top:3px}
+.lights-page-title{font-size:24px;font-weight:600;letter-spacing:-0.3px}
+.lights-on-count{font-family:"DM Mono",monospace;font-size:18px;color:var(--muted);margin-top:3px}
 .global-bar{display:flex;gap:8px;margin-bottom:24px}
-.global-btn{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-size:15px;font-family:"DM Sans",sans-serif;cursor:pointer;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}
+.global-btn{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-size:18px;font-family:"DM Sans",sans-serif;cursor:pointer;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px}
 .global-btn:hover{border-color:var(--muted)}.global-btn.g-on{border-color:var(--lights-on-border);color:var(--lights-on-color)}
 .group-section{margin-bottom:28px}
 .group-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.group-name-label{font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
-.group-sub{font-size:13px;opacity:0.6}.group-actions{display:flex;gap:4px}
-.gact-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:6px;transition:all 0.15s}
+.group-name-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.group-sub{font-size:16px;opacity:0.6}.group-actions{display:flex;gap:4px}
+.gact-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:19px;font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:6px;transition:all 0.15s}
 .gact-btn:hover{background:var(--tag-bg);color:var(--text)}.gact-btn.danger:hover{color:#e05555}
 .lights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(130px,100%),1fr));gap:10px;width:100%}
-.empty-group{font-size:16px;color:var(--muted);font-style:italic;padding:10px 0;text-align:center;border:1px dashed var(--border);border-radius:10px}
+.empty-group{font-size:19px;color:var(--muted);font-style:italic;padding:10px 0;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .light-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;user-select:none;position:relative;min-height:130px;display:flex;flex-direction:column;overflow:hidden;width:100%}
 .light-card:hover{border-color:var(--muted)}.light-card.on{background:var(--lights-on-bg);border-color:var(--lights-on-border)}.light-card.offline{opacity:0.4;cursor:not-allowed}
 .light-icon-wrap{width:32px;height:32px;border-radius:8px;background:var(--tag-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:8px}
-.light-card.on .light-icon-wrap{background:var(--lights-on-border)}.light-icon-wrap i{font-size:16px;color:var(--muted)}.light-card.on .light-icon-wrap i{color:var(--lights-on-color)}
-.light-edit-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;opacity:0;position:absolute;top:8px;right:8px;z-index:2}
+.light-card.on .light-icon-wrap{background:var(--lights-on-border)}.light-icon-wrap i{font-size:19px;color:var(--muted)}.light-card.on .light-icon-wrap i{color:var(--lights-on-color)}
+.light-edit-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;opacity:0;position:absolute;top:8px;right:8px;z-index:2}
 .light-card:hover .light-edit-btn{opacity:1}
-.light-card-name{font-size:16px;font-weight:500;color:var(--text);margin-bottom:2px;padding-right:18px}
-.light-card-status{font-size:16px;color:var(--muted);margin-bottom:8px}.light-card.on .light-card-status{color:var(--lights-on-color)}
-.offline-badge{font-size:16px;color:#a04040;display:flex;align-items:center;gap:3px}
+.light-card-name{font-size:19px;font-weight:500;color:var(--text);margin-bottom:2px;padding-right:18px}
+.light-card-status{font-size:19px;color:var(--muted);margin-bottom:8px}.light-card.on .light-card-status{color:var(--lights-on-color)}
+.offline-badge{font-size:19px;color:#a04040;display:flex;align-items:center;gap:3px}
 .dimmer-wrap{margin-top:auto;width:100%}.dimmer-row{display:flex;align-items:center;gap:5px;width:100%}
-.dimmer-icon{font-size:15px;color:var(--muted);flex-shrink:0}
+.dimmer-icon{font-size:18px;color:var(--muted);flex-shrink:0}
 .dimmer-slider{flex:1;min-width:0;height:3px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
 .light-card.on .dimmer-slider{background:linear-gradient(to right,var(--lights-on-border),var(--lights-on-color))}
 .dimmer-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--lights-on-color);cursor:pointer}
 .recent-colors{display:flex;gap:4px;margin-top:8px}.rc-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
 .rc-dot:hover,.rc-dot.active{border-color:var(--text)}
 .rules-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.rules-title{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.rules-title{font-size:24px;font-weight:600;letter-spacing:-0.3px}
 .rule-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
-.rule-card.disabled{opacity:0.45}.rule-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rule-card.disabled{opacity:0.45}.rule-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
 .rule-icon.nfc{background:var(--chris-1);color:var(--chris-t)}.rule-icon.alexa{background:#0c2a4a;color:#7ab8f5}
 .rule-icon.time{background:#2a1a4a;color:#c57aff}.rule-icon.arrive{background:#2e1e0a;color:#e0a040}
-.rule-body{flex:1;min-width:0}.rule-name{font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px}
-.rule-desc{font-size:16px;color:var(--muted);line-height:1.4}
-.rule-trigger-badge{display:inline-flex;align-items:center;gap:4px;font-size:16px;padding:2px 7px;border-radius:20px;background:var(--tag-bg);color:var(--tag-text);margin-top:6px;font-family:"DM Mono",monospace}
+.rule-body{flex:1;min-width:0}.rule-name{font-size:18px;font-weight:500;color:var(--text);margin-bottom:3px}
+.rule-desc{font-size:19px;color:var(--muted);line-height:1.4}
+.rule-trigger-badge{display:inline-flex;align-items:center;gap:4px;font-size:19px;padding:2px 7px;border-radius:20px;background:var(--tag-bg);color:var(--tag-text);margin-top:6px;font-family:"DM Mono",monospace}
 .rule-toggle{flex-shrink:0;width:36px;height:20px;border-radius:10px;background:var(--border);position:relative;cursor:pointer;transition:background 0.2s;border:none}
 .rule-toggle.on{background:var(--today-color)}.rule-toggle::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:white;top:3px;left:3px;transition:left 0.2s}
 .rule-toggle.on::after{left:19px}
-.rule-section-label{font-family:"DM Mono",monospace;font-size:16px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:20px}
+.rule-section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:20px}
 .rule-section-label:first-of-type{margin-top:0}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:300}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem;width:360px;max-width:96vw;max-height:92vh;overflow-y:auto}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.modal-hdr h3{font-size:15px;font-weight:500;color:var(--text)}
-.close-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;display:flex;padding:2px}
+.modal-hdr h3{font-size:18px;font-weight:500;color:var(--text)}
+.close-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:21px;display:flex;padding:2px}
 .type-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
-.ttab{flex:1;min-width:48px;padding:6px 2px;border:1px solid var(--border);border-radius:8px;font-size:15px;cursor:pointer;background:none;color:var(--muted);text-align:center;font-family:"DM Sans",sans-serif}
+.ttab{flex:1;min-width:48px;padding:6px 2px;border:1px solid var(--border);border-radius:8px;font-size:18px;cursor:pointer;background:none;color:var(--muted);text-align:center;font-family:"DM Sans",sans-serif}
 .ttab.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
-.field{margin-bottom:10px}.field label{display:block;font-size:15px;color:var(--muted);margin-bottom:4px;font-weight:500}
-.field input,.field select,.field textarea{width:100%;font-size:15px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:"DM Sans",sans-serif;outline:none}
+.field{margin-bottom:10px}.field label{display:block;font-size:18px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;font-size:18px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:"DM Sans",sans-serif;outline:none}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--muted)}
 .field select option{background:var(--surface);color:var(--text)}.field textarea{height:52px;resize:vertical}
-.opt-label{font-size:15px;color:var(--muted);font-weight:400;margin-left:3px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt-label{font-size:18px;color:var(--muted);font-weight:400;margin-left:3px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
-.badge{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:15px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
+.badge{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:18px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
 .badge.active{background:var(--tag-bg);color:var(--text);border-color:var(--muted)}
 .sec{display:none}.sec.on{display:block}
 .mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
-.btn-save{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:8px 18px;font-size:15px;cursor:pointer;font-weight:600;font-family:"DM Sans",sans-serif}
-.btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:15px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
-.btn-danger{background:none;border:1px solid #7a2020;border-radius:8px;padding:8px 14px;font-size:15px;cursor:pointer;color:#e05555;font-family:"DM Sans",sans-serif;margin-right:auto}
+.btn-save{background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:8px 18px;font-size:18px;cursor:pointer;font-weight:600;font-family:"DM Sans",sans-serif}
+.btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:var(--muted);font-family:"DM Sans",sans-serif}
+.btn-danger{background:none;border:1px solid #7a2020;border-radius:8px;padding:8px 14px;font-size:18px;cursor:pointer;color:#e05555;font-family:"DM Sans",sans-serif;margin-right:auto}
 .person-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;margin-bottom:6px;transition:all 0.15s}
 .person-opt:hover{border-color:var(--muted);background:var(--tag-bg)}.person-opt.active{border-color:var(--today-color);background:var(--today-bg)}
 
@@ -233,28 +233,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .trigger-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .trigger-opt{border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;text-align:center}
 .trigger-opt:hover{border-color:var(--muted);background:var(--tag-bg)}.trigger-opt.active{border-color:var(--today-color);background:var(--today-bg)}
-.trigger-opt i{font-size:20px;display:block;margin-bottom:4px}.trigger-opt span{font-size:15px;color:var(--muted)}.trigger-opt.active span{color:var(--text)}
-.arrow-row{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--muted);font-size:16px}
+.trigger-opt i{font-size:24px;display:block;margin-bottom:4px}.trigger-opt span{font-size:18px;color:var(--muted)}.trigger-opt.active span{color:var(--text)}
+.arrow-row{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--muted);font-size:19px}
 .arrow-row::before,.arrow-row::after{content:"";flex:1;height:1px;background:var(--border)}
 /* MEMBER CARDS */
 .member-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.15s}
 .member-card:hover{border-color:var(--muted)}
-.member-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;flex-shrink:0}
+.member-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:600;flex-shrink:0}
 .member-info{flex:1;min-width:0}
-.member-name{font-size:16px;font-weight:500;color:var(--text);margin-bottom:2px}
-.member-sub{font-size:15px;color:var(--muted)}
+.member-name{font-size:19px;font-weight:500;color:var(--text);margin-bottom:2px}
+.member-sub{font-size:18px;color:var(--muted)}
 .member-color-dots{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
 .mcd{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,0.2)}
 /* THEME EDITOR */
 .theme-editor-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
 .theme-editor-row:last-child{border-bottom:none}
-.theme-editor-label{font-size:16px;color:var(--text);flex:1}
+.theme-editor-label{font-size:19px;color:var(--text);flex:1}
 .theme-editor-preview{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);flex-shrink:0;cursor:pointer;position:relative}
 .theme-editor-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 /* COLOR PICKER */
 .cpw{display:flex;flex-direction:column;gap:6px}
 .cp-tabs{display:flex;gap:2px;margin-bottom:2px}
-.cp-tab{border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:15px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
+.cp-tab{border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:18px;cursor:pointer;background:none;color:var(--muted);font-family:"DM Sans",sans-serif}
 .cp-tab.active{background:var(--tag-bg);color:var(--text);border-color:var(--muted)}
 .cp-panel{display:none}.cp-panel.active{display:block}
 .cp-wheel-wrap{display:flex;align-items:center;gap:10px}
@@ -262,16 +262,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .cp-wheel-preview{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);flex-shrink:0}
 .cp-rgb{display:flex;flex-direction:column;gap:4px}
 .cp-rgb-row{display:flex;align-items:center;gap:6px}
-.cp-rgb-lbl{font-size:15px;color:var(--muted);width:14px;font-family:"DM Mono",monospace;flex-shrink:0;text-align:right}
-.cp-rgb-val{flex:1;font-size:16px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:"DM Mono",monospace;outline:none}
+.cp-rgb-lbl{font-size:18px;color:var(--muted);width:14px;font-family:"DM Mono",monospace;flex-shrink:0;text-align:right}
+.cp-rgb-val{flex:1;font-size:19px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:"DM Mono",monospace;outline:none}
 .cp-hex-row{display:flex;align-items:center;gap:6px;margin-top:2px}
-.cp-hex-pre{font-size:15px;color:var(--muted);font-family:"DM Mono",monospace}
-.cp-hex-val{flex:1;font-size:16px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:"DM Mono",monospace;outline:none}
+.cp-hex-pre{font-size:18px;color:var(--muted);font-family:"DM Mono",monospace}
+.cp-hex-val{flex:1;font-size:19px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:"DM Mono",monospace;outline:none}
 .cp-rgb-preview-row{display:flex;align-items:center;gap:8px;margin-top:4px}
 .cp-rgb-preview{width:36px;height:36px;border-radius:8px;border:1px solid var(--border)}
 /* THEMES SETTINGS */
 .theme-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--tag-bg);border-radius:8px;margin-bottom:6px}
-.theme-item-name{font-size:15px;color:var(--text);flex:1}
+.theme-item-name{font-size:18px;color:var(--text);flex:1}
 .theme-item-actions{display:flex;gap:6px;align-items:center}
 </style>
 </head>
@@ -297,7 +297,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <button class="hamburger" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
   <div style="flex:1;min-width:0">
     <div class="topbar-title" id="topbar-title">Home</div>
-    <div id="last-updated-label" style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;display:none"></div>
+    <div id="last-updated-label" style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace;display:none"></div>
   </div>
   <div class="theme-switcher">
     <button class="change-theme-btn" onclick="goToSettings()"><i class="ti ti-palette"></i> Theme</button>
@@ -316,22 +316,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="card">
         <div class="col-header"><div class="avatar av-b">B</div>Brittni<span class="count-badge" id="b-count">0</span></div>
         <div class="drop-zone" id="drop-britt" ondragover="homeDragOver(event,'britt')" ondragleave="homeDragLeave(event)" ondrop="homeDrop(event,'britt')">
-          <div style="margin-bottom:10px"><div class="section-label" style="font-size:12px;margin-bottom:4px">Chores</div><div id="b-chores"></div></div>
-          <div style="margin-bottom:10px"><div class="section-label" style="font-size:12px;margin-bottom:4px">To-do</div><div id="b-todos"></div></div>
-          <div><div class="section-label" style="font-size:12px;margin-bottom:4px">Appointments</div><div id="b-appts"></div></div>
+          <div style="margin-bottom:10px"><div class="section-label" style="font-size:15px;margin-bottom:4px">Chores</div><div id="b-chores"></div></div>
+          <div style="margin-bottom:10px"><div class="section-label" style="font-size:15px;margin-bottom:4px">To-do</div><div id="b-todos"></div></div>
+          <div><div class="section-label" style="font-size:15px;margin-bottom:4px">Appointments</div><div id="b-appts"></div></div>
         </div>
       </div>
       <div class="card">
         <div class="col-header"><div class="avatar av-c">C</div>Christian<span class="count-badge" id="c-count">0</span></div>
         <div class="drop-zone" id="drop-christian" ondragover="homeDragOver(event,'christian')" ondragleave="homeDragLeave(event)" ondrop="homeDrop(event,'christian')">
-          <div style="margin-bottom:10px"><div class="section-label" style="font-size:12px;margin-bottom:4px">Chores</div><div id="c-chores"></div></div>
-          <div style="margin-bottom:10px"><div class="section-label" style="font-size:12px;margin-bottom:4px">To-do</div><div id="c-todos"></div></div>
-          <div><div class="section-label" style="font-size:12px;margin-bottom:4px">Appointments</div><div id="c-appts"></div></div>
+          <div style="margin-bottom:10px"><div class="section-label" style="font-size:15px;margin-bottom:4px">Chores</div><div id="c-chores"></div></div>
+          <div style="margin-bottom:10px"><div class="section-label" style="font-size:15px;margin-bottom:4px">To-do</div><div id="c-todos"></div></div>
+          <div><div class="section-label" style="font-size:15px;margin-bottom:4px">Appointments</div><div id="c-appts"></div></div>
         </div>
       </div>
     </div>
     <div class="card">
-      <div class="col-header"><div class="avatar av-u"><i class="ti ti-user-question" style="font-size:16px"></i></div>Unclaimed<span class="count-badge" id="u-count">0</span></div>
+      <div class="col-header"><div class="avatar av-u"><i class="ti ti-user-question" style="font-size:19px"></i></div>Unclaimed<span class="count-badge" id="u-count">0</span></div>
       <div class="drop-zone" id="drop-unassigned" ondragover="homeDragOver(event,'unassigned')" ondragleave="homeDragLeave(event)" ondrop="homeDrop(event,'unassigned')">
         <div id="unclaimed-list"></div>
       </div>
@@ -342,7 +342,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="section-label" style="margin-bottom:0" id="wsd-label-text">This week</div>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn" style="padding:4px 8px" onclick="wsdNav(-1)"><i class="ti ti-chevron-left"></i></button>
-        <button class="btn" style="padding:4px 8px;font-size:13px" onclick="wsdNav(0)">Now</button>
+        <button class="btn" style="padding:4px 8px;font-size:16px" onclick="wsdNav(0)">Now</button>
         <button class="btn" style="padding:4px 8px" onclick="wsdNav(1)"><i class="ti ti-chevron-right"></i></button>
       </div>
     </div>
@@ -357,7 +357,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="col-header" style="margin-bottom:10px">
         <i class="ti ti-shopping-cart"></i> Shopping
         <span class="count-badge" id="shop-count">0</span>
-        <button class="btn" style="margin-left:auto;padding:3px 8px;font-size:13px" onclick="openAddShopItem()"><i class="ti ti-plus"></i></button>
+        <button class="btn" style="margin-left:auto;padding:3px 8px;font-size:16px" onclick="openAddShopItem()"><i class="ti ti-plus"></i></button>
       </div>
       <div id="home-shop-list" style="flex:1;overflow-y:auto;max-height:220px"></div>
     </div>
@@ -380,37 +380,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <option value="day">Day</option>
       </select>
       <button class="fab-btn" onclick="openAddModal(null)"><i class="ti ti-plus"></i> Add event</button>
-      <button class="btn" onclick="goToRecurSettings()" style="white-space:nowrap;font-size:13px"><i class="ti ti-repeat"></i> Edit recurring</button>
-      <button class="btn" onclick="openClearView()" style="white-space:nowrap;font-size:13px;border-color:#7a2020;color:#e05555"><i class="ti ti-trash"></i> Clear tasks</button>
+      <button class="btn" onclick="goToRecurSettings()" style="white-space:nowrap;font-size:16px"><i class="ti ti-repeat"></i> Edit recurring</button>
+      <button class="btn" onclick="openClearView()" style="white-space:nowrap;font-size:16px;border-color:#7a2020;color:#e05555"><i class="ti ti-trash"></i> Clear tasks</button>
     </div>
   </div>
   <div class="filter-row" id="filter-row"></div>
   <div id="cal"></div>
   <div class="cal-person-panels">
     <div class="cal-person-panel" id="panel-britt-wrap" ondragover="panelDragOver(event,'britt')" ondragleave="panelDragLeave(event)" ondrop="panelDrop(event,'britt')">
-      <div class="cal-panel-header"><div class="avatar av-b">B</div><div class="cal-panel-name" style="color:var(--britt-t)">Brittni <span style="font-size:13px;color:var(--muted);font-weight:400">— drag here to assign</span></div></div>
+      <div class="cal-panel-header"><div class="avatar av-b">B</div><div class="cal-panel-name" style="color:var(--britt-t)">Brittni <span style="font-size:16px;color:var(--muted);font-weight:400">— drag here to assign</span></div></div>
       <div class="cal-panel-events" id="panel-britt"></div>
     </div>
     <div class="cal-person-panel" id="panel-christian-wrap" ondragover="panelDragOver(event,'christian')" ondragleave="panelDragLeave(event)" ondrop="panelDrop(event,'christian')">
-      <div class="cal-panel-header"><div class="avatar av-c">C</div><div class="cal-panel-name" style="color:var(--chris-t)">Christian <span style="font-size:13px;color:var(--muted);font-weight:400">— drag here to assign</span></div></div>
+      <div class="cal-panel-header"><div class="avatar av-c">C</div><div class="cal-panel-name" style="color:var(--chris-t)">Christian <span style="font-size:16px;color:var(--muted);font-weight:400">— drag here to assign</span></div></div>
       <div class="cal-panel-events" id="panel-christian"></div>
     </div>
   </div>
   <div class="cal-unassigned-panel">
-    <div class="col-header" style="margin-bottom:8px"><div class="avatar av-u"><i class="ti ti-user-question" style="font-size:16px"></i></div>Unclaimed <span style="font-size:13px;color:var(--muted);font-weight:400">— drag here to unassign</span></div>
+    <div class="col-header" style="margin-bottom:8px"><div class="avatar av-u"><i class="ti ti-user-question" style="font-size:19px"></i></div>Unclaimed <span style="font-size:16px;color:var(--muted);font-weight:400">— drag here to unassign</span></div>
     <div class="unassigned-drop" id="panel-unassigned" ondragover="panelDragOver(event,'unassigned')" ondragleave="panelDragLeave(event)" ondrop="panelDrop(event,'unassigned')"></div>
   </div>
 </div>
 
 <div class="page" id="page-shopping">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <div style="font-size:20px;font-weight:600;letter-spacing:-0.3px">Shopping List</div>
+    <div style="font-size:24px;font-weight:600;letter-spacing:-0.3px">Shopping List</div>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="clearCheckedShopItems()"><i class="ti ti-trash"></i> Clear done</button>
       <button class="btn btn-primary" onclick="openAddShopItem()"><i class="ti ti-plus"></i> Add item</button>
     </div>
   </div>
-  <div style="font-size:16px;color:var(--muted);margin-bottom:16px">Unchecked items carry over to next week automatically.</div>
+  <div style="font-size:19px;color:var(--muted);margin-bottom:16px">Unchecked items carry over to next week automatically.</div>
   <div class="card" id="shop-page-list" style="margin-bottom:12px"></div>
   <button class="btn" onclick="openAddShopItem()" style="width:100%;justify-content:center;padding:10px"><i class="ti ti-plus"></i> Add item</button>
 </div>
@@ -442,24 +442,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- SETTINGS -->
 <div class="page" id="page-settings">
-  <div style="font-size:20px;font-weight:600;letter-spacing:-0.3px;margin-bottom:18px">Settings</div>
+  <div style="font-size:24px;font-weight:600;letter-spacing:-0.3px;margin-bottom:18px">Settings</div>
 
   <!-- HOUSEHOLD MEMBERS -->
-  <div style="font-size:16px;font-weight:500;margin-bottom:10px">Household Members</div>
+  <div style="font-size:19px;font-weight:500;margin-bottom:10px">Household Members</div>
   <div id="member-cards" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
   <button class="btn" onclick="openAddMember()" style="margin-bottom:24px"><i class="ti ti-user-plus"></i> Add household member</button>
 
   <!-- THEME EDITOR -->
-  <div style="font-size:16px;font-weight:500;margin-bottom:10px">Themes</div>
+  <div style="font-size:19px;font-weight:500;margin-bottom:10px">Themes</div>
   <div class="card" style="margin-bottom:10px">
-    <div style="font-size:15px;font-weight:500;margin-bottom:10px">Quick apply</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:10px">Quick apply</div>
     <div id="theme-list"></div>
     <button class="btn" style="margin-top:10px;width:100%;justify-content:center" onclick="openSaveTheme()"><i class="ti ti-palette"></i> Save current as theme</button>
   </div>
   <div class="card" style="margin-bottom:24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-size:15px;font-weight:500">Edit current theme</div>
-      <button class="btn" id="theme-editor-toggle-btn" onclick="toggleThemeEditor()" style="font-size:13px;padding:4px 10px"><i class="ti ti-adjustments"></i> Edit</button>
+      <div style="font-size:18px;font-weight:500">Edit current theme</div>
+      <button class="btn" id="theme-editor-toggle-btn" onclick="toggleThemeEditor()" style="font-size:16px;padding:4px 10px"><i class="ti ti-adjustments"></i> Edit</button>
     </div>
     <div id="theme-editor-wrap" style="display:none;margin-top:12px">
       <div id="theme-editor-fields"></div>
@@ -467,23 +467,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 
   <!-- CALENDAR SETTINGS -->
-  <div style="font-size:16px;font-weight:500;margin-bottom:10px;margin-top:6px">Calendar Settings</div>
+  <div style="font-size:19px;font-weight:500;margin-bottom:10px;margin-top:6px">Calendar Settings</div>
   <div class="card" style="margin-bottom:10px">
-    <div style="font-size:15px;font-weight:500;margin-bottom:10px">Recurring tasks</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:10px">Recurring tasks</div>
     <div id="recur-groups-list"><div class="empty-msg">No recurring tasks yet.</div></div>
   </div>
   <div class="card" style="margin-bottom:10px">
-    <div style="font-size:15px;font-weight:500;margin-bottom:10px">Holidays & Birthdays</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:10px">Holidays & Birthdays</div>
     <div id="custom-holidays-list" style="margin-bottom:10px"><div class="empty-msg">No custom holidays yet.</div></div>
     <button class="btn" onclick="openAddHoliday()" style="width:100%;justify-content:center"><i class="ti ti-calendar-plus"></i> Add holiday or birthday</button>
   </div>
   <div class="card" style="margin-bottom:10px">
-    <div style="font-size:15px;font-weight:500;margin-bottom:6px">Chore rollover</div>
-    <div style="font-size:16px;color:var(--muted)">Unchecked chores roll to next day at midnight. Currently: <span style="color:var(--text);font-weight:500">ON</span></div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:6px">Chore rollover</div>
+    <div style="font-size:19px;color:var(--muted)">Unchecked chores roll to next day at midnight. Currently: <span style="color:var(--text);font-weight:500">ON</span></div>
   </div>
   <div class="card" style="margin-bottom:20px;border-color:#7a2020">
-    <div style="font-size:15px;font-weight:500;margin-bottom:6px;color:#e05555">Danger zone</div>
-    <div style="font-size:16px;color:var(--muted);margin-bottom:12px">Clear every task from the dashboard. This cannot be undone. Work events, holidays, and birthdays are not affected.</div>
+    <div style="font-size:18px;font-weight:500;margin-bottom:6px;color:#e05555">Danger zone</div>
+    <div style="font-size:19px;color:var(--muted);margin-bottom:12px">Clear every task from the dashboard. This cannot be undone. Work events, holidays, and birthdays are not affected.</div>
     <button class="btn" onclick="openClearAll()" style="border-color:#7a2020;color:#e05555;width:100%;justify-content:center"><i class="ti ti-trash"></i> Clear all tasks ever</button>
   </div>
 </div>
@@ -497,7 +497,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <!-- Step 1: confirm scope -->
       <div id="clear-step1">
-        <div style="font-size:15px;color:var(--text);line-height:1.6;margin-bottom:18px" id="clear-msg"></div>
+        <div style="font-size:18px;color:var(--text);line-height:1.6;margin-bottom:18px" id="clear-msg"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button class="btn-cancel" onclick="closeModal('modal-clear')">No, keep them</button>
           <button class="btn-save" style="background:#c0392b;border-color:#c0392b" onclick="clearStep2()">Yes, clear</button>
@@ -505,7 +505,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <!-- Step 2: ask about recurring -->
       <div id="clear-step2" style="display:none">
-        <div style="font-size:15px;color:var(--text);line-height:1.6;margin-bottom:18px" id="clear-recur-msg"></div>
+        <div style="font-size:18px;color:var(--text);line-height:1.6;margin-bottom:18px" id="clear-recur-msg"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button class="btn-cancel" onclick="clearExecute(false)">No, keep recurring</button>
           <button class="btn-save" style="background:#c0392b;border-color:#c0392b" onclick="clearExecute(true)">Yes, clear all</button>
@@ -594,7 +594,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="sec" id="sec-work">
         <div class="field"><label>Who</label><div class="badges" id="b-workwho"><button class="badge active" data-v="britt" onclick="pick(this,'workwho');applyWorkDefaults()">Brittni</button><button class="badge" data-v="christian" onclick="pick(this,'workwho');applyWorkDefaults()">Christian</button></div></div>
         <div class="two-col"><div class="field"><label>Start time</label><input type="time" id="f-wstart" oninput="checkWorkConflict()"/></div><div class="field"><label>End time</label><input type="time" id="f-wend" oninput="checkWorkConflict()"/></div></div>
-        <div id="f-work-conflict" style="display:none;font-size:16px;color:#e0a040;padding:6px 8px;background:rgba(224,160,64,0.1);border-radius:6px;margin-bottom:8px"></div>
+        <div id="f-work-conflict" style="display:none;font-size:19px;color:#e0a040;padding:6px 8px;background:rgba(224,160,64,0.1);border-radius:6px;margin-bottom:8px"></div>
         <div class="field"><label>Frequency</label>
           <div class="badges" id="b-wfreq">
             <button class="badge active" data-v="once" onclick="pick(this,'wfreq');showWorkRecurFields()">One-time</button>
@@ -675,9 +675,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div class="field"><label>Assign to</label>
         <div id="person-opts">
-          <div class="person-opt" data-p="britt" onclick="selectPerson('britt')"><div class="avatar av-b">B</div><div style="font-size:15px;color:var(--text)">Brittni</div></div>
-          <div class="person-opt" data-p="christian" onclick="selectPerson('christian')"><div class="avatar av-c">C</div><div style="font-size:15px;color:var(--text)">Christian</div></div>
-          <div class="person-opt" data-p="unassigned" onclick="selectPerson('unassigned')"><div class="avatar av-u"><i class="ti ti-user-question"></i></div><div style="font-size:15px;color:var(--text)">Unclaimed</div></div>
+          <div class="person-opt" data-p="britt" onclick="selectPerson('britt')"><div class="avatar av-b">B</div><div style="font-size:18px;color:var(--text)">Brittni</div></div>
+          <div class="person-opt" data-p="christian" onclick="selectPerson('christian')"><div class="avatar av-c">C</div><div style="font-size:18px;color:var(--text)">Christian</div></div>
+          <div class="person-opt" data-p="unassigned" onclick="selectPerson('unassigned')"><div class="avatar av-u"><i class="ti ti-user-question"></i></div><div style="font-size:18px;color:var(--text)">Unclaimed</div></div>
         </div>
       </div>
       <div class="mfooter"><button class="btn-danger" onclick="deleteEditTask()"><i class="ti ti-trash"></i> Delete</button><button class="btn-cancel" onclick="closeModal('modal-edit')">Cancel</button><button class="btn-save" onclick="saveEdit()">Save</button></div>
@@ -692,7 +692,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3 id="el-heading">Edit light</h3><button class="close-x" onclick="closeModal('modal-edit-light')"><i class="ti ti-x"></i></button></div>
       <div class="field"><label>Name</label><input type="text" id="el-name"/></div>
       <div class="field"><label>Room</label><select id="el-group"></select></div>
-      <div class="field"><label>Brightness</label><input type="range" class="brightness-full" id="el-brightness" min="1" max="100"/><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:13px;color:var(--muted)">Dim</span><span style="font-size:13px;color:var(--muted)" id="el-brightness-label">80%</span><span style="font-size:13px;color:var(--muted)">Bright</span></div></div>
+      <div class="field"><label>Brightness</label><input type="range" class="brightness-full" id="el-brightness" min="1" max="100"/><div style="display:flex;justify-content:space-between;margin-top:4px"><span style="font-size:16px;color:var(--muted)">Dim</span><span style="font-size:16px;color:var(--muted)" id="el-brightness-label">80%</span><span style="font-size:16px;color:var(--muted)">Bright</span></div></div>
       <div class="field"><label>Color</label><div class="color-grid" id="el-colors"></div></div>
       <div class="mfooter"><button class="btn-danger" onclick="deleteLightFn()"><i class="ti ti-trash"></i> Remove</button><button class="btn-cancel" onclick="closeModal('modal-edit-light')">Cancel</button><button class="btn-save" onclick="saveEditLight()">Save</button></div>
     </div>
@@ -777,7 +777,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <label>Repeat yearly</label>
         <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
           <input type="checkbox" id="ah-yearly" checked style="accent-color:var(--today-color);width:15px;height:15px;cursor:pointer"/>
-          <span style="font-size:16px;color:var(--muted)">Repeat every year on this date</span>
+          <span style="font-size:19px;color:var(--muted)">Repeat every year on this date</span>
         </div>
       </div>
       <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-holiday')">Cancel</button><button class="btn-save" onclick="saveAddHoliday()">Add</button></div>
@@ -790,7 +790,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-recur')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3 id="er-heading">Edit recurring task</h3><button class="close-x" onclick="closeModal('modal-edit-recur')"><i class="ti ti-x"></i></button></div>
-      <div style="font-size:16px;color:var(--muted);margin-bottom:12px" id="er-subtitle">Changes apply to all future instances.</div>
+      <div style="font-size:19px;color:var(--muted);margin-bottom:12px" id="er-subtitle">Changes apply to all future instances.</div>
       <div class="field"><label>Title</label><input type="text" id="er-title"/></div>
       <div class="field"><label>Assigned to</label>
         <select id="er-person">
@@ -813,7 +813,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="field">
         <label>End date <span class="opt-label">(extend or shorten series)</span></label>
         <input type="date" id="er-end-date"/>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px" id="er-end-hint"></div>
+        <div style="font-size:16px;color:var(--muted);margin-top:4px" id="er-end-hint"></div>
       </div>
       <div class="mfooter">
         <button class="btn-danger" onclick="deleteRecurGroup()"><i class="ti ti-trash"></i> Delete all</button>
@@ -829,7 +829,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-save-theme')">
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3>Save theme</h3><button class="close-x" onclick="closeModal('modal-save-theme')"><i class="ti ti-x"></i></button></div>
-      <div style="font-size:16px;color:var(--muted);margin-bottom:12px">Saves your current colors as a reusable theme.</div>
+      <div style="font-size:19px;color:var(--muted);margin-bottom:12px">Saves your current colors as a reusable theme.</div>
       <div class="field"><label>Theme name</label><input type="text" id="theme-name-input" placeholder="e.g. Midnight Pink"/></div>
       <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-save-theme')">Cancel</button><button class="btn-save" onclick="saveThemeFn()">Save theme</button></div>
     </div>
@@ -855,19 +855,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-hdr"><h3 id="em-heading">Edit member</h3><button class="close-x" onclick="closeModal('modal-edit-member')"><i class="ti ti-x"></i></button></div>
       <div class="field"><label>Name</label><input type="text" id="em-name"/></div>
-      <div style="font-size:16px;color:var(--muted);margin-bottom:10px;margin-top:4px">Colors per event type</div>
+      <div style="font-size:19px;color:var(--muted);margin-bottom:10px;margin-top:4px">Colors per event type</div>
       <div id="em-type-colors"></div>
       <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:16px;color:var(--muted)">Work schedules</div>
-        <button class="btn" onclick="addWorkScheduleRow()" style="padding:3px 9px;font-size:13px"><i class="ti ti-plus"></i> Add schedule</button>
+        <div style="font-size:19px;color:var(--muted)">Work schedules</div>
+        <button class="btn" onclick="addWorkScheduleRow()" style="padding:3px 9px;font-size:16px"><i class="ti ti-plus"></i> Add schedule</button>
       </div>
       <div id="em-work-schedules" style="display:flex;flex-direction:column;gap:10px"></div>
       <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
         <div>
-          <div style="font-size:15px;color:var(--text)">Match theme defaults</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:2px">Auto-update event colors when you switch themes</div>
+          <div style="font-size:18px;color:var(--text)">Match theme defaults</div>
+          <div style="font-size:16px;color:var(--muted);margin-top:2px">Auto-update event colors when you switch themes</div>
         </div>
         <input type="checkbox" id="em-use-theme-defaults" style="width:16px;height:16px;accent-color:var(--today-color);cursor:pointer"/>
       </div>
@@ -1067,7 +1067,7 @@ function renderMemberCards(){
         <div class="member-sub">${(()=>{const scheds=workSchedules[m.id]||[];return scheds.length?scheds.length+" schedule"+(scheds.length!==1?"s":"")+" · "+scheds.map(s=>s.label||fmtTime(s.timeStart)).join(", "):"No work schedule";})()}</div>
         <div class="member-color-dots">${dots}</div>
       </div>
-      <i class="ti ti-chevron-right" style="color:var(--muted);font-size:16px"></i>
+      <i class="ti ti-chevron-right" style="color:var(--muted);font-size:19px"></i>
     </div>`;
   }).join("");
 }
@@ -1108,7 +1108,7 @@ function openEditMember(id){
   const tc=document.getElementById("em-type-colors");
   tc.innerHTML=TYPE_LIST.map(type=>`
     <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:16px;color:var(--text);flex:1;text-transform:capitalize">${type}</span>
+      <span style="font-size:19px;color:var(--text);flex:1;text-transform:capitalize">${type}</span>
       <div id="em-cpw-${type}"></div>
     </div>`).join("");
   TYPE_LIST.forEach(type=>{
@@ -1176,34 +1176,34 @@ let pendingSchedules=[]; // editing copy
 function renderWorkScheduleRows(){
   const el=document.getElementById("em-work-schedules");if(!el)return;
   if(!pendingSchedules.length){
-    el.innerHTML=`<div class="empty-msg" style="font-size:16px">No schedules yet. Add one above.</div>`;
+    el.innerHTML=`<div class="empty-msg" style="font-size:19px">No schedules yet. Add one above.</div>`;
     return;
   }
   el.innerHTML=pendingSchedules.map((s,i)=>`
     <div style="background:var(--tag-bg);border:1px solid var(--border);border-radius:10px;padding:12px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <input type="text" value="${s.label||""}" placeholder="Label (e.g. Summer, Normal)"
-          style="flex:1;font-size:16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
+          style="flex:1;font-size:19px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
           oninput="pendingSchedules[${i}].label=this.value"/>
         <button class="gact-btn danger" onclick="removeScheduleRow(${i})" style="flex-shrink:0"><i class="ti ti-trash"></i></button>
       </div>
       <div class="two-col" style="margin-bottom:8px">
         <div class="field" style="margin-bottom:0"><label>Start date</label>
-          <input type="date" value="${s.startDate||""}" style="width:100%;font-size:16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
+          <input type="date" value="${s.startDate||""}" style="width:100%;font-size:19px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
             oninput="pendingSchedules[${i}].startDate=this.value"/></div>
         <div class="field" style="margin-bottom:0"><label>End date</label>
-          <input type="date" value="${s.endDate||""}" style="width:100%;font-size:16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
+          <input type="date" value="${s.endDate||""}" style="width:100%;font-size:19px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
             oninput="pendingSchedules[${i}].endDate=this.value"/></div>
       </div>
       <div class="two-col" style="margin-bottom:8px">
         <div class="field" style="margin-bottom:0"><label>Start time</label>
-          <input type="time" value="${s.timeStart||""}" style="width:100%;font-size:16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
+          <input type="time" value="${s.timeStart||""}" style="width:100%;font-size:19px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
             oninput="pendingSchedules[${i}].timeStart=this.value"/></div>
         <div class="field" style="margin-bottom:0"><label>End time</label>
-          <input type="time" value="${s.timeEnd||""}" style="width:100%;font-size:16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
+          <input type="time" value="${s.timeEnd||""}" style="width:100%;font-size:19px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'DM Sans',sans-serif;outline:none"
             oninput="pendingSchedules[${i}].timeEnd=this.value"/></div>
       </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:5px">Work days</div>
+      <div style="font-size:16px;color:var(--muted);margin-bottom:5px">Work days</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">
         ${["sun","mon","tue","wed","thu","fri","sat"].map(d=>`
           <button class="badge${(s.days||[]).includes(d)?" active":""}"
@@ -1351,7 +1351,7 @@ function renderThemeList(){
   const el=document.getElementById("theme-list");if(!el)return;
   const all=[...BUILTIN_THEMES,...customThemes];
   el.innerHTML=all.map(t=>`<div class="theme-item">
-    <div class="theme-item-name">${t.name}${t.builtin?'<span style="font-size:12px;color:var(--muted);margin-left:6px">built-in</span>':""}</div>
+    <div class="theme-item-name">${t.name}${t.builtin?'<span style="font-size:15px;color:var(--muted);margin-left:6px">built-in</span>':""}</div>
     <div class="theme-item-actions">
       <button class="btn${activeThemeId===t.id?" btn-primary":""}" onclick='applyTheme(${JSON.stringify(t).replace(/'/g,"&apos;")})'><i class="ti ti-palette"></i>${activeThemeId===t.id?" Active":" Apply"}</button>
       ${!t.builtin?`<button class="btn" onclick="deleteTheme('${t.id}')" style="border-color:#7a2020;color:#e05555"><i class="ti ti-trash"></i></button>`:""}
@@ -1483,7 +1483,7 @@ function buildCpw(containerId,initColor,callbackFnName){
       <div class="cp-wheel-wrap">
         <input type="color" value="${initColor}" id="cpw-${containerId}" oninput="cpWheel('${containerId}','${callbackFnName}',this.value)"/>
         <div class="cp-wheel-preview" id="cpp-${containerId}" style="background:${initColor}"></div>
-        <div style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace" id="cplbl-${containerId}">${initColor}</div>
+        <div style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace" id="cplbl-${containerId}">${initColor}</div>
       </div>
     </div>
     <div class="cp-panel" id="cptab-rgb-${containerId}">
@@ -1492,7 +1492,7 @@ function buildCpw(containerId,initColor,callbackFnName){
         <div class="cp-rgb-row"><span class="cp-rgb-lbl">G</span><input class="cp-rgb-val" type="number" min="0" max="255" value="${g}" id="cpg-${containerId}" oninput="cpRgb('${containerId}','${callbackFnName}')"/></div>
         <div class="cp-rgb-row"><span class="cp-rgb-lbl">B</span><input class="cp-rgb-val" type="number" min="0" max="255" value="${b}" id="cpb-${containerId}" oninput="cpRgb('${containerId}','${callbackFnName}')"/></div>
         <div class="cp-hex-row"><span class="cp-hex-pre">#</span><input class="cp-hex-val" type="text" maxlength="6" value="${initColor.slice(1)}" id="cph-${containerId}" oninput="cpHex('${containerId}','${callbackFnName}')"/></div>
-        <div class="cp-rgb-preview-row"><div class="cp-rgb-preview" id="cpp2-${containerId}" style="background:${initColor}"></div><div style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace">${initColor}</div></div>
+        <div class="cp-rgb-preview-row"><div class="cp-rgb-preview" id="cpp2-${containerId}" style="background:${initColor}"></div><div style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace">${initColor}</div></div>
       </div>
     </div>
   </div>`;
@@ -1846,7 +1846,7 @@ function tf(ds){
 function calPillHtml(t){
   const{bg,text}=taskColor(t);
   const done=t.done?"done-pill":"";
-  const tt=t.time?`<span style="font-size:11px;padding:1px 3px;border-radius:2px;background:rgba(0,0,0,0.2);flex-shrink:0;font-family:'DM Mono',monospace">${fmtTime(t.time)}</span>`:"";
+  const tt=t.time?`<span style="font-size:14px;padding:1px 3px;border-radius:2px;background:rgba(0,0,0,0.2);flex-shrink:0;font-family:'DM Mono',monospace">${fmtTime(t.time)}</span>`:"";
   return`<div class="task-pill ${done}" style="background:${bg};color:${text}" data-drag-id="${t.id}" data-drag-type="task"
     draggable="true" ondragstart="calDragStart(event,${t.id})" onclick="event.stopPropagation();toggleDone(${t.id})">
     <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${t.title}</span>${tt}
@@ -1902,17 +1902,17 @@ function renderPersonPanels(){
     const done=t.done;
     // count future instances for recurring
     const futureCount=isRecur?tasks.filter(x=>x.recurGroupId===t.recurGroupId&&!x.done&&!x.skipped&&x.date>t.date).length:0;
-    const recurTag=isRecur?`<span style="font-size:11px;padding:1px 5px;border-radius:10px;background:${hexToRgba(clr,0.3)};color:${clr};flex-shrink:0;font-weight:500">↻</span>`:"";
-    const dueTag=isRecur?`<span style="font-size:11px;color:var(--muted);flex-shrink:0">due ${t.date.slice(5)}</span>`:"";
-    const dateTag=!isRecur?`<span style="font-size:12px;color:var(--muted);margin-left:4px;flex-shrink:0">${t.date.slice(5)}</span>`:"";
+    const recurTag=isRecur?`<span style="font-size:14px;padding:1px 5px;border-radius:10px;background:${hexToRgba(clr,0.3)};color:${clr};flex-shrink:0;font-weight:500">↻</span>`:"";
+    const dueTag=isRecur?`<span style="font-size:14px;color:var(--muted);flex-shrink:0">due ${t.date.slice(5)}</span>`:"";
+    const dateTag=!isRecur?`<span style="font-size:15px;color:var(--muted);margin-left:4px;flex-shrink:0">${t.date.slice(5)}</span>`:"";
     return`<div class="cal-panel-event${done?" done-panel":""}" style="background:${hexToRgba(clr,0.15)}" draggable="true"
       ondragstart="calDragStart(event,${t.id})" onclick="event.stopPropagation();toggleDone(${t.id})">
       <div class="cal-panel-dot" style="background:${clr}"></div>
-      <span style="flex:1;font-size:16px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;${done?"text-decoration:line-through;opacity:0.5":""}">${t.title}</span>
+      <span style="flex:1;font-size:19px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;${done?"text-decoration:line-through;opacity:0.5":""}">${t.title}</span>
       ${recurTag}${dueTag}
-      ${t.time?`<span style="font-size:12px;padding:1px 4px;border-radius:3px;background:${hexToRgba(clr,0.2)};color:${clr};flex-shrink:0;font-family:'DM Mono',monospace">${fmtTime(t.time)}</span>`:""}
+      ${t.time?`<span style="font-size:15px;padding:1px 4px;border-radius:3px;background:${hexToRgba(clr,0.2)};color:${clr};flex-shrink:0;font-family:'DM Mono',monospace">${fmtTime(t.time)}</span>`:""}
       ${dateTag}
-      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0 2px;flex-shrink:0;opacity:0.6;display:flex;align-items:center" onclick="event.stopPropagation();openEditModal(${t.id})"><i class="ti ti-pencil"></i></button>
+      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:19px;padding:0 2px;flex-shrink:0;opacity:0.6;display:flex;align-items:center" onclick="event.stopPropagation();openEditModal(${t.id})"><i class="ti ti-pencil"></i></button>
     </div>`;
   }
 
@@ -1938,9 +1938,9 @@ function renderPersonPanels(){
   document.getElementById("panel-unassigned").innerHTML=allU.length?allU.map(t=>`
     <div class="task-pill" style="background:var(--tag-bg);color:var(--tag-text);cursor:grab;display:flex;align-items:center;gap:4px" draggable="true"
       ondragstart="calDragStart(event,${t.id})" onclick="openEditModal(${t.id})">
-      ${t.recurGroupId?'<span style="font-size:11px;opacity:0.7">↻</span>':""}
+      ${t.recurGroupId?'<span style="font-size:14px;opacity:0.7">↻</span>':""}
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${t.title}</span>
-    </div>`).join(""):'<div class="empty-msg" style="font-size:13px">No unclaimed tasks</div>';
+    </div>`).join(""):'<div class="empty-msg" style="font-size:16px">No unclaimed tasks</div>';
 }
 
 /* RENDER */
@@ -1962,7 +1962,7 @@ function rWeek(){
   const s=new Date(cur);s.setDate(s.getDate()-s.getDay());const e=ad(s,6);
   document.getElementById("period").textContent=MN[s.getMonth()]+" "+s.getDate()+(s.getMonth()!==e.getMonth()?" – "+MN[e.getMonth()]+" ":" – ")+e.getDate()+", "+e.getFullYear();
   let h='<div class="week-header">';
-  for(let i=0;i<7;i++){const d=ad(s,i);const it=fd(d)===fd(new Date());h+=`<div class="dh" style="${it?"color:#7ab8f5;font-weight:600":""}">${DAYS[i]} <span style="font-size:15px">${d.getDate()}</span></div>`;}
+  for(let i=0;i<7;i++){const d=ad(s,i);const it=fd(d)===fd(new Date());h+=`<div class="dh" style="${it?"color:#7ab8f5;font-weight:600":""}">${DAYS[i]} <span style="font-size:18px">${d.getDate()}</span></div>`;}
   h+='</div><div class="week-grid">';
   for(let i=0;i<7;i++){const d=ad(s,i);const ds=fd(d);h+=dayCell(ds,d.getDate(),"");}
   h+="</div>";document.getElementById("cal").innerHTML=h;
@@ -2003,7 +2003,7 @@ function rDay(){
   // Build shared hour-label column + two person columns
   function buildCol(id,timedEvs,colLabel,leftPx,rightPx){
     return`<div class="day-person-col" id="${id}" style="position:relative;height:${totalH}px;flex:1;min-width:0">
-      <div style="position:absolute;top:-24px;left:0;right:0;text-align:center;font-size:13px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif">${colLabel}</div>
+      <div style="position:absolute;top:-24px;left:0;right:0;text-align:center;font-size:16px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif">${colLabel}</div>
     </div>`;
   }
 
@@ -2014,7 +2014,7 @@ function rDay(){
           const h=START_H+i;
           const lbl=h===0?"12 AM":h<12?h+" AM":h===12?"12 PM":(h-12)+" PM";
           return`<div style="position:absolute;top:${i*HOUR_H}px;left:0;width:52px;height:${HOUR_H}px;border-top:1px solid var(--border)">
-            <span style="position:absolute;right:6px;top:3px;font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</span>
+            <span style="position:absolute;right:6px;top:3px;font-size:16px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap">${lbl}</span>
           </div>`;
         }).join("")}
       </div>
@@ -2023,12 +2023,12 @@ function rDay(){
         ${Array.from({length:END_H-START_H},(_,i)=>`<div style="position:absolute;top:${i*HOUR_H}px;left:0;right:0;height:${HOUR_H}px;border-top:1px solid var(--border);pointer-events:none;grid-column:1/-1;z-index:0"><div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);opacity:0.3"></div></div>`).join("")}
         <!-- Brittni column -->
         <div style="position:relative;border-right:1px solid var(--border);padding-top:28px">
-          <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:13px;font-weight:600;color:var(--britt-t);font-family:'DM Sans',sans-serif">${bName}</div>
+          <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:16px;font-weight:600;color:var(--britt-t);font-family:'DM Sans',sans-serif">${bName}</div>
           <div style="position:relative;height:${totalH}px" id="daily-col-britt"></div>
         </div>
         <!-- Christian column -->
         <div style="position:relative;padding-top:28px">
-          <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:13px;font-weight:600;color:var(--chris-t);font-family:'DM Sans',sans-serif">${cName}</div>
+          <div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:16px;font-weight:600;color:var(--chris-t);font-family:'DM Sans',sans-serif">${cName}</div>
           <div style="position:relative;height:${totalH}px" id="daily-col-chris"></div>
         </div>
       </div>
@@ -2060,7 +2060,7 @@ function rDay(){
       block.dataset.id=t.id;
       block.innerHTML=`<div style="display:flex;align-items:flex-start;gap:4px;min-width:0">
           <div style="flex:1;min-width:0"><div class="span-event-title">${t.title}</div>${height>30?`<div class="span-event-time">${fmtTime(t.time)} – ${fmtTime(t.endtime||addMins(t.time,30))}</div>`:""}</div>
-          <button class="span-edit-btn" onclick="event.stopPropagation();openEditModal(${t.id})" style="background:none;border:none;cursor:pointer;color:currentColor;opacity:0.6;font-size:13px;padding:0;flex-shrink:0;line-height:1"><i class="ti ti-pencil"></i></button>
+          <button class="span-edit-btn" onclick="event.stopPropagation();openEditModal(${t.id})" style="background:none;border:none;cursor:pointer;color:currentColor;opacity:0.6;font-size:16px;padding:0;flex-shrink:0;line-height:1"><i class="ti ti-pencil"></i></button>
         </div>
         <div class="span-resize-handle"></div>`;
       // DRAG — click anywhere on block body (not pencil, not handle)
@@ -2137,7 +2137,7 @@ function rDay(){
         block.innerHTML=`<div class="span-event-title">${t.title}</div><div class="span-resize-handle"></div>`;
         const opb=document.createElement("button");
         opb.innerHTML='<i class="ti ti-pencil"></i>';
-        opb.style.cssText="position:absolute;top:2px;right:2px;background:none;border:none;cursor:pointer;color:currentColor;opacity:0.5;font-size:12px;padding:0";
+        opb.style.cssText="position:absolute;top:2px;right:2px;background:none;border:none;cursor:pointer;color:currentColor;opacity:0.5;font-size:15px;padding:0";
         opb.onclick=e=>{e.stopPropagation();openEditModal(t.id);};
         block.appendChild(opb);
         col.appendChild(block);
@@ -2229,8 +2229,8 @@ function renderCustomHolidays(){
   if(!customHolidays.length){el.innerHTML='<div class="empty-msg">No custom holidays yet.</div>';return;}
   el.innerHTML=customHolidays.map((h,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:15px;flex:1">${h.isBirthday?"🎂 ":"🗓 "}${h.title}</div>
-      <div style="font-size:13px;color:var(--muted)">${h.date.slice(5)}${h.yearly?" · yearly":""}</div>
+      <div style="font-size:18px;flex:1">${h.isBirthday?"🎂 ":"🗓 "}${h.title}</div>
+      <div style="font-size:16px;color:var(--muted)">${h.date.slice(5)}${h.yearly?" · yearly":""}</div>
       <button class="gact-btn danger" onclick="deleteCustomHoliday(${i})"><i class="ti ti-trash"></i></button>
     </div>`).join("");
 }
@@ -2264,8 +2264,8 @@ function renderRecurGroups(){
     return`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:500;color:var(--text)">${g.title}</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
+          <div style="font-size:18px;font-weight:500;color:var(--text)">${g.title}</div>
+          <div style="font-size:16px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
             <span>${g.instances[0]?.recurring||"recurring"} · ${g.type}</span>
             <span>assigned: ${g.person||"unassigned"}</span>
             <span>${g.instances.length} total · ${remaining} remaining</span>
@@ -2731,7 +2731,7 @@ function renderHomeShopList(){
   const nextWeek=fd(new Date(new Date(thisWeek+"T12:00:00").getTime()+7*86400000));
   const unchecked=shoppingList.filter(i=>!i.checked).length;
   const countEl=document.getElementById("shop-count");if(countEl)countEl.textContent=unchecked;
-  if(!shoppingList.length){el.innerHTML='<div class="empty" style="padding:8px 4px;font-size:16px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
+  if(!shoppingList.length){el.innerHTML='<div class="empty" style="padding:8px 4px;font-size:19px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
   let html="";
   SHOP_GROUPS.forEach(g=>{
     const items=shoppingList.filter(i=>i.group===g.key);
@@ -2776,7 +2776,7 @@ function renderShopPage(){
     const uncheckedCount=items.filter(i=>!i.checked).length;
     html+=`<div class="shop-group-header" style="display:flex;align-items:center;justify-content:space-between">
       <span>${g.label}${uncheckedCount?` <span class="count-badge" style="margin-left:4px">${uncheckedCount}</span>`:""}</span>
-      <button onclick="openAddShopItem('${g.key}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:2px 4px;display:flex;align-items:center"><i class="ti ti-plus"></i></button>
+      <button onclick="openAddShopItem('${g.key}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 4px;display:flex;align-items:center"><i class="ti ti-plus"></i></button>
     </div>`;
     items.forEach(item=>{
       const wk=item.weekStart||thisWeek;
@@ -2836,7 +2836,7 @@ function renderLights(){
         <div class="light-icon-wrap"><i class="ti ${LICON[l.type]||"ti-bulb"}"></i></div>
         <div class="light-card-name">${l.name}</div>
         <div class="light-card-status">${l.offline?"Offline":l.on?l.brightness+"%":"Off"}</div>
-        ${l.offline?'<div class="offline-badge"><i class="ti ti-alert-circle" style="font-size:12px"></i> Unresponsive</div>':""}
+        ${l.offline?'<div class="offline-badge"><i class="ti ti-alert-circle" style="font-size:15px"></i> Unresponsive</div>':""}
         ${!l.offline?`<div class="dimmer-wrap"><div class="dimmer-row"><i class="ti ti-sun-low dimmer-icon"></i><input type="range" class="dimmer-slider" min="1" max="100" value="${l.brightness}" onclick="event.stopPropagation()" oninput="event.stopPropagation();setLightBrightness(${l.id},this.value,this)"/><i class="ti ti-sun dimmer-icon"></i></div><div class="recent-colors">${l.recentColors.slice(0,4).map(c=>`<div class="rc-dot${l.color===c?" active":""}" style="background:${c}" onclick="event.stopPropagation();quickLightColor(${l.id},'${c}',this)"></div>`).join("")}</div></div>`:""}`;
       if(!l.offline){card.addEventListener("mousedown",()=>startLightPress(l.id));card.addEventListener("mouseup",()=>endLightPress(l.id));card.addEventListener("mouseleave",cancelLightPress);card.addEventListener("touchstart",()=>startLightPress(l.id),{passive:true});card.addEventListener("touchend",()=>endLightPress(l.id));card.addEventListener("touchcancel",cancelLightPress);}
       grid.appendChild(card);
@@ -2857,7 +2857,7 @@ function saveEditLight(){const l=lights.find(x=>x.id===editLightId);if(l){l.name
 function deleteLightFn(){if(!confirm("Remove this light?"))return;lights=lights.filter(x=>x.id!==editLightId);closeModal("modal-edit-light");renderLights();renderHome();}
 function openAddLight(){document.getElementById("al-name").value="";document.getElementById("al-group").innerHTML=lightGroups.map(g=>`<option value="${g}">${g}</option>`).join("")+'<option value="__new__">+ New room…</option>';document.getElementById("modal-add-light").style.display="block";setTimeout(()=>document.getElementById("al-name").focus(),50);}
 function saveAddLight(){const name=document.getElementById("al-name").value.trim();if(!name)return;let group=document.getElementById("al-group").value;if(group==="__new__"){group=prompt("New room name:")||"Other";}if(!lightGroups.includes(group))lightGroups.push(group);lights.push({id:lnid++,name,group,on:false,brightness:80,color:"#ffffff",recentColors:["#ffffff","#ffe4a0","#ffb347","#7ab8f5"],type:document.getElementById("al-type").value,offline:false});closeModal("modal-add-light");renderLights();renderHome();}
-function openAddGroup(){document.getElementById("ag-name").value="";document.getElementById("ag-lights").innerHTML=lights.map(l=>`<div class="gci" onclick="this.querySelector('input').checked=!this.querySelector('input').checked"><input type="checkbox" value="${l.id}" onclick="event.stopPropagation()"/><span style="font-size:15px;flex:1">${l.name}</span><span style="font-size:12px;color:var(--muted)">${l.group}</span></div>`).join("");document.getElementById("modal-add-group").style.display="block";setTimeout(()=>document.getElementById("ag-name").focus(),50);}
+function openAddGroup(){document.getElementById("ag-name").value="";document.getElementById("ag-lights").innerHTML=lights.map(l=>`<div class="gci" onclick="this.querySelector('input').checked=!this.querySelector('input').checked"><input type="checkbox" value="${l.id}" onclick="event.stopPropagation()"/><span style="font-size:18px;flex:1">${l.name}</span><span style="font-size:15px;color:var(--muted)">${l.group}</span></div>`).join("");document.getElementById("modal-add-group").style.display="block";setTimeout(()=>document.getElementById("ag-name").focus(),50);}
 function saveAddGroup(){const name=document.getElementById("ag-name").value.trim();if(!name)return;if(!lightGroups.includes(name))lightGroups.push(name);[...document.querySelectorAll("#ag-lights input:checked")].forEach(i=>{const l=lights.find(x=>x.id===parseInt(i.value));if(l)l.group=name;});closeModal("modal-add-group");renderLights();}
 function renameLightGroup(g){const n=prompt(`Rename "${g}" to:`);if(!n||n===g)return;lightGroups=lightGroups.map(x=>x===g?n:x);lights.forEach(l=>{if(l.group===g)l.group=n;});renderLights();}
 function deleteLightGroup(g){if(!confirm(`Delete "${g}"? Lights move to Living Room.`))return;lights.forEach(l=>{if(l.group===g)l.group="Living Room";});lightGroups=lightGroups.filter(x=>x!==g);renderLights();}
@@ -2875,12 +2875,12 @@ function renderRules(){
     gr.forEach(r=>{
       const card=document.createElement("div");card.className=`rule-card${r.enabled?"":" disabled"}`;
       card.innerHTML=`<div class="rule-icon ${trig}"><i class="ti ${TRIGGER_ICONS[trig]}"></i></div>
-        <div class="rule-body"><div class="rule-name">${r.name}</div><div class="rule-desc">${ACTION_LABELS[r.action]||r.action}${r.actionDetail?" — "+r.actionDetail:""}</div><div class="rule-trigger-badge"><i class="ti ${TRIGGER_ICONS[trig]}" style="font-size:12px"></i> ${r.triggerDetail||TRIGGER_LABELS_R[trig]}</div></div>
+        <div class="rule-body"><div class="rule-name">${r.name}</div><div class="rule-desc">${ACTION_LABELS[r.action]||r.action}${r.actionDetail?" — "+r.actionDetail:""}</div><div class="rule-trigger-badge"><i class="ti ${TRIGGER_ICONS[trig]}" style="font-size:15px"></i> ${r.triggerDetail||TRIGGER_LABELS_R[trig]}</div></div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0"><button class="rule-toggle${r.enabled?" on":""}" onclick="toggleRule(${r.id})"></button><button class="gact-btn" onclick="deleteRule(${r.id})"><i class="ti ti-trash"></i></button></div>`;
       container.appendChild(card);
     });
   });
-  if(!rules.length)container.innerHTML='<div class="placeholder" style="min-height:200px"><i class="ti ti-bolt" style="font-size:32px;opacity:0.3"></i><p style="font-size:15px">No rules yet.</p></div>';
+  if(!rules.length)container.innerHTML='<div class="placeholder" style="min-height:200px"><i class="ti ti-bolt" style="font-size:32px;opacity:0.3"></i><p style="font-size:18px">No rules yet.</p></div>';
 }
 function toggleRule(id){const r=rules.find(x=>x.id===id);if(r)r.enabled=!r.enabled;renderRules();}
 function deleteRule(id){if(!confirm("Delete this rule?"))return;rules=rules.filter(x=>x.id!==id);renderRules();}
