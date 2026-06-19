@@ -35,7 +35,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .page{display:none;padding:20px 18px 40px;flex:1;overflow-y:auto}.page.active{display:block}
 
 .section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:12px;color:var(--muted)}
 /* SHOPPING LIST */
 .shop-item{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--border)}
@@ -238,7 +238,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .rule-section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:20px}
 .rule-section-label:first-of-type{margin-top:0}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:300}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;width:480px;max-width:94vw;max-height:92vh;overflow-y:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;width:480px;max-width:94vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .modal-hdr h3{font-size:18px;font-weight:500;color:var(--text)}
 .close-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:21px;display:flex;padding:2px}
@@ -474,6 +474,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .bvar-col.bvar-under{color:#3db87a;background:rgba(61,184,122,0.1)}
 .bvar-header-row .bvar-col{color:var(--muted);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;font-weight:500;background:none}
 
+
+
 </style>
 </head>
 <body data-theme="dark">
@@ -490,7 +492,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <button class="nav-tab" onclick="goTab('budget',this)"><i class="ti ti-coin"></i> Budget</button>
   <button class="nav-tab" onclick="goTab('lights',this)"><i class="ti ti-bulb"></i> Lights</button>
   <button class="nav-tab" onclick="goTab('rules',this)"><i class="ti ti-bolt"></i> Rules</button>
-  <button class="nav-tab" onclick="goTab('devices',this)"><i class="ti ti-cpu"></i> Devices</button>
   <button class="nav-tab" onclick="goTab('settings',this)"><i class="ti ti-settings"></i> Settings</button>
 </div>
 <!-- TOP BAR -->
@@ -566,7 +567,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 
-<!-- CALENDAR -->
 <div class="page" id="page-calendar">
   <div class="cal-toolbar">
     <div class="nav-group">
@@ -816,6 +816,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
     <!-- Variable Expenses Tracker -->
     <div id="tracker-variable">
+      <!-- Category filter bar -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="tv-filter-bar">
+        <button class="filter-btn active" data-cat="all" onclick="setTvFilter('all',this)">All</button>
+      </div>
       <div class="budget-card" style="margin-bottom:14px">
         <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-receipt"></i> Variable Expenses</div><div class="bsect-total" id="tv-total">$0</div></div>
         <div id="tv-list"></div>
@@ -837,10 +841,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-user"></i> Personal</div><div class="bsect-total" id="ts-pers-total">$0</div></div>
           <div id="ts-pers-list"></div>
         </div>
-      </div>
-      <div class="budget-card">
-        <div class="budget-section-hdr"><div class="bsect-title">Other savings</div><div class="bsect-total" id="ts-other-total">$0</div></div>
-        <div id="ts-other-list"></div>
       </div>
     </div>
 
@@ -1061,7 +1061,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="badges">
           <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
           <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
-          <button class="badge" data-v="other" onclick="pickSavBucket('other',this)">Other</button>
         </div>
       </div>
       <div class="field"><label>Date</label><input type="date" id="exp-date"/></div>
@@ -1112,7 +1111,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <select id="mat-bucket">
           <option value="household">Household</option>
           <option value="personal">Personal</option>
-          <option value="other">Other</option>
         </select>
       </div>
       <div class="mfooter">
@@ -1172,7 +1170,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <!-- ADD EVENT MODAL -->
 <div id="modal-add" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-add')">
-    <div class="modal" onclick="event.stopPropagation()" style="width:600px;max-width:96vw">
+    <div class="modal" onclick="event.stopPropagation()" style="width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column">
       <div class="modal-hdr"><h3 id="mhdr">Add event</h3><button class="close-x" onclick="closeModal('modal-add')"><i class="ti ti-x"></i></button></div>
       <div class="type-tabs">
         <button class="ttab active" data-type="chore" onclick="switchType('chore',this)">Chore</button>
@@ -1938,6 +1936,22 @@ const BUILTIN_THEMES=[
     bg:"#f9f5f0",surface:"#ffffff",border:"#e8ddd0",text:"#3d2f20",muted:"#9e8670",
     accent:"#b8601e",check:"#b8601e","tag-bg":"#f3ede5","tag-text":"#9e8670",
     "lights-on-bg":"#fff3e0","lights-on-border":"#e07020","lights-on-color":"#b8601e","today-color":"#b8601e","today-bg":"#fff0e6","today-text":"#8c3a00","wb-bg":"#f5efe8","wb-pen":"#3d2f20","holiday-color":"#b8601e","holiday-text":"#fff0e6"}},
+  // ── Apple Home Light ── clean iOS-style layered whites, blue accents
+  {id:"apple-light",name:"Apple Home (Light)",builtin:true,vars:{
+    bg:"#f2f2f7",surface:"#ffffff",border:"#e0e0e8",text:"#1c1c1e",muted:"#8e8e93",
+    accent:"#007aff",check:"#007aff","tag-bg":"#f2f2f7","tag-text":"#8e8e93",
+    "lights-on-bg":"#fff9ec","lights-on-border":"#f5a623","lights-on-color":"#d4780a",
+    "today-color":"#007aff","today-bg":"#e8f1ff","today-text":"#0055cc",
+    "wb-bg":"#ffffff","wb-pen":"#1c1c1e",
+    "holiday-color":"#007aff","holiday-text":"#ffffff"}},
+  // ── Apple Home Dark ── iOS dark mode, deep charcoal, blue accents
+  {id:"apple-dark",name:"Apple Home (Dark)",builtin:true,vars:{
+    bg:"#000000",surface:"#1c1c1e",border:"#2c2c2e",text:"#ffffff",muted:"#8e8e93",
+    accent:"#0a84ff",check:"#0a84ff","tag-bg":"#2c2c2e","tag-text":"#8e8e93",
+    "lights-on-bg":"#2a1f00","lights-on-border":"#f5a623","lights-on-color":"#ffd60a",
+    "today-color":"#0a84ff","today-bg":"#001a3d","today-text":"#409cff",
+    "wb-bg":"#1c1c1e","wb-pen":"#ffffff",
+    "holiday-color":"#0a84ff","holiday-text":"#ffffff"}},
 ];
 let customThemes=JSON.parse(localStorage.getItem("customThemes")||"[]");
 let activeThemeId=localStorage.getItem("activeThemeId")||"dark";
@@ -2033,6 +2047,14 @@ const THEME_DEFAULTS={
   warm:{
     britt:{chore:"#b8601e",appointment:"#d4783a",work:"#888070",todo:"#9050a0",shopping:"#c86828",vacation:"#e07840"},
     christian:{chore:"#3a7a30",appointment:"#5a9a50",work:"#888070",todo:"#70b060",shopping:"#2a6a20",vacation:"#80b870"},
+  },
+  "apple-light":{
+    britt:{chore:"#ff2d55",appointment:"#ff375f",work:"#8e8e93",todo:"#bf5af2",shopping:"#ff2d55",vacation:"#ff6b81"},
+    christian:{chore:"#34c759",appointment:"#30d158",work:"#8e8e93",todo:"#007aff",shopping:"#34c759",vacation:"#5ac8fa"},
+  },
+  "apple-dark":{
+    britt:{chore:"#ff375f",appointment:"#ff6b81",work:"#636366",todo:"#bf5af2",shopping:"#ff375f",vacation:"#ff6b81"},
+    christian:{chore:"#30d158",appointment:"#34c759",work:"#636366",todo:"#0a84ff",shopping:"#30d158",vacation:"#5ac8fa"},
   },
 };
 
@@ -2301,7 +2323,6 @@ function goTab(id,btn){
   document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
   document.getElementById("page-"+id).classList.add("active");
   if(btn)btn.classList.add("active");
-  // update topbar title
   const TITLES={home:"Home",calendar:"Calendar",shopping:"Shopping",budget:"Budget",lights:"Lights",rules:"Rules & Automations",devices:"Devices",settings:"Settings"};
   const ttEl=document.getElementById("topbar-title");if(ttEl)ttEl.textContent=TITLES[id]||id;
   closeSidebar();
@@ -2322,10 +2343,8 @@ function closeSidebar(){
   document.getElementById("sidebar-overlay").classList.remove("open");
 }
 function goToSettings(){
-  // navigate to settings tab
   const settingsBtn=document.querySelector('.nav-tab[onclick*="settings"]');
   goTab("settings",settingsBtn);
-  // scroll to theme section after render
   setTimeout(()=>{
     const themeSection=document.querySelector("#theme-list");
     if(themeSection)themeSection.closest(".card")?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -3615,6 +3634,22 @@ function saveBudgetData(){
 function loadBudgetFromStore(){
   try{budgetData=JSON.parse(localStorage.getItem("budgetData"));budgetNid=parseInt(localStorage.getItem("budgetNid")||"200");}catch(e){budgetData=null;}
   if(!budgetData||!budgetData.recurring)initBudgetDataV3();
+  // Seed demo expenses if none exist yet (first time seeing real budget UI)
+  if(budgetData&&(!budgetData.expenses||budgetData.expenses.length===0)){
+    budgetData.expenses=[
+      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"Groceries",amount:62.40,note:"Trader Joes"},
+      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"DoorDash",amount:34.80,note:"Friday dinner"},
+      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Groceries",amount:28.15,note:"QFC run"},
+      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Pets",amount:45.00,note:"Cat food and litter"},
+      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Household Items",amount:31.20,note:"Target"},
+      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Amazon",amount:67.50,note:"Amazon order"},
+      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"Eating Out",amount:22.80,note:"Lunch"},
+      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"DoorDash",amount:41.25,note:"Monday dinner"},
+      {id:budgetNid++,date:"2026-06-23",type:"variable",category:"Groceries",amount:54.90,note:"Costco run"},
+      {id:budgetNid++,date:"2026-06-19",type:"savings",category:"Savings",savingsBucket:"household",amount:557,note:"Auto-transfer"},
+    ];
+    saveBudgetData();
+  }
 }
 
 function initBudgetDataV3(){
@@ -3636,11 +3671,15 @@ function initBudgetDataV3(){
         {id:budgetNid++,name:"Car Loan",amount:500,frequency:"monthly",dueDay:13,isDebt:true},
       ],
       subscriptions:[
-        {id:budgetNid++,name:"Prime Video",amount:20.93},{id:budgetNid++,name:"YouTube Premium",amount:24.93},
-        {id:budgetNid++,name:"Microsoft",amount:21.67},{id:budgetNid++,name:"Petcube",amount:18.27},
-        {id:budgetNid++,name:"ChatGPT",amount:22.04},{id:budgetNid++,name:"Minecraft",amount:7.99},
-        {id:budgetNid++,name:"Hulu",amount:20.93},{id:budgetNid++,name:"Netflix",amount:0},
-        {id:budgetNid++,name:"Amazon Prime",amount:0},
+        {id:budgetNid++,name:"Prime Video",amount:20.93,dueDay:8},
+        {id:budgetNid++,name:"YouTube Premium",amount:24.93,dueDay:12},
+        {id:budgetNid++,name:"Microsoft",amount:21.67,dueDay:19},
+        {id:budgetNid++,name:"Petcube",amount:18.27,dueDay:19},
+        {id:budgetNid++,name:"ChatGPT",amount:22.04,dueDay:21},
+        {id:budgetNid++,name:"Minecraft",amount:7.99,dueDay:19},
+        {id:budgetNid++,name:"Hulu",amount:20.93,dueDay:8},
+        {id:budgetNid++,name:"Netflix",amount:0,dueDay:1},
+        {id:budgetNid++,name:"Amazon Prime",amount:0,dueDay:1},
       ],
       variable:[
         {id:budgetNid++,name:"Groceries",weeklyBudget:200},{id:budgetNid++,name:"DoorDash",weeklyBudget:100},
@@ -3843,7 +3882,38 @@ function openBudgetStartBalance(){
 }
 
 /* ── WEEKLY ──────────────────────────────────────────────────── */
-function proRateToWeek(rec){if(!rec.amount)return 0;if(rec.frequency==="weekly")return rec.amount;if(rec.frequency==="biweekly")return rec.amount/2;return rec.amount/4.3;}
+function proRateToWeek(rec){
+  // Legacy: used only for auto-calc variable budget estimate
+  if(!rec.amount)return 0;
+  if(rec.frequency==="weekly")return rec.amount;
+  if(rec.frequency==="biweekly")return rec.amount/2;
+  return rec.amount/4.3;
+}
+
+// Returns the full amount if this bill/sub is due in the given week, 0 otherwise
+function billDueInWeek(rec, weekStart){
+  if(!rec.amount||rec.amount===0)return 0;
+  const dueDay=rec.dueDay||1;
+  const ws=new Date(weekStart+"T12:00:00");
+  const we=new Date(ws.getTime()+6*86400000);
+  // Check if dueDay falls within this week (same month as either ws or we)
+  // Try both months (week can span two months)
+  const months=new Set([ws.getMonth()+"-"+ws.getFullYear(), we.getMonth()+"-"+we.getFullYear()]);
+  for(const m of months){
+    const [mo,yr]=m.split("-").map(Number);
+    const dueDate=new Date(yr,mo,dueDay);
+    if(dueDate>=ws&&dueDate<=we)return rec.amount;
+  }
+  return 0;
+}
+
+// Returns full amount if due in the given month
+function billDueInMonth(rec, yearMonth){
+  if(!rec.amount||rec.amount===0)return 0;
+  if(rec.frequency==="weekly")return rec.amount*4.3;
+  if(rec.frequency==="biweekly")return rec.amount*2.17;
+  return rec.amount; // monthly — always show full
+}
 
 function renderWeeklyView(){
   const ws=budgetCurrentWeekStart;
@@ -3860,12 +3930,11 @@ function renderWeeklyView(){
   const weekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=weekEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
   const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
 
-  const budgBills=rec.bills.reduce((s,b)=>s+proRateToWeek(b),0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+proRateToWeek(b),0);
+  const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
+  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
   const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:"biweekly"}),0);
 
-  // AUTO-CALCULATE total variable budget: income - bills - subs - savings
-  // Use per-week override if set, otherwise auto-calculate
+  // AUTO-CALCULATE total variable budget: income - bills due this week - subs due this week - savings
   const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
   const varTotalBudget=period.varBudgetTotal??autoVarTotal;
@@ -3889,7 +3958,7 @@ function renderWeeklyView(){
   const srcLbl=document.getElementById("w-var-budget-source");
   if(srcLbl){
     const isOverride=period.varBudgetTotal!==undefined;
-    srcLbl.textContent=isOverride?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`:`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills − ${$f(budgSubs)} subs − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
+    srcLbl.textContent=isOverride?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`:`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills due this week − ${$f(budgSubs)} subs due this week − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
   }
 
   const totalBills=rec.bills.reduce((s,b)=>s+actual(b.id),0);
@@ -3935,10 +4004,10 @@ function renderMonthlyView(){
 
   const monthIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=monthStart&&w.payDate<=monthEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
   const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40)*4.3,0);
-  const budgBills=rec.bills.reduce((s,b)=>s+b.amount,0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+b.amount,0);
+  const budgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,ym),0);
+  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,ym),0);
   const budgVar=rec.variable.reduce((s,v)=>s+(v.weeklyBudget||0)*4.3,0);
-  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+at.amount*2.17,0); // ~2 paychecks/mo
+  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+at.amount*2.17,0);
 
   const totalBills=rec.bills.reduce((s,b)=>s+actual(b.id),0);
   const totalSubs=rec.subscriptions.reduce((s,b)=>s+actual(b.id),0);
@@ -4053,12 +4122,30 @@ function renderTrackerView(){
   else if(trackerView==="income")renderTrackerIncome();
 }
 
+let _tvFilter="all";
+
+function setTvFilter(cat,btn){
+  _tvFilter=cat;
+  document.querySelectorAll("#tv-filter-bar .filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.cat===cat));
+  renderTrackerVariable();
+}
+
+function buildTvFilterBar(){
+  const bar=document.getElementById("tv-filter-bar");if(!bar)return;
+  const cats=[...new Set((budgetData.expenses||[]).filter(e=>e.type==="variable").map(e=>e.category))].sort();
+  bar.innerHTML=`<button class="filter-btn${_tvFilter==="all"?" active":""}" data-cat="all" onclick="setTvFilter('all',this)">All</button>`
+    +cats.map(c=>`<button class="filter-btn${_tvFilter===c?" active":""}" data-cat="${c}" onclick="setTvFilter('${c}',this)" style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${catColor(c)};display:inline-block"></span>${c}</button>`).join("");
+}
+
 function renderTrackerVariable(){
-  const exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable")].sort((a,b)=>b.date.localeCompare(a.date));
+  buildTvFilterBar();
+  let exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable")];
+  if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
+  exps.sort((a,b)=>b.date.localeCompare(a.date));
   const total=exps.reduce((s,e)=>s+e.amount,0);
   t("tv-total",$f(total));
   const el=document.getElementById("tv-list");if(!el)return;
-  if(!exps.length){el.innerHTML='<div class="empty-msg">No variable expenses logged yet</div>';return;}
+  if(!exps.length){el.innerHTML='<div class="empty-msg">No expenses found</div>';return;}
   el.innerHTML=exps.map(e=>`<div class="exp-tracker-row">
     <div class="exp-cat-dot" style="background:${catColor(e.category)}"></div>
     <div class="exp-info"><div class="exp-desc">${e.note||e.category}</div><div class="exp-meta">${e.category} · ${e.date}</div></div>
@@ -4077,12 +4164,10 @@ function renderTrackerSavings(){
   t("ts-expected",$f(expected));t("ts-actual",$f(actual));
 
   const hhExps=savExps.filter(e=>e.savingsBucket==="household");
-  const persExps=savExps.filter(e=>e.savingsBucket==="personal");
-  const otherExps=savExps.filter(e=>e.savingsBucket==="other"||!e.savingsBucket);
+  const persExps=savExps.filter(e=>e.savingsBucket==="personal"||(!e.savingsBucket&&e.savingsBucket!=="household"));
 
   renderSavExpList("ts-hh-list","ts-hh-total",hhExps);
   renderSavExpList("ts-pers-list","ts-pers-total",persExps);
-  renderSavExpList("ts-other-list","ts-other-total",otherExps);
 }
 
 function renderSavExpList(listId,totalId,exps){
@@ -4457,8 +4542,8 @@ function openAdjustVarBudget(){
   const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
   const rec=budgetData.recurring;
   const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
-  const budgBills=rec.bills.reduce((s,b)=>s+proRateToWeek(b),0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+proRateToWeek(b),0);
+  const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
+  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
   const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:"biweekly"}),0);
   _avbAutoTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
   const currentTotal=period.varBudgetTotal??_avbAutoTotal;
@@ -4523,6 +4608,8 @@ function saveAdjustVarBudget(){
   closeModal("modal-adjust-var");
   renderWeeklyView();
 }
+
+
 
 /* ── CATCH-ALL SYNC ─────────────────────────────────────────
    Drag-and-drop (mouse AND touch) mutates the tasks array
