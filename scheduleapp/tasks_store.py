@@ -13,6 +13,8 @@ DEFAULT_DATA = {
     "customHolidays": [],
     "workSchedules": {},
     "members": None,
+    "budgetData": None,
+    "budgetNid": 1,
     "nid": 100,
     "shopNid": 1,
     "wsNid": 1,
