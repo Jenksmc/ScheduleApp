@@ -1565,6 +1565,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 <script>
+/* ── MODAL OPEN / CLOSE ──────────────────────────────────────── */
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(el)el.style.display="none";
+}
+
+function bgClose(e,id){
+  if(e.target===e.currentTarget)closeModal(id);
+}
+
+
 /* ── iOS TOUCH DRAG SYSTEM ─────────────────────────────────────
    iOS Safari does not support HTML5 drag-and-drop.
    This implements long-press-to-drag with touch events directly.
