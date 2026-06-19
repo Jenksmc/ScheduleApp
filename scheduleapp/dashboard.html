@@ -33,6 +33,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .nav-tab.active{background:var(--britt-1);color:var(--text)}
 .nav-tab i{font-size:19px;flex-shrink:0}
 .page{display:none;padding:20px 18px 40px;flex:1;overflow-y:auto}.page.active{display:block}
+#page-calendar.active{display:flex;flex-direction:column}
 .section-label{font-family:"DM Mono",monospace;font-size:19px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
 .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:12px;color:var(--muted)}
@@ -113,8 +114,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .filter-btn.f-all.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 .week-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .dh{text-align:center;font-size:18px;color:var(--muted);padding:4px 0;font-weight:500}
-.week-grid,.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.day-cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 5px;min-height:90px;cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;flex-direction:column}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:2px;flex:1;min-height:0}
+.day-cell{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 5px;min-height:0;cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;flex-direction:column;overflow:hidden}
 .day-cell:hover{border-color:var(--muted)}.day-cell.today{border-color:var(--today-color);background:var(--today-bg)}
 .holiday-banner{font-size:16px;padding:2px 5px;border-radius:3px;margin-bottom:3px;background:var(--holiday-color);color:var(--holiday-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;flex-shrink:0}
 .day-cell.other-month{opacity:0.35}
@@ -385,7 +387,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
   <div class="filter-row" id="filter-row"></div>
-  <div id="cal"></div>
+  <div id="cal" style="flex:1;min-height:0;display:flex;flex-direction:column"></div>
   <div class="cal-person-panels">
     <div class="cal-person-panel" id="panel-britt-wrap" ondragover="panelDragOver(event,'britt')" ondragleave="panelDragLeave(event)" ondrop="panelDrop(event,'britt')">
       <div class="cal-panel-header"><div class="avatar av-b">B</div><div class="cal-panel-name" style="color:var(--britt-t)">Brittni <span style="font-size:16px;color:var(--muted);font-weight:400">— drag here to assign</span></div></div>
@@ -1905,7 +1907,7 @@ function renderPersonPanels(){
     const recurTag=isRecur?`<span style="font-size:14px;padding:1px 5px;border-radius:10px;background:${hexToRgba(clr,0.3)};color:${clr};flex-shrink:0;font-weight:500">↻</span>`:"";
     const dueTag=isRecur?`<span style="font-size:14px;color:var(--muted);flex-shrink:0">due ${t.date.slice(5)}</span>`:"";
     const dateTag=!isRecur?`<span style="font-size:15px;color:var(--muted);margin-left:4px;flex-shrink:0">${t.date.slice(5)}</span>`:"";
-    return`<div class="cal-panel-event${done?" done-panel":""}" style="background:${hexToRgba(clr,0.15)}" draggable="true"
+    return`<div class="cal-panel-event${done?" done-panel":""}" style="background:${hexToRgba(clr,0.15)}" draggable="true" data-drag-id="${t.id}" data-drag-type="task"
       ondragstart="calDragStart(event,${t.id})" onclick="event.stopPropagation();toggleDone(${t.id})">
       <div class="cal-panel-dot" style="background:${clr}"></div>
       <span style="flex:1;font-size:19px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;${done?"text-decoration:line-through;opacity:0.5":""}">${t.title}</span>
@@ -1936,7 +1938,7 @@ function renderPersonPanels(){
     .filter(t=>{if(uRecurSeen.has(t.recurGroupId))return false;uRecurSeen.add(t.recurGroupId);return true;});
   const allU=[...uOneOff,...uRecurNext];
   document.getElementById("panel-unassigned").innerHTML=allU.length?allU.map(t=>`
-    <div class="task-pill" style="background:var(--tag-bg);color:var(--tag-text);cursor:grab;display:flex;align-items:center;gap:4px" draggable="true"
+    <div class="task-pill" style="background:var(--tag-bg);color:var(--tag-text);cursor:grab;display:flex;align-items:center;gap:4px" draggable="true" data-drag-id="${t.id}" data-drag-type="task"
       ondragstart="calDragStart(event,${t.id})" onclick="openEditModal(${t.id})">
       ${t.recurGroupId?'<span style="font-size:14px;opacity:0.7">↻</span>':""}
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${t.title}</span>
@@ -2091,10 +2093,13 @@ function rDay(){
       block.addEventListener("mousedown",e=>{
         if(e.target.classList.contains("span-resize-handle"))return;
         if(e.target.closest(".span-edit-btn"))return;
-        e.preventDefault();didDrag=false;blockPointerDown(e.clientY);
-        dragStartY=e.clientY;origTop=parseFloat(block.style.top);origStartM=tmMins(t.time);
-        // handled by blockPointerDown
+        e.preventDefault();blockPointerDown(e.clientY);
       });
+      block.addEventListener("touchstart",e=>{
+        if(e.target.classList.contains("span-resize-handle"))return;
+        if(e.target.closest(".span-edit-btn"))return;
+        blockPointerDown(e.touches[0].clientY);
+      },{passive:true});
       // RESIZE
       const handle=block.querySelector(".span-resize-handle");
       function startResize(startY){
