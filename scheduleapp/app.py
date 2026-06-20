@@ -15,9 +15,7 @@ CORS(app)
 # ever land in the saved data again, regardless of what any client
 # (old or new, ipad/phone/laptop) tries to push.
 BLOCKED_DEMO_TITLES = {
-    "Clean litter boxes", "Vacuum", "Take out trash", "Dishes",
-    "Dentist appt", "Cat food", "Study BGP flashcards",
-    "Oil change", "Mop floors", "Wipe counters",
+    # Empty — real data is now on the Pi, no demo junk to block
 }
 
 def strip_demo_junk(data):
