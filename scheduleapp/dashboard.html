@@ -2622,8 +2622,12 @@ function renderWeekStrip(){
       const{bg,text}=taskColor(t);
       const tt=t.time?`<span class="wsd-time">${fmtTime(t.time)}</span>`:"";
       const done=t.done?"text-decoration:line-through;opacity:0.5":"";
+      const cbStyle=t.done?`background:${text};border-color:${text}`:`border:1.5px solid ${text};background:transparent`;
       h+=`<div class="wsd-ev-row" draggable="true" data-drag-id="${t.id}" data-drag-type="wsd" data-id="${t.id}" style="${done}">
-        <div class="wsd-ev-pill" style="background:${bg};color:${text};flex:1">${t.title}${tt}</div>
+        <div onclick="event.stopPropagation();toggleDone(${t.id});renderHome()" style="width:13px;height:13px;border-radius:3px;${cbStyle};flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-right:3px">
+          ${t.done?`<svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`:""}
+        </div>
+        <div class="wsd-ev-pill" style="background:${bg};color:${text};flex:1;cursor:pointer" onclick="event.stopPropagation();toggleDone(${t.id});renderHome()">${t.title}${tt}</div>
         <button class="wsd-pencil" onclick="event.stopPropagation();openEditModal(${t.id})"><i class="ti ti-pencil"></i></button>
       </div>`;
     });
