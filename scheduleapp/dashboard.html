@@ -483,6 +483,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
    Applied when ?profile= is in URL
    Smaller fonts, single-column, touch-optimized
 ═══════════════════════════════════════════════════════════ */
+.mobile-mode,
+.mobile-mode body,
+.mobile-mode .page,
+.mobile-mode #page-personal-home,
+.mobile-mode #page-calendar,
+.mobile-mode #page-budget,
+.mobile-mode #page-shopping {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+}
+.mobile-mode * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.mobile-mode canvas { max-width: 100% !important; }
+.mobile-mode .week-strip { overflow: hidden; }
+.mobile-mode .wsd { min-width: 0; overflow: hidden; }
+.mobile-mode .cal-toolbar { flex-wrap: wrap; }
+.mobile-mode .week-grid,
+.mobile-mode .month-grid,
+.mobile-mode .week-header { overflow: hidden; }
 .mobile-mode body { font-size: 14px; }
 .mobile-mode .topbar { height: 44px; padding: 0 12px; }
 .mobile-mode .topbar-title { font-size: 16px; }
@@ -3015,6 +3036,9 @@ function detectUrlProfile(){
   if(p && ["britt","christian"].includes(p)){
     urlProfile = p;
     document.body.classList.add("mobile-mode");
+    document.documentElement.style.overflowX = "hidden";
+    document.body.style.overflowX = "hidden";
+    document.body.style.maxWidth = "100vw";
     return true;
   }
   return false;
