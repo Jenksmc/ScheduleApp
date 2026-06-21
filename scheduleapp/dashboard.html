@@ -2490,14 +2490,63 @@ function addMins(ts,mins){if(!ts)return"";const[h,m]=ts.split(":").map(Number);c
 function rollover(){
   const tod=fd(new Date());
   const yest=fd(new Date(new Date().getTime()-86400000));
+
   tasks.forEach(t=>{
-    // Only roll weekly/monthly recurring chores (not daily — daily just stays undone)
+    if(t.type!=="chore"||t.date!==yest||t.done||t.skipped)return;
+
+    // Weekly/monthly: push forward as before
     const isWeeklyOrMore=(t.recurring==="weekly"||t.recurring==="monthly");
-    if(t.type==="chore"&&t.date===yest&&!t.done&&isWeeklyOrMore&&!tasks.some(x=>x.rolledFrom===t.id&&x.date===tod)){
-      tasks.push({...t,id:nid++,date:tod,rolledFrom:t.id,notes:(t.notes||"")+"(rolled over)"});
+    if(isWeeklyOrMore&&!tasks.some(x=>x.rolledFrom===t.id&&x.date===tod)){
+      tasks.push({...t,id:nid++,date:tod,rolledFrom:t.id,notes:(t.notes||"")});
+      return;
+    }
+
+    // Daily missed chore handling
+    if(t.recurring==="daily"){
+      // Find tomorrow's instance of same recurring group
+      const todayInstance=t.recurGroupId
+        ?tasks.find(x=>x.recurGroupId===t.recurGroupId&&x.date===tod&&!x.skipped)
+        :null;
+
+      if(todayInstance){
+        // Already has a today instance — check if we need to override assignment
+        if(t.altAssign&&todayInstance.person!==t.person){
+          // Yesterday's person missed it AND today was going to be the other person
+          // Override: assign today's to the person who missed yesterday
+          if(!todayInstance.missedOverride){
+            todayInstance._originalPerson=todayInstance.person;
+            todayInstance.person=t.person; // missed person does it today
+            todayInstance.missedOverride=true;
+            todayInstance.missedFromId=t.id;
+          }
+        }
+        // If same person already, or non-alternating — nothing to do
+      } else if(!t.recurGroupId){
+        // Non-recurring daily chore — push to today if not already there
+        if(!tasks.some(x=>x.rolledFrom===t.id&&x.date===tod)){
+          tasks.push({...t,id:nid++,date:tod,rolledFrom:t.id});
+        }
+      }
     }
   });
 }
+
+// When a chore is checked off, check if it was a missed override source
+// and if so, revert tomorrow's instance back to original person
+function onChoreChecked(taskId){
+  const t=tasks.find(x=>x.id===taskId);
+  if(!t||!t.recurGroupId)return;
+
+  // Find any task that was overridden because of this missed task
+  const overridden=tasks.find(x=>x.missedOverride&&x.missedFromId===taskId);
+  if(overridden&&overridden._originalPerson){
+    overridden.person=overridden._originalPerson;
+    overridden.missedOverride=false;
+    overridden.missedFromId=null;
+    delete overridden._originalPerson;
+  }
+}
+
 rollover();
 
 /* TABS */
@@ -2577,7 +2626,22 @@ function taskRow(t){
 function toggleDone(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   t.done=!t.done;
-  // re-render whatever is visible
+  // If a chore just got checked off, revert any missed-override on tomorrow's instance
+  if(t.done&&t.type==="chore")onChoreChecked(id);
+  // If unchecked, re-apply missed logic for yesterday's tasks
+  if(!t.done&&t.type==="chore"&&t.recurGroupId){
+    const tod=fd(new Date());
+    const yest=fd(new Date(new Date().getTime()-86400000));
+    if(t.date===yest&&t.altAssign){
+      const todayInst=tasks.find(x=>x.recurGroupId===t.recurGroupId&&x.date===tod&&!x.skipped);
+      if(todayInst&&!todayInst.missedOverride&&todayInst.person!==t.person){
+        todayInst._originalPerson=todayInst.person;
+        todayInst.person=t.person;
+        todayInst.missedOverride=true;
+        todayInst.missedFromId=t.id;
+      }
+    }
+  }
   renderHome();
   if(document.getElementById("page-calendar").classList.contains("active"))render();
 }
