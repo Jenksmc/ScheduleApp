@@ -478,6 +478,96 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
 
 
+/* ═══════════════════════════════════════════════════════════
+   MOBILE PROFILE MODE
+   Applied when ?profile= is in URL
+   Smaller fonts, single-column, touch-optimized
+═══════════════════════════════════════════════════════════ */
+.mobile-mode body { font-size: 14px; }
+.mobile-mode .topbar { height: 44px; padding: 0 12px; }
+.mobile-mode .topbar-title { font-size: 16px; }
+.mobile-mode .page { padding: 12px 12px 60px; }
+.mobile-mode .card { padding: 10px; border-radius: 10px; }
+.mobile-mode .col-header { font-size: 14px; margin-bottom: 8px; }
+.mobile-mode .task-title { font-size: 14px; }
+.mobile-mode .task-row { padding: 6px 4px; }
+.mobile-mode .section-label { font-size: 10px; }
+.mobile-mode .btn { font-size: 13px; padding: 5px 10px; }
+.mobile-mode .week-strip { gap: 3px; }
+.mobile-mode .wsd { padding: 5px 3px; min-height: 70px; }
+.mobile-mode .wsd-label { font-size: 10px; }
+.mobile-mode .wsd-num { font-size: 12px; }
+.mobile-mode .wsd-ev-pill { font-size: 10px; padding: 2px; }
+.mobile-mode .filter-btn { font-size: 12px; padding: 3px 9px; }
+.mobile-mode .time-tag { font-size: 11px; }
+.mobile-mode .count-badge { font-size: 12px; padding: 1px 5px; }
+.mobile-mode .budget-tab-row { gap: 4px; padding-bottom: 8px; margin-bottom: 10px; }
+.mobile-mode .btab { font-size: 13px; padding: 6px 10px; }
+.mobile-mode .bcompact-card { padding: 10px; }
+.mobile-mode .bcompact-title { font-size: 10px; }
+.mobile-mode .budget-period-nav { gap: 6px; margin-bottom: 10px; }
+.mobile-mode .cnav-btn { padding: 5px 8px; font-size: 14px; }
+.mobile-mode .bvar-col { font-size: 11px; }
+.mobile-mode .bvar-name { font-size: 12px; }
+.mobile-mode .bline-name { font-size: 12px; }
+.mobile-mode .bline-actual { font-size: 12px; }
+
+/* Mobile budget dropdown sections */
+.mobile-budget-section { margin-bottom: 10px; }
+.mobile-dropdown-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  transition: all 0.15s;
+  margin-bottom: 6px;
+}
+.mobile-dropdown-btn.open { border-color: var(--today-color); border-radius: 10px 10px 0 0; margin-bottom: 0; }
+.mobile-dropdown-btn i.chevron { transition: transform 0.2s; font-size: 16px; color: var(--muted); }
+.mobile-dropdown-btn.open i.chevron { transform: rotate(180deg); }
+.mobile-dropdown-content {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--today-color);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.mobile-dropdown-content.open { display: block; }
+
+/* Mobile chart select */
+.mobile-chart-select {
+  width: 100%;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: "DM Sans", sans-serif;
+  margin-bottom: 8px;
+}
+
+/* Mobile calendar */
+.mobile-mode .cal-toolbar { flex-wrap: wrap; gap: 6px; }
+.mobile-mode .week-header .dh { font-size: 11px; }
+.mobile-mode .day-cell { padding: 4px 3px; min-height: 50px; }
+.mobile-mode .day-num { font-size: 11px; }
+.mobile-mode .task-pill { font-size: 10px; padding: 1px 3px; }
+.mobile-mode .fab-btn { font-size: 14px; padding: 6px 10px; }
+.mobile-mode .cal-person-panels { grid-template-columns: 1fr; }
+.mobile-mode .cal-panel-event { font-size: 13px; }
+
 </style>
 </head>
 <body data-theme="dark">
@@ -2924,6 +3014,7 @@ function detectUrlProfile(){
   const p = params.get("profile");
   if(p && ["britt","christian"].includes(p)){
     urlProfile = p;
+    document.body.classList.add("mobile-mode");
     return true;
   }
   return false;
@@ -2933,6 +3024,10 @@ function initPersonalHome(){
   // Swap "Home" nav tab to go to personal home
   const homeTab = document.querySelector('.nav-tab[onclick*="home"]');
   if(homeTab) homeTab.setAttribute("onclick", "goTab('personal-home',this)");
+  // Auto-filter person filters to profile + unassigned
+  if(urlProfile){
+    activePersonFilters = new Set([urlProfile, "unassigned"]);
+  }
   // Activate personal home
   goTab("personal-home", homeTab);
 }
@@ -5132,9 +5227,208 @@ function renderBudgetPage(){
 }
 
 function renderBudgetOverview(){
+  if(urlProfile && document.body.classList.contains("mobile-mode")){
+    renderMobileBudgetView();
+    return;
+  }
   if(budgetView==="weekly")renderWeeklyView();
   else if(budgetView==="monthly")renderMonthlyView();
   else if(budgetView==="daily")renderDailyView();
+}
+
+/* ── MOBILE BUDGET VIEW ─────────────────────────────────────── */
+let _mobileChartView = "breakdown"; // "breakdown" | "incexp"
+let _mobileSectionView = "variable"; // "variable" | "expenses" | "bills" | "subs" | "savings"
+
+function renderMobileBudgetView(){
+  // Use weekly data as the base
+  if(!budgetData)return;
+  if(!budgetCurrentWeekStart) budgetCurrentWeekStart=getFridayWeekStart(new Date());
+  const ws=budgetCurrentWeekStart;
+  const weekEnd=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+  const period=getPeriod(getWeekPeriodKey(ws));
+  const rec=budgetData.recurring;
+  const expenses=getExpensesFor(ws,weekEnd,"variable");
+  const savExps=getExpensesFor(ws,weekEnd,"savings");
+
+  const varActuals={};
+  rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+
+  const weekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=weekEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
+  const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
+  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
+  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:"biweekly"}),0);
+  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
+  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+  const varTotalBudget=period.varBudgetTotal??autoVarTotal;
+  const catCount=rec.variable.length||1;
+  const defaultCatBudget=varTotalBudget/catCount;
+  rec.variable.forEach(v=>{
+    v._weeklyBudget=period.varBudgetOverrides[v.id]!==undefined?period.varBudgetOverrides[v.id]:defaultCatBudget;
+  });
+  const budgVar=rec.variable.reduce((s,v)=>s+(v._weeklyBudget||0),0);
+  const totalBills=rec.bills.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0);
+  const totalSubs=rec.subscriptions.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0);
+  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
+  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+  const sb=parseFloat(period.startBalance)||0;
+  const endActual=sb+weekIncome-totalBills-totalSubs-totalVar-totalSav;
+  const endBudget=sb+budgIncome-budgBills-budgSubs-budgVar-budgSav;
+
+  const s=new Date(ws+"T12:00:00");
+  const e=new Date(s.getTime()+6*86400000);
+  const periodLabel=s.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+e.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
+  const content=document.getElementById("btab-overview-content");
+  if(!content)return;
+
+  content.innerHTML=`
+    <!-- Period nav -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+      <button class="cnav-btn" onclick="budgetNav(-1)"><i class="ti ti-chevron-left"></i></button>
+      <button class="today-btn" onclick="budgetGoToday()">Today</button>
+      <button class="cnav-btn" onclick="budgetNav(1)"><i class="ti ti-chevron-right"></i></button>
+      <div style="font-size:14px;font-weight:500;color:var(--text);flex:1">${periodLabel}</div>
+    </div>
+
+    <!-- Weekly summary (always visible) -->
+    <div class="budget-card bcompact-card" style="margin-bottom:10px">
+      <div class="bcompact-title">WEEKLY SUMMARY</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">INCOME</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#3db87a">${$f(weekIncome)}</div>
+          <div style="font-size:10px;color:var(--muted)">of ${$f(budgIncome)} expected</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">END BALANCE</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${endActual>=0?"#3db87a":"#e05555"}">${$f(endActual)}</div>
+          <div style="font-size:10px;color:var(--muted)">of ${$f(endBudget)} budget</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">SPENT</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#e05555">${$f(totalVar+totalBills+totalSubs)}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">SAVED</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add">${$f(totalSav)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart dropdown -->
+    <div class="mobile-budget-section">
+      <select class="mobile-chart-select" onchange="setMobileChartView(this.value)">
+        <option value="breakdown" ${_mobileChartView==="breakdown"?"selected":""}>📊 Spending Breakdown</option>
+        <option value="incexp" ${_mobileChartView==="incexp"?"selected":""}>📈 Income vs Expenses</option>
+      </select>
+      <div class="budget-card bcompact-card" id="mobile-chart-area"></div>
+    </div>
+
+    <!-- Section dropdown -->
+    <div class="mobile-budget-section">
+      <select class="mobile-chart-select" onchange="setMobileSectionView(this.value)">
+        <option value="expenses" ${_mobileSectionView==="expenses"?"selected":""}>💸 Total Expenses</option>
+        <option value="variable" ${_mobileSectionView==="variable"?"selected":""}>🏷️ Variable Budget vs Actual</option>
+        <option value="bills" ${_mobileSectionView==="bills"?"selected":""}>📋 Bills & Debt</option>
+        <option value="subs" ${_mobileSectionView==="subs"?"selected":""}>📺 Subscriptions</option>
+        <option value="savings" ${_mobileSectionView==="savings"?"selected":""}>💰 Savings</option>
+      </select>
+      <div class="budget-card bcompact-card" id="mobile-section-area"></div>
+    </div>
+
+    <!-- Add expense button -->
+    <button class="btn btn-primary" onclick="openAddExpenseSheet()" style="width:100%;justify-content:center;padding:10px;margin-top:4px">
+      <i class="ti ti-plus"></i> Log Expense
+    </button>
+  `;
+
+  // Render chart
+  setTimeout(()=>{
+    renderMobileChart(_mobileChartView, totalBills, totalSubs, totalVar, totalSav, weekIncome);
+    renderMobileSection(_mobileSectionView, rec, period, varActuals, expenses, savExps, ws);
+  },30);
+}
+
+function setMobileChartView(v){
+  _mobileChartView=v;
+  if(!budgetData)return;
+  const ws=budgetCurrentWeekStart;
+  const weekEnd=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+  const period=getPeriod(getWeekPeriodKey(ws));
+  const rec=budgetData.recurring;
+  const expenses=getExpensesFor(ws,weekEnd,"variable");
+  const savExps=getExpensesFor(ws,weekEnd,"savings");
+  const varActuals={};rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  const totalBills=rec.bills.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0);
+  const totalSubs=rec.subscriptions.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0);
+  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
+  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+  const weekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=weekEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  renderMobileChart(v,totalBills,totalSubs,totalVar,totalSav,weekIncome);
+}
+
+function setMobileSectionView(v){
+  _mobileSectionView=v;
+  if(!budgetData)return;
+  const ws=budgetCurrentWeekStart;
+  const weekEnd=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+  const period=getPeriod(getWeekPeriodKey(ws));
+  const rec=budgetData.recurring;
+  const expenses=getExpensesFor(ws,weekEnd,"variable");
+  const savExps=getExpensesFor(ws,weekEnd,"savings");
+  const varActuals={};rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  renderMobileSection(v,rec,period,varActuals,expenses,savExps,ws);
+}
+
+function renderMobileChart(view, totalBills, totalSubs, totalVar, totalSav, weekIncome){
+  const el=document.getElementById("mobile-chart-area");if(!el)return;
+  if(view==="breakdown"){
+    el.innerHTML='<div class="bcompact-title">SPENDING BREAKDOWN</div><canvas id="m-chart-breakdown" height="160"></canvas>';
+    setTimeout(()=>drawDonutChart("m-chart-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]),20);
+  } else {
+    el.innerHTML='<div class="bcompact-title">INCOME vs EXPENSES</div><canvas id="m-chart-incexp" height="160"></canvas>';
+    setTimeout(()=>drawBarChart("m-chart-incexp",["Income","Bills","Subs","Var","Savings"],[weekIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]),20);
+  }
+}
+
+function renderMobileSection(view, rec, period, varActuals, expenses, savExps, ws){
+  const el=document.getElementById("mobile-section-area");if(!el)return;
+  if(view==="expenses"){
+    el.innerHTML='<div class="bcompact-title">TOTAL EXPENSES</div><div id="m-daily-strip"></div>';
+    renderBudgetDailyStrip(ws,expenses,"m-daily-strip",null);
+  } else if(view==="variable"){
+    el.innerHTML='<div class="bcompact-title">VARIABLE BUDGET vs ACTUAL</div><div id="m-var-lines"></div>';
+    renderVarLines("m-var-lines",null,rec.variable,varActuals,"weekly");
+  } else if(view==="bills"){
+    el.innerHTML='<div class="bcompact-title">BILLS & DEBT</div><div id="m-bills-lines"></div>';
+    renderBlineGroup("m-bills-lines",null,rec.bills,period,"weekly");
+  } else if(view==="subs"){
+    el.innerHTML='<div class="bcompact-title">SUBSCRIPTIONS</div><div id="m-subs-lines"></div>';
+    renderBlineGroup("m-subs-lines",null,rec.subscriptions,period,"weekly");
+  } else if(view==="savings"){
+    const hhExps=savExps.filter(e=>e.savingsBucket==="household");
+    const persExps=savExps.filter(e=>e.savingsBucket==="personal");
+    const hhTotal=hhExps.reduce((s,e)=>s+e.amount,0);
+    const persTotal=persExps.reduce((s,e)=>s+e.amount,0);
+    el.innerHTML=`<div class="bcompact-title">SAVINGS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">HOUSEHOLD</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#378add">${$f(hhTotal)}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">PERSONAL</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#378add">${$f(persTotal)}</div>
+        </div>
+      </div>
+      <div id="m-sav-hh-list"></div>
+      <div style="font-size:12px;color:var(--muted);margin:8px 0 4px">Personal</div>
+      <div id="m-sav-pers-list"></div>`;
+    renderSavExpList("m-sav-hh-list",null,hhExps);
+    renderSavExpList("m-sav-pers-list",null,persExps);
+  }
 }
 
 function openBudgetStartBalance(){
