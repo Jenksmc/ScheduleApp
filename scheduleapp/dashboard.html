@@ -625,8 +625,43 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="card" id="shop-page-list" style="margin-bottom:12px"></div>
   <button class="btn" onclick="openAddShopItem()" style="width:100%;justify-content:center;padding:10px"><i class="ti ti-plus"></i> Add item</button>
 </div>
-<!-- BUDGET PAGE v2 — Full redesign with Monthly/Weekly/Daily views, charts, expenses log, recurring setup -->
+<!-- BUDGET PAGE -->
 <div class="page" id="page-budget">
+
+  <!-- ══ PIN LOCK SCREEN ══════════════════════════════════════ -->
+  <div id="budget-lock-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:20px">
+    <div style="font-size:32px">🔒</div>
+    <div style="font-size:22px;font-weight:600;color:var(--text)">Budget</div>
+    <div style="font-size:15px;color:var(--muted);margin-top:-10px">Select your profile</div>
+    <div style="display:flex;gap:14px;margin-top:4px" id="budget-profile-buttons"></div>
+    <!-- PIN entry -->
+    <div id="budget-pin-entry" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="font-size:16px;color:var(--muted)" id="budget-pin-label">Enter PIN for <strong id="budget-pin-name"></strong></div>
+      <div style="display:flex;gap:10px" id="budget-pin-dots"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px" id="budget-pin-pad"></div>
+      <div style="font-size:14px;color:#e05555;min-height:18px" id="budget-pin-error"></div>
+      <button onclick="budgetLockBack()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;font-family:'DM Sans',sans-serif">← Back</button>
+    </div>
+    <!-- First time PIN setup -->
+    <div id="budget-pin-setup" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div style="font-size:16px;color:var(--muted)">Set a PIN for <strong id="budget-setup-name"></strong></div>
+      <div style="font-size:13px;color:var(--muted)" id="budget-setup-step">Choose a 4-digit PIN</div>
+      <div style="display:flex;gap:10px" id="budget-setup-dots"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px" id="budget-setup-pad"></div>
+    </div>
+  </div>
+
+  <!-- ══ BUDGET CONTENT (shown after unlock) ══════════════════ -->
+  <div id="budget-unlocked-content" style="display:none">
+    <!-- Profile bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:8px 12px;background:var(--tag-bg);border-radius:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="budget-active-avatar" style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600"></div>
+        <div id="budget-active-name" style="font-size:15px;font-weight:500;color:var(--text)"></div>
+        <div style="font-size:12px;color:var(--muted)">· Budget</div>
+      </div>
+      <button onclick="lockBudget()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:13px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ti ti-lock"></i> Lock</button>
+    </div>
 
   <!-- TOP NAV: main budget tabs -->
   <div class="budget-tab-row" id="budget-main-tabs">
@@ -875,6 +910,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- ══ SETTINGS TAB ══════════════════════════════════════════ -->
   <div id="btab-bsettings-content" style="display:none">
+    <!-- Profile & PIN -->
+    <div class="budget-card" style="margin-bottom:14px">
+      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-shield-lock"></i> Profile & PIN</div></div>
+      <div id="bs-profile-info" style="font-size:14px;color:var(--muted);margin-bottom:10px"></div>
+      <button class="btn" onclick="openChangePinModal(activeBudgetProfile)"><i class="ti ti-key"></i> Change PIN</button>
+    </div>
     <!-- Income config -->
     <div class="budget-card" style="margin-bottom:14px">
       <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-cash"></i> Income Sources</div><button class="btn" onclick="openAddIncomeSource()"><i class="ti ti-plus"></i></button></div>
@@ -914,6 +955,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 
+  </div><!-- /budget-unlocked-content -->
 </div>
 
 
@@ -1288,6 +1330,76 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Location</label><input type="text" id="f-loc"/></div>
         <div class="field"><label>With / Provider</label><input type="text" id="f-prov"/></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-anotes"></textarea></div>
+        <div class="field"><label>Frequency</label><div class="badges" id="b-afreq">
+          <button class="badge active" data-v="once" onclick="pick(this,'afreq');showRecurFields_a()">One-time</button>
+          <button class="badge" data-v="daily" onclick="pick(this,'afreq');showRecurFields_a()">Daily</button>
+          <button class="badge" data-v="weekly" onclick="pick(this,'afreq');showRecurFields_a()">Weekly</button>
+          <button class="badge" data-v="monthly" onclick="pick(this,'afreq');showRecurFields_a()">Monthly</button>
+          <button class="badge" data-v="nthweekday" onclick="pick(this,'afreq');showRecurFields_a()">Specific weeks</button>
+        </div></div>
+        <div id="f-arecur-wrap" style="display:none">
+          <div id="f-arecur-days-wrap" style="display:none">
+            <div class="field"><label id="f-arecur-days-label">Repeat on</label>
+              <div class="badges" id="b-arecurdays">
+                <button class="badge active" data-v="sun" onclick="toggleRecurDayX('a',this)">Sun</button>
+                <button class="badge active" data-v="mon" onclick="toggleRecurDayX('a',this)">Mon</button>
+                <button class="badge active" data-v="tue" onclick="toggleRecurDayX('a',this)">Tue</button>
+                <button class="badge active" data-v="wed" onclick="toggleRecurDayX('a',this)">Wed</button>
+                <button class="badge active" data-v="thu" onclick="toggleRecurDayX('a',this)">Thu</button>
+                <button class="badge active" data-v="fri" onclick="toggleRecurDayX('a',this)">Fri</button>
+                <button class="badge active" data-v="sat" onclick="toggleRecurDayX('a',this)">Sat</button>
+              </div>
+            </div>
+          </div>
+          <div id="f-anthweekday-wrap" style="display:none">
+            <div class="field"><label>Which weekday</label>
+              <div class="badges" id="b-anthwd">
+                <button class="badge active" data-v="0" onclick="pick(this,'anthwd')">Sun</button>
+                <button class="badge" data-v="1" onclick="pick(this,'anthwd')">Mon</button>
+                <button class="badge" data-v="2" onclick="pick(this,'anthwd')">Tue</button>
+                <button class="badge" data-v="3" onclick="pick(this,'anthwd')">Wed</button>
+                <button class="badge" data-v="4" onclick="pick(this,'anthwd')">Thu</button>
+                <button class="badge" data-v="5" onclick="pick(this,'anthwd')">Fri</button>
+                <button class="badge" data-v="6" onclick="pick(this,'anthwd')">Sat</button>
+              </div>
+            </div>
+            <div class="field"><label>Which occurrence(s)</label>
+              <div class="badges" id="b-anthocc">
+                <button class="badge active" data-v="1" onclick="toggleNthOccX('a',this)">1st</button>
+                <button class="badge" data-v="2" onclick="toggleNthOccX('a',this)">2nd</button>
+                <button class="badge" data-v="3" onclick="toggleNthOccX('a',this)">3rd</button>
+                <button class="badge" data-v="4" onclick="toggleNthOccX('a',this)">4th</button>
+                <button class="badge" data-v="-1" onclick="toggleNthOccX('a',this)">Last</button>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label>Repeat until</label><input type="date" id="f-arecur-end"/></div>
+          <div id="f-aalt-assign-wrap" style="background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="margin-bottom:0;font-size:15px;font-weight:500">Alternate assignment</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;color:var(--muted)">
+                <input type="checkbox" id="f-aalt-enabled" style="accent-color:var(--today-color);width:15px;height:15px" onchange="toggleAltAssignX('a')"/>
+                Enable
+              </label>
+            </div>
+            <div id="f-aalt-fields" style="display:none">
+              <div class="field" style="margin-bottom:8px"><label>Alternate with</label>
+                <select id="f-aalt-person">
+                  <option value="christian">Christian</option>
+                  <option value="britt">Brittni</option>
+                  <option value="unassigned">Unclaimed</option>
+                </select>
+              </div>
+              <div class="field" style="margin-bottom:0"><label>Switch every</label>
+                <div class="badges" id="f-aalt-mode">
+                  <button class="badge active" data-v="occurrence" onclick="pick(this,'f-aalt-mode')">Occurrence</button>
+                  <button class="badge" data-v="week" onclick="pick(this,'f-aalt-mode')">Week</button>
+                  <button class="badge" data-v="month" onclick="pick(this,'f-aalt-mode')">Month</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="sec" id="sec-work">
         <div class="field"><label>Who</label><div class="badges" id="b-workwho"><button class="badge active" data-v="britt" onclick="pick(this,'workwho');applyWorkDefaults()">Brittni</button><button class="badge" data-v="christian" onclick="pick(this,'workwho');applyWorkDefaults()">Christian</button></div></div>
@@ -1321,37 +1433,201 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="two-col"><div class="field"><label>Start time <span class="opt-label">(opt)</span></label><input type="time" id="f-ttime"/></div><div class="field"><label>End time <span class="opt-label">(opt)</span></label><input type="time" id="f-tendtime"/></div></div>
         <div class="field"><label>Priority</label><div class="badges" id="b-pri"><button class="badge active" data-v="normal" onclick="pick(this,'pri')">Normal</button><button class="badge" data-v="high" onclick="pick(this,'pri')">High</button><button class="badge" data-v="low" onclick="pick(this,'pri')">Low</button></div></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-tnotes"></textarea></div>
-      </div>
-      <div class="sec" id="sec-shopping">
-        <div class="field"><label>Category</label><div class="badges" id="b-shopcat"><button class="badge active" data-v="groceries" onclick="pick(this,'shopcat')">Groceries</button><button class="badge" data-v="household" onclick="pick(this,'shopcat')">Household</button><button class="badge" data-v="cats" onclick="pick(this,'shopcat')">Cats</button><button class="badge" data-v="personal" onclick="pick(this,'shopcat')">Personal</button><button class="badge" data-v="other" onclick="pick(this,'shopcat')">Other</button></div></div>
-        <div class="field"><label>Assigned to</label><select id="f-shop-person"><option value="unassigned" selected>Unclaimed</option><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
-        <div class="field"><label>Frequency</label><div class="badges" id="b-shopfreq">
-          <button class="badge active" data-v="once" onclick="pick(this,'shopfreq');showShopRecurFields()">One-time</button>
-          <button class="badge" data-v="weekly" onclick="pick(this,'shopfreq');showShopRecurFields()">Weekly</button>
-          <button class="badge" data-v="biweekly" onclick="pick(this,'shopfreq');showShopRecurFields()">Every 2 wks</button>
-          <button class="badge" data-v="monthly" onclick="pick(this,'shopfreq');showShopRecurFields()">Monthly</button>
+        <div class="field"><label>Frequency</label><div class="badges" id="b-tfreq">
+          <button class="badge active" data-v="once" onclick="pick(this,'tfreq');showRecurFields_t()">One-time</button>
+          <button class="badge" data-v="daily" onclick="pick(this,'tfreq');showRecurFields_t()">Daily</button>
+          <button class="badge" data-v="weekly" onclick="pick(this,'tfreq');showRecurFields_t()">Weekly</button>
+          <button class="badge" data-v="monthly" onclick="pick(this,'tfreq');showRecurFields_t()">Monthly</button>
+          <button class="badge" data-v="nthweekday" onclick="pick(this,'tfreq');showRecurFields_t()">Specific weeks</button>
         </div></div>
-        <div id="f-shop-recur-wrap" style="display:none">
-          <div class="field"><label>Repeat until</label><input type="date" id="f-shop-recur-end"/></div>
-          <div class="field" id="f-shop-day-wrap" style="display:none"><label>Day of week</label>
-            <div class="badges" id="b-shopday">
-              <button class="badge" data-v="sun" onclick="pick(this,'shopday')">Sun</button>
-              <button class="badge" data-v="mon" onclick="pick(this,'shopday')">Mon</button>
-              <button class="badge" data-v="tue" onclick="pick(this,'shopday')">Tue</button>
-              <button class="badge active" data-v="wed" onclick="pick(this,'shopday')">Wed</button>
-              <button class="badge" data-v="thu" onclick="pick(this,'shopday')">Thu</button>
-              <button class="badge" data-v="fri" onclick="pick(this,'shopday')">Fri</button>
-              <button class="badge" data-v="sat" onclick="pick(this,'shopday')">Sat</button>
+        <div id="f-trecur-wrap" style="display:none">
+          <div id="f-trecur-days-wrap" style="display:none">
+            <div class="field"><label id="f-trecur-days-label">Repeat on</label>
+              <div class="badges" id="b-trecurdays">
+                <button class="badge active" data-v="sun" onclick="toggleRecurDayX('t',this)">Sun</button>
+                <button class="badge active" data-v="mon" onclick="toggleRecurDayX('t',this)">Mon</button>
+                <button class="badge active" data-v="tue" onclick="toggleRecurDayX('t',this)">Tue</button>
+                <button class="badge active" data-v="wed" onclick="toggleRecurDayX('t',this)">Wed</button>
+                <button class="badge active" data-v="thu" onclick="toggleRecurDayX('t',this)">Thu</button>
+                <button class="badge active" data-v="fri" onclick="toggleRecurDayX('t',this)">Fri</button>
+                <button class="badge active" data-v="sat" onclick="toggleRecurDayX('t',this)">Sat</button>
+              </div>
+            </div>
+          </div>
+          <div id="f-tnthweekday-wrap" style="display:none">
+            <div class="field"><label>Which weekday</label>
+              <div class="badges" id="b-tnthwd">
+                <button class="badge active" data-v="0" onclick="pick(this,'tnthwd')">Sun</button>
+                <button class="badge" data-v="1" onclick="pick(this,'tnthwd')">Mon</button>
+                <button class="badge" data-v="2" onclick="pick(this,'tnthwd')">Tue</button>
+                <button class="badge" data-v="3" onclick="pick(this,'tnthwd')">Wed</button>
+                <button class="badge" data-v="4" onclick="pick(this,'tnthwd')">Thu</button>
+                <button class="badge" data-v="5" onclick="pick(this,'tnthwd')">Fri</button>
+                <button class="badge" data-v="6" onclick="pick(this,'tnthwd')">Sat</button>
+              </div>
+            </div>
+            <div class="field"><label>Which occurrence(s)</label>
+              <div class="badges" id="b-tnthocc">
+                <button class="badge active" data-v="1" onclick="toggleNthOccX('t',this)">1st</button>
+                <button class="badge" data-v="2" onclick="toggleNthOccX('t',this)">2nd</button>
+                <button class="badge" data-v="3" onclick="toggleNthOccX('t',this)">3rd</button>
+                <button class="badge" data-v="4" onclick="toggleNthOccX('t',this)">4th</button>
+                <button class="badge" data-v="-1" onclick="toggleNthOccX('t',this)">Last</button>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label>Repeat until</label><input type="date" id="f-trecur-end"/></div>
+          <div id="f-talt-assign-wrap" style="background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="margin-bottom:0;font-size:15px;font-weight:500">Alternate assignment</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;color:var(--muted)">
+                <input type="checkbox" id="f-talt-enabled" style="accent-color:var(--today-color);width:15px;height:15px" onchange="toggleAltAssignX('t')"/>
+                Enable
+              </label>
+            </div>
+            <div id="f-talt-fields" style="display:none">
+              <div class="field" style="margin-bottom:8px"><label>Alternate with</label>
+                <select id="f-talt-person">
+                  <option value="christian">Christian</option>
+                  <option value="britt">Brittni</option>
+                  <option value="unassigned">Unclaimed</option>
+                </select>
+              </div>
+              <div class="field" style="margin-bottom:0"><label>Switch every</label>
+                <div class="badges" id="f-talt-mode">
+                  <button class="badge active" data-v="occurrence" onclick="pick(this,'f-talt-mode')">Occurrence</button>
+                  <button class="badge" data-v="week" onclick="pick(this,'f-talt-mode')">Week</button>
+                  <button class="badge" data-v="month" onclick="pick(this,'f-talt-mode')">Month</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      <div class="sec" id="sec-shopping">
+        <div class="field"><label>Category</label><div class="badges" id="b-shopcat">
+          <button class="badge active" data-v="groceries" onclick="pick(this,'shopcat')">Groceries</button>
+          <button class="badge" data-v="household" onclick="pick(this,'shopcat')">Household</button>
+          <button class="badge" data-v="cats" onclick="pick(this,'shopcat')">Cats</button>
+          <button class="badge" data-v="personal" onclick="pick(this,'shopcat')">Personal</button>
+          <button class="badge" data-v="other" onclick="pick(this,'shopcat')">Other</button>
+        </div></div>
+        <div class="field"><label>Assigned to</label><select id="f-shop-person"><option value="unassigned" selected>Unclaimed</option><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
         <div class="two-col"><div class="field"><label>Store <span class="opt-label">(opt)</span></label><input type="text" id="f-store"/></div><div class="field"><label>Quantity <span class="opt-label">(opt)</span></label><input type="text" id="f-qty"/></div></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-snotes"></textarea></div>
+        <div class="field"><label>Frequency</label><div class="badges" id="b-sfreq">
+          <button class="badge active" data-v="once" onclick="pick(this,'sfreq');showRecurFields_s()">One-time</button>
+          <button class="badge" data-v="daily" onclick="pick(this,'sfreq');showRecurFields_s()">Daily</button>
+          <button class="badge" data-v="weekly" onclick="pick(this,'sfreq');showRecurFields_s()">Weekly</button>
+          <button class="badge" data-v="monthly" onclick="pick(this,'sfreq');showRecurFields_s()">Monthly</button>
+          <button class="badge" data-v="nthweekday" onclick="pick(this,'sfreq');showRecurFields_s()">Specific weeks</button>
+        </div></div>
+        <div id="f-srecur-wrap" style="display:none">
+          <div id="f-srecur-days-wrap" style="display:none">
+            <div class="field"><label id="f-srecur-days-label">Repeat on</label>
+              <div class="badges" id="b-srecurdays">
+                <button class="badge active" data-v="sun" onclick="toggleRecurDayX('s',this)">Sun</button>
+                <button class="badge active" data-v="mon" onclick="toggleRecurDayX('s',this)">Mon</button>
+                <button class="badge active" data-v="tue" onclick="toggleRecurDayX('s',this)">Tue</button>
+                <button class="badge active" data-v="wed" onclick="toggleRecurDayX('s',this)">Wed</button>
+                <button class="badge active" data-v="thu" onclick="toggleRecurDayX('s',this)">Thu</button>
+                <button class="badge active" data-v="fri" onclick="toggleRecurDayX('s',this)">Fri</button>
+                <button class="badge active" data-v="sat" onclick="toggleRecurDayX('s',this)">Sat</button>
+              </div></div></div>
+          <div id="f-snthweekday-wrap" style="display:none">
+            <div class="field"><label>Which weekday</label>
+              <div class="badges" id="b-snthwd">
+                <button class="badge active" data-v="0" onclick="pick(this,'snthwd')">Sun</button>
+                <button class="badge" data-v="1" onclick="pick(this,'snthwd')">Mon</button>
+                <button class="badge" data-v="2" onclick="pick(this,'snthwd')">Tue</button>
+                <button class="badge" data-v="3" onclick="pick(this,'snthwd')">Wed</button>
+                <button class="badge" data-v="4" onclick="pick(this,'snthwd')">Thu</button>
+                <button class="badge" data-v="5" onclick="pick(this,'snthwd')">Fri</button>
+                <button class="badge" data-v="6" onclick="pick(this,'snthwd')">Sat</button>
+              </div></div>
+            <div class="field"><label>Which occurrence(s)</label>
+              <div class="badges" id="b-snthocc">
+                <button class="badge active" data-v="1" onclick="toggleNthOccX('s',this)">1st</button>
+                <button class="badge" data-v="2" onclick="toggleNthOccX('s',this)">2nd</button>
+                <button class="badge" data-v="3" onclick="toggleNthOccX('s',this)">3rd</button>
+                <button class="badge" data-v="4" onclick="toggleNthOccX('s',this)">4th</button>
+                <button class="badge" data-v="-1" onclick="toggleNthOccX('s',this)">Last</button>
+              </div></div></div>
+          <div class="field"><label>Repeat until</label><input type="date" id="f-srecur-end"/></div>
+          <div style="background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="margin-bottom:0;font-size:15px;font-weight:500">Alternate assignment</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;color:var(--muted)">
+                <input type="checkbox" id="f-salt-enabled" style="accent-color:var(--today-color);width:15px;height:15px" onchange="toggleAltAssignX('s')"/>Enable
+              </label></div>
+            <div id="f-salt-fields" style="display:none">
+              <div class="field" style="margin-bottom:8px"><label>Alternate with</label>
+                <select id="f-salt-person"><option value="christian">Christian</option><option value="britt">Brittni</option><option value="unassigned">Unclaimed</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Switch every</label>
+                <div class="badges" id="f-salt-mode">
+                  <button class="badge active" data-v="occurrence" onclick="pick(this,'f-salt-mode')">Occurrence</button>
+                  <button class="badge" data-v="week" onclick="pick(this,'f-salt-mode')">Week</button>
+                  <button class="badge" data-v="month" onclick="pick(this,'f-salt-mode')">Month</button>
+                </div></div></div></div></div>
       </div>
       <div class="sec" id="sec-vacation">
         <div class="field"><label>Who</label><div class="badges" id="b-vacwho"><button class="badge active" data-v="britt" onclick="pick(this,'vacwho')">Brittni</button><button class="badge" data-v="christian" onclick="pick(this,'vacwho')">Christian</button><button class="badge" data-v="both" onclick="pick(this,'vacwho')">Both</button></div></div>
         <div class="field"><label>End date <span class="opt-label">(optional)</span></label><input type="date" id="f-vacend"/></div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label><textarea id="f-vacnotes"></textarea></div>
+        <div class="field"><label>Frequency</label><div class="badges" id="b-vfreq">
+          <button class="badge active" data-v="once" onclick="pick(this,'vfreq');showRecurFields_v()">One-time</button>
+          <button class="badge" data-v="daily" onclick="pick(this,'vfreq');showRecurFields_v()">Daily</button>
+          <button class="badge" data-v="weekly" onclick="pick(this,'vfreq');showRecurFields_v()">Weekly</button>
+          <button class="badge" data-v="monthly" onclick="pick(this,'vfreq');showRecurFields_v()">Monthly</button>
+          <button class="badge" data-v="nthweekday" onclick="pick(this,'vfreq');showRecurFields_v()">Specific weeks</button>
+        </div></div>
+        <div id="f-vrecur-wrap" style="display:none">
+          <div id="f-vrecur-days-wrap" style="display:none">
+            <div class="field"><label id="f-vrecur-days-label">Repeat on</label>
+              <div class="badges" id="b-vrecurdays">
+                <button class="badge active" data-v="sun" onclick="toggleRecurDayX('v',this)">Sun</button>
+                <button class="badge active" data-v="mon" onclick="toggleRecurDayX('v',this)">Mon</button>
+                <button class="badge active" data-v="tue" onclick="toggleRecurDayX('v',this)">Tue</button>
+                <button class="badge active" data-v="wed" onclick="toggleRecurDayX('v',this)">Wed</button>
+                <button class="badge active" data-v="thu" onclick="toggleRecurDayX('v',this)">Thu</button>
+                <button class="badge active" data-v="fri" onclick="toggleRecurDayX('v',this)">Fri</button>
+                <button class="badge active" data-v="sat" onclick="toggleRecurDayX('v',this)">Sat</button>
+              </div></div></div>
+          <div id="f-vnthweekday-wrap" style="display:none">
+            <div class="field"><label>Which weekday</label>
+              <div class="badges" id="b-vnthwd">
+                <button class="badge active" data-v="0" onclick="pick(this,'vnthwd')">Sun</button>
+                <button class="badge" data-v="1" onclick="pick(this,'vnthwd')">Mon</button>
+                <button class="badge" data-v="2" onclick="pick(this,'vnthwd')">Tue</button>
+                <button class="badge" data-v="3" onclick="pick(this,'vnthwd')">Wed</button>
+                <button class="badge" data-v="4" onclick="pick(this,'vnthwd')">Thu</button>
+                <button class="badge" data-v="5" onclick="pick(this,'vnthwd')">Fri</button>
+                <button class="badge" data-v="6" onclick="pick(this,'vnthwd')">Sat</button>
+              </div></div>
+            <div class="field"><label>Which occurrence(s)</label>
+              <div class="badges" id="b-vnthocc">
+                <button class="badge active" data-v="1" onclick="toggleNthOccX('v',this)">1st</button>
+                <button class="badge" data-v="2" onclick="toggleNthOccX('v',this)">2nd</button>
+                <button class="badge" data-v="3" onclick="toggleNthOccX('v',this)">3rd</button>
+                <button class="badge" data-v="4" onclick="toggleNthOccX('v',this)">4th</button>
+                <button class="badge" data-v="-1" onclick="toggleNthOccX('v',this)">Last</button>
+              </div></div></div>
+          <div class="field"><label>Repeat until</label><input type="date" id="f-vrecur-end"/></div>
+          <div style="background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="margin-bottom:0;font-size:15px;font-weight:500">Alternate assignment</label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:15px;color:var(--muted)">
+                <input type="checkbox" id="f-valt-enabled" style="accent-color:var(--today-color);width:15px;height:15px" onchange="toggleAltAssignX('v')"/>Enable
+              </label></div>
+            <div id="f-valt-fields" style="display:none">
+              <div class="field" style="margin-bottom:8px"><label>Alternate with</label>
+                <select id="f-valt-person"><option value="christian">Christian</option><option value="britt">Brittni</option><option value="unassigned">Unclaimed</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Switch every</label>
+                <div class="badges" id="f-valt-mode">
+                  <button class="badge active" data-v="occurrence" onclick="pick(this,'f-valt-mode')">Occurrence</button>
+                  <button class="badge" data-v="week" onclick="pick(this,'f-valt-mode')">Week</button>
+                  <button class="badge" data-v="month" onclick="pick(this,'f-valt-mode')">Month</button>
+                </div></div></div></div></div>
       </div>
       </div>
 <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add')">Cancel</button><button class="btn-save" onclick="saveTask()">Save</button></div>
@@ -3187,6 +3463,125 @@ function updateAltHint(){
 }
 
 /* ── RECUR FIELDS ── */
+/* ── GENERIC RECURRING HELPERS (todo/appt/shopping/vacation/work) ── */
+
+function toggleAltAssignX(prefix){
+  const enabled=document.getElementById("f-"+prefix+"alt-enabled")?.checked;
+  const fields=document.getElementById("f-"+prefix+"alt-fields");
+  if(fields)fields.style.display=enabled?"block":"none";
+}
+
+function toggleRecurDayX(prefix,btn){
+  const freq=bv[prefix+"freq"]||"daily";
+  if(freq==="weekly"){
+    document.querySelectorAll("#b-"+prefix+"recurdays .badge").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+  } else {
+    btn.classList.toggle("active");
+  }
+}
+
+function toggleNthOccX(prefix,btn){ btn.classList.toggle("active"); }
+
+// Generic showRecurFields for any prefix
+function _showRecurFieldsX(prefix){
+  const freq=bv[prefix+"freq"]||"once";
+  const isRecur=freq!=="once";
+  const wrap=document.getElementById("f-"+prefix+"recur-wrap");
+  if(wrap)wrap.style.display=isRecur?"block":"none";
+  const dw=document.getElementById("f-"+prefix+"recur-days-wrap");
+  if(dw)dw.style.display=(freq==="daily"||freq==="weekly")?"block":"none";
+  const nw=document.getElementById("f-"+prefix+"nthweekday-wrap");
+  if(nw)nw.style.display=(freq==="nthweekday")?"block":"none";
+  const lbl=document.getElementById("f-"+prefix+"recur-days-label");
+  if(lbl)lbl.textContent=freq==="weekly"?"Repeat on day":"Active days (deselect to skip)";
+  if(freq==="weekly"){
+    document.querySelectorAll("#b-"+prefix+"recurdays .badge").forEach(b=>b.classList.remove("active"));
+    const dateVal=document.getElementById("f-date")?.value;
+    if(dateVal){const dow=new Date(dateVal+"T12:00:00").getDay();const keys=["sun","mon","tue","wed","thu","fri","sat"];document.querySelector("#b-"+prefix+"recurdays [data-v='"+keys[dow]+"']")?.classList.add("active");}
+  } else if(freq==="daily"){
+    document.querySelectorAll("#b-"+prefix+"recurdays .badge").forEach(b=>b.classList.add("active"));
+  }
+  if(!isRecur){
+    const ac=document.getElementById("f-"+prefix+"alt-enabled");if(ac)ac.checked=false;
+    const af=document.getElementById("f-"+prefix+"alt-fields");if(af)af.style.display="none";
+  }
+}
+
+// Per-type wrappers
+function showRecurFields_s(){ _showRecurFieldsX("s"); }
+function showRecurFields_t(){ _showRecurFieldsX("t"); }
+function showRecurFields_a(){ _showRecurFieldsX("a"); }
+function showRecurFields_v(){ _showRecurFieldsX("v"); }
+
+// Generic save helper: generates recurring instances for a given prefix+type
+function saveRecurringX(prefix, baseTask, groupId){
+  const freq=bv[prefix+"freq"]||"once";
+  if(freq==="once")return;
+  const recurEnd=document.getElementById("f-"+prefix+"recur-end")?.value;
+  if(!recurEnd)return;
+  const altEnabled=document.getElementById("f-"+prefix+"alt-enabled")?.checked||false;
+  const altPerson=document.getElementById("f-"+prefix+"alt-person")?.value||"christian";
+  const altMode=document.querySelector("#f-"+prefix+"alt-mode .badge.active")?.dataset.v||"occurrence";
+  const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
+
+  baseTask.recurGroupId=groupId;
+  baseTask.recurring=freq;
+  baseTask.altAssign=altEnabled;
+  baseTask.altAssignPerson=altPerson;
+  baseTask.altAssignMode=altMode;
+
+  if(freq==="nthweekday"){
+    const targetDow=parseInt(document.querySelector("#b-"+prefix+"nthwd .badge.active")?.dataset.v??"0");
+    const occs=[...document.querySelectorAll("#b-"+prefix+"nthocc .badge.active")].map(b=>parseInt(b.dataset.v));
+    baseTask.nthWeekday=targetDow;baseTask.nthOccurrences=occs;
+    const endD=new Date(recurEnd+"T12:00:00");
+    const startD=new Date(baseTask.date+"T12:00:00");
+    let cursor=new Date(startD.getFullYear(),startD.getMonth(),1);
+    const endMonthCap=new Date(endD.getFullYear(),endD.getMonth(),1);
+    let first=true;
+    while(cursor<=endMonthCap){
+      const y=cursor.getFullYear(),m=cursor.getMonth();
+      occs.forEach(occ=>{
+        let occDate;
+        if(occ===-1){let d=new Date(y,m+1,0);while(d.getDay()!==targetDow)d.setDate(d.getDate()-1);occDate=d;}
+        else{let d=new Date(y,m,1),count=0;while(d.getMonth()===m){if(d.getDay()===targetDow){count++;if(count===occ)break;}d.setDate(d.getDate()+1);}occDate=(d.getMonth()===m&&d.getDay()===targetDow)?d:null;}
+        if(occDate&&occDate>=startD&&occDate<=endD){
+          if(!first){
+            const idx=tasks.filter(x=>x.recurGroupId===groupId).length;
+            let p=baseTask.person;
+            if(altEnabled){let flip=false;if(altMode==="occurrence")flip=(idx%2===1);else if(altMode==="week"){const wk=Math.floor((occDate-new Date(occDate.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}else if(altMode==="month")flip=(occDate.getMonth()%2===1);p=flip?altPerson:baseTask.person;}
+            tasks.push({...baseTask,id:nid++,date:fd(occDate),done:false,person:p});
+          } else first=false;
+        }
+      });
+      cursor.setMonth(cursor.getMonth()+1);
+    }
+  } else {
+    const allowedDays=[...document.querySelectorAll("#b-"+prefix+"recurdays .badge.active")].map(b=>b.dataset.v);
+    baseTask.allowedDays=allowedDays;
+    const endD=new Date(recurEnd+"T12:00:00");
+    let cur=new Date(baseTask.date+"T12:00:00");
+    let first=true;
+    while(cur<=endD){
+      const dow=cur.getDay();const dowKey=DOW_KEYS[dow];
+      const isAllowed=allowedDays.includes(dowKey);
+      if(isAllowed){
+        if(!first){
+          const idx=tasks.filter(x=>x.recurGroupId===groupId).length;
+          let p=baseTask.person;
+          if(altEnabled){let flip=false;if(altMode==="occurrence")flip=(idx%2===1);else if(altMode==="week"){const d2=new Date(cur);const wk=Math.floor((d2-new Date(d2.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}else if(altMode==="month")flip=(cur.getMonth()%2===1);p=flip?altPerson:baseTask.person;}
+          tasks.push({...baseTask,id:nid++,date:fd(cur),done:false,person:p,allowedDays});
+        } else first=false;
+      }
+      if(freq==="daily")cur=new Date(cur.getTime()+86400000);
+      else if(freq==="weekly")cur=new Date(cur.getTime()+7*86400000);
+      else if(freq==="monthly"){cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}
+      else break;
+    }
+  }
+}
+
 function toggleNewAltAssign(){
   const enabled=document.getElementById("f-alt-enabled")?.checked;
   const fields=document.getElementById("f-alt-fields");
@@ -3504,6 +3899,13 @@ function openAddModal(ds){
   document.querySelectorAll("#b-nthwd .badge").forEach(b=>b.classList.toggle("active",b.dataset.v==="0"));
   document.querySelectorAll("#b-nthocc .badge").forEach(b=>b.classList.toggle("active",b.dataset.v==="1"||b.dataset.v==="3"));
   const wrw=document.getElementById("f-work-recur-wrap");if(wrw)wrw.style.display="none";
+  // Reset generic recur fields
+  ["t","a","v","s"].forEach(p=>{
+    const rw=document.getElementById("f-"+p+"recur-wrap");if(rw)rw.style.display="none";
+    const ac=document.getElementById("f-"+p+"alt-enabled");if(ac)ac.checked=false;
+    const af=document.getElementById("f-"+p+"alt-fields");if(af)af.style.display="none";
+    document.querySelectorAll("#b-"+p+"freq .badge").forEach((b,i)=>b.classList.toggle("active",i===0));
+  });
   const wc=document.getElementById("f-work-conflict");if(wc){wc.style.display="none";wc.textContent="";}
   const wre=document.getElementById("f-wrecur-end");if(wre)wre.value="";
   document.getElementById("f-person").value="unassigned";
@@ -3511,7 +3913,7 @@ function openAddModal(ds){
   const altCbR=document.getElementById("f-alt-enabled");if(altCbR)altCbR.checked=false;
   const altFR=document.getElementById("f-alt-fields");if(altFR)altFR.style.display="none";
   const altWR=document.getElementById("f-alt-assign-wrap");if(altWR)altWR.style.display="none";
-  bv={freq:"once",pri:"normal",vacwho:"britt",workwho:"britt",shopcat:"groceries",arrivewho:"britt","f-alt-mode":"occurrence"};
+  bv={freq:"once",tfreq:"once",afreq:"once",vfreq:"once",sfreq:"once",pri:"normal",vacwho:"britt",workwho:"britt",shopcat:"groceries",arrivewho:"britt","f-alt-mode":"occurrence"};
   activeDays=new Set(["mon","tue","wed","thu","fri"]);
   document.querySelectorAll("#b-wdays .badge").forEach(b=>b.classList.toggle("active",activeDays.has(b.dataset.v)));
   document.querySelectorAll(".badge[data-v]").forEach(b=>{const g=b.closest(".badges")?.id?.replace("b-","");if(g&&bv[g]!==undefined&&g!=="wdays")b.classList.toggle("active",b.dataset.v===bv[g]);});
@@ -3634,6 +4036,8 @@ function saveTask(){
     t.provider=document.getElementById("f-prov").value;
     t.notes=document.getElementById("f-anotes").value;
     t.person=document.getElementById("f-appt-person").value;
+    const afreq=bv.afreq||"once";
+    if(afreq!=="once"){t.recurring=afreq;t.recurGroupId=groupId;saveRecurringX("a",t,groupId);}
   }
   else if(selType==="work"){
     t.time=document.getElementById("f-wstart").value;
@@ -3677,6 +4081,8 @@ function saveTask(){
     t.priority=bv.pri;
     t.notes=document.getElementById("f-tnotes").value;
     t.person=document.getElementById("f-todo-person").value;
+    const tfreq=bv.tfreq||"once";
+    if(tfreq!=="once"){t.recurring=tfreq;t.recurGroupId=groupId;saveRecurringX("t",t,groupId);}
   }
   else if(selType==="shopping"){
     t.shopcat=bv.shopcat;
@@ -3684,34 +4090,16 @@ function saveTask(){
     t.store=document.getElementById("f-store").value;
     t.qty=document.getElementById("f-qty").value;
     t.notes=document.getElementById("f-snotes").value;
-    const shopFreq=bv.shopfreq||"once";
-    const shopEnd=document.getElementById("f-shop-recur-end")?.value;
-    if(shopFreq!=="once"&&shopEnd){
-      t.recurGroupId=groupId;t.recurring=shopFreq;
-      const DOW_KEYS2=["sun","mon","tue","wed","thu","fri","sat"];
-      const targetDay=bv.shopday||"wed";
-      const endD2=new Date(shopEnd+"T12:00:00");
-      let cur3=new Date(date+"T12:00:00");
-      let first3=true;
-      let stepDays=shopFreq==="biweekly"?14:7;
-      // For weekly/biweekly, advance to the right day of week first
-      if(shopFreq==="weekly"||shopFreq==="biweekly"){
-        const targetDowNum=DOW_KEYS2.indexOf(targetDay);
-        while(cur3.getDay()!==targetDowNum&&cur3<=endD2)cur3=new Date(cur3.getTime()+86400000);
-      }
-      while(cur3<=endD2){
-        if(!first3)tasks.push({...t,id:nid++,date:fd(cur3),done:false});
-        else first3=false;
-        if(shopFreq==="monthly"){cur3=new Date(cur3);cur3.setMonth(cur3.getMonth()+1);}
-        else cur3=new Date(cur3.getTime()+stepDays*86400000);
-      }
-    }
+    const sfreq=bv.sfreq||"once";
+    if(sfreq!=="once"){t.recurring=sfreq;t.recurGroupId=groupId;saveRecurringX("s",t,groupId);}
   }
   else if(selType==="vacation"){
     t.vacwho=bv.vacwho;
     t.person=bv.vacwho==="both"?"britt":bv.vacwho;
     t.vacend=document.getElementById("f-vacend").value;
     t.notes=document.getElementById("f-vacnotes").value;
+    const vfreq=bv.vfreq||"once";
+    if(vfreq!=="once"){t.recurring=vfreq;t.recurGroupId=groupId;saveRecurringX("v",t,groupId);}
   }
   tasks.push(t);
   closeModal("modal-add");
@@ -3970,6 +4358,243 @@ function saveShopItem(){
   shoppingList.push({id:shopNid++,name,qty,group,checked:false,weekStart});
   saveShoppingList();renderHomeShopList();renderShopPage();
   closeModal("modal-add-shop");
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BUDGET PROFILE + PIN SYSTEM
+   Two profiles: britt and christian
+   Each has separate budgetData stored under different localStorage keys
+   PIN is stored as a simple hash in localStorage
+   Active profile lives in sessionStorage (clears on tab close)
+══════════════════════════════════════════════════════════════ */
+
+const BUDGET_PROFILES = [
+  { id:"britt",    name:"Brittni", color:"#e85d8a", bg:"rgba(232,93,138,0.15)", initial:"B" },
+  { id:"christian",name:"Christian", color:"#3db87a", bg:"rgba(61,184,122,0.15)", initial:"C" },
+];
+
+let activeBudgetProfile = null; // set on unlock
+let _pinBuffer = [];
+let _pinTarget = null;
+let _pinSetupPhase = 1; // 1=choose, 2=confirm
+let _pinSetupFirst = "";
+
+/* ── Simple PIN hash (not crypto — just enough to avoid plaintext) ── */
+function hashPin(pin){ return pin.split("").reduce((h,c)=>((h<<5)-h)+c.charCodeAt(0)|0,0).toString(36); }
+
+function getPinKey(profileId){ return "budgetPin_"+profileId; }
+function getDataKey(profileId){ return "budgetData_"+profileId; }
+function getNidKey(profileId){ return "budgetNid_"+profileId; }
+
+function profileHasPin(profileId){ return !!localStorage.getItem(getPinKey(profileId)); }
+function verifyPin(profileId, pin){ return localStorage.getItem(getPinKey(profileId))===hashPin(pin); }
+function savePin(profileId, pin){ localStorage.setItem(getPinKey(profileId), hashPin(pin)); }
+
+/* ── Load / save budget data for active profile ── */
+function loadProfileBudgetData(){
+  if(!activeBudgetProfile)return;
+  const key=getDataKey(activeBudgetProfile);
+  const nidKey=getNidKey(activeBudgetProfile);
+  try{
+    const d=localStorage.getItem(key);
+    budgetData=d?JSON.parse(d):null;
+    budgetNid=parseInt(localStorage.getItem(nidKey)||"200");
+  }catch(e){budgetData=null;}
+  if(!budgetData||!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
+}
+
+function saveProfileBudgetData(){
+  if(!activeBudgetProfile)return;
+  localStorage.setItem(getDataKey(activeBudgetProfile), JSON.stringify(budgetData));
+  localStorage.setItem(getNidKey(activeBudgetProfile), String(budgetNid));
+}
+
+/* Override saveBudgetData to also save to profile key */
+const _origSaveBudgetData = saveBudgetData;
+saveBudgetData = function(){
+  _origSaveBudgetData();
+  if(activeBudgetProfile) saveProfileBudgetData();
+};
+
+function initBudgetDataForProfile(profileId){
+  // Each profile gets their own income/bills/etc
+  // Britt gets real data, Christian gets placeholder
+  const today=fd(new Date());
+  if(profileId==="britt"){
+    // Same as existing initBudgetDataV3 but keyed to this profile
+    initBudgetDataV3();
+  } else {
+    // Christian placeholder
+    budgetNid=1;
+    budgetData={
+      recurring:{
+        incomeSources:[{id:budgetNid++,name:"Income",hourlyRate:0,defaultHours:40,processingWeeks:2,startDate:today,endDate:null}],
+        autoTransfers:[{id:budgetNid++,name:"Savings",amount:0,bucket:"household"}],
+        bills:[
+          {id:budgetNid++,name:"Rent (share)",amount:0,frequency:"monthly",dueDay:1,isDebt:false},
+        ],
+        subscriptions:[],
+        variable:[
+          {id:budgetNid++,name:"Groceries",weeklyBudget:0},
+          {id:budgetNid++,name:"Eating Out",weeklyBudget:0},
+          {id:budgetNid++,name:"Entertainment",weeklyBudget:0},
+          {id:budgetNid++,name:"Misc",weeklyBudget:0},
+        ],
+        savings_household:[{id:budgetNid++,name:"Emergency Fund",goalTotal:0}],
+        savings_personal:[{id:budgetNid++,name:"Personal Savings",goalTotal:0}],
+      },
+      incomeWeeks:[],
+      expenses:[],
+      periods:{},
+    };
+    generateIncomeWeeks();
+  }
+  saveProfileBudgetData();
+}
+
+/* ── LOCK SCREEN RENDER ── */
+function renderBudgetLockScreen(){
+  const btns=document.getElementById("budget-profile-buttons");
+  if(!btns)return;
+  btns.innerHTML=BUDGET_PROFILES.map(p=>`
+    <div onclick="selectBudgetProfile('${p.id}')" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="width:64px;height:64px;border-radius:50%;background:${p.bg};border:2px solid ${p.color};display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:${p.color};transition:transform 0.15s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">
+        ${p.initial}
+      </div>
+      <div style="font-size:14px;font-weight:500;color:var(--text)">${p.name}</div>
+    </div>`).join("");
+}
+
+function selectBudgetProfile(profileId){
+  _pinTarget=profileId;
+  _pinBuffer=[];
+  const profile=BUDGET_PROFILES.find(p=>p.id===profileId);
+  if(!profileHasPin(profileId)){
+    // First time — set up PIN
+    _pinSetupPhase=1;_pinSetupFirst="";
+    document.getElementById("budget-profile-buttons").parentElement.style.display="none";
+    const setup=document.getElementById("budget-pin-setup");
+    setup.style.display="flex";
+    document.getElementById("budget-setup-name").textContent=profile.name;
+    document.getElementById("budget-setup-step").textContent="Choose a 4-digit PIN";
+    buildPinPad("budget-setup-pad","budget-setup-dots", onSetupPinDigit);
+    updatePinDots("budget-setup-dots",0);
+  } else {
+    // Enter PIN
+    document.getElementById("budget-profile-buttons").parentElement.style.display="none";
+    const entry=document.getElementById("budget-pin-entry");
+    entry.style.display="flex";
+    document.getElementById("budget-pin-name").textContent=profile.name;
+    document.getElementById("budget-pin-error").textContent="";
+    buildPinPad("budget-pin-pad","budget-pin-dots", onEnterPinDigit);
+    updatePinDots("budget-pin-dots",0);
+  }
+}
+
+function buildPinPad(padId, dotsId, onDigit){
+  const pad=document.getElementById(padId);if(!pad)return;
+  const digits=["1","2","3","4","5","6","7","8","9","","0","⌫"];
+  pad.innerHTML=digits.map((d,i)=>d===""?`<div></div>`:`
+    <button onclick="(${onDigit.toString()})('${d}')" style="width:64px;height:64px;border-radius:50%;border:1px solid var(--border);background:var(--tag-bg);font-size:${d==='⌫'?'20':'22'}px;font-weight:500;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.1s;display:flex;align-items:center;justify-content:center" onmousedown="this.style.background='var(--border)'" onmouseup="this.style.background='var(--tag-bg)'">
+      ${d}
+    </button>`).join("");
+}
+
+function updatePinDots(dotsId, count){
+  const el=document.getElementById(dotsId);if(!el)return;
+  el.innerHTML=Array.from({length:4},(_,i)=>`
+    <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);background:${i<count?'var(--today-color)':'transparent'};transition:background 0.15s"></div>`).join("");
+}
+
+function onEnterPinDigit(d){
+  if(d==="⌫"){_pinBuffer.pop();}
+  else if(_pinBuffer.length<4){_pinBuffer.push(d);}
+  updatePinDots("budget-pin-dots",_pinBuffer.length);
+  if(_pinBuffer.length===4){
+    if(verifyPin(_pinTarget,_pinBuffer.join(""))){
+      unlockBudget(_pinTarget);
+    } else {
+      document.getElementById("budget-pin-error").textContent="Incorrect PIN";
+      setTimeout(()=>{_pinBuffer=[];updatePinDots("budget-pin-dots",0);document.getElementById("budget-pin-error").textContent="";},800);
+    }
+  }
+}
+
+function onSetupPinDigit(d){
+  if(d==="⌫"){_pinBuffer.pop();}
+  else if(_pinBuffer.length<4){_pinBuffer.push(d);}
+  updatePinDots("budget-setup-dots",_pinBuffer.length);
+  if(_pinBuffer.length===4){
+    if(_pinSetupPhase===1){
+      _pinSetupFirst=_pinBuffer.join("");
+      _pinBuffer=[];
+      _pinSetupPhase=2;
+      document.getElementById("budget-setup-step").textContent="Confirm your PIN";
+      updatePinDots("budget-setup-dots",0);
+      buildPinPad("budget-setup-pad","budget-setup-dots",onSetupPinDigit);
+    } else {
+      if(_pinBuffer.join("")===_pinSetupFirst){
+        savePin(_pinTarget,_pinBuffer.join(""));
+        unlockBudget(_pinTarget);
+      } else {
+        document.getElementById("budget-setup-step").textContent="PINs didn't match — try again";
+        _pinBuffer=[];_pinSetupPhase=1;_pinSetupFirst="";
+        setTimeout(()=>{updatePinDots("budget-setup-dots",0);document.getElementById("budget-setup-step").textContent="Choose a 4-digit PIN";},900);
+      }
+    }
+  }
+}
+
+function budgetLockBack(){
+  _pinBuffer=[];_pinTarget=null;
+  document.getElementById("budget-pin-entry").style.display="none";
+  document.getElementById("budget-pin-setup").style.display="none";
+  document.getElementById("budget-profile-buttons").parentElement.style.display="";
+  renderBudgetLockScreen();
+}
+
+function unlockBudget(profileId){
+  activeBudgetProfile=profileId;
+  sessionStorage.setItem("budgetProfile",profileId);
+  const profile=BUDGET_PROFILES.find(p=>p.id===profileId);
+  // Show unlocked content
+  document.getElementById("budget-lock-screen").style.display="none";
+  document.getElementById("budget-unlocked-content").style.display="block";
+  // Update profile bar
+  const av=document.getElementById("budget-active-avatar");
+  if(av){av.textContent=profile.initial;av.style.background=profile.bg;av.style.color=profile.color;}
+  const nm=document.getElementById("budget-active-name");
+  if(nm)nm.textContent=profile.name;
+  // Load this profile's budget data
+  loadProfileBudgetData();
+  // Render budget
+  setBudgetMainTab("overview");
+}
+
+function lockBudget(){
+  activeBudgetProfile=null;
+  sessionStorage.removeItem("budgetProfile");
+  document.getElementById("budget-lock-screen").style.display="flex";
+  document.getElementById("budget-unlocked-content").style.display="none";
+  renderBudgetLockScreen();
+}
+
+/* ── Settings: change PIN ── */
+function openChangePinModal(profileId){
+  _pinTarget=profileId;_pinBuffer=[];_pinSetupPhase=1;_pinSetupFirst="";
+  const profile=BUDGET_PROFILES.find(p=>p.id===profileId);
+  document.getElementById("budget-setup-name").textContent=profile.name;
+  document.getElementById("budget-setup-step").textContent="Choose a new 4-digit PIN";
+  const setup=document.getElementById("budget-pin-setup");
+  // Temporarily show setup within unlocked view
+  const ls=document.getElementById("budget-lock-screen");
+  ls.style.display="flex";
+  document.getElementById("budget-unlocked-content").style.display="none";
+  document.getElementById("budget-profile-buttons").parentElement.style.display="none";
+  setup.style.display="flex";
+  buildPinPad("budget-setup-pad","budget-setup-dots",onSetupPinDigit);
+  updatePinDots("budget-setup-dots",0);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -4231,12 +4856,27 @@ function budgetNav(dir){
 
 /* ── OVERVIEW RENDER DISPATCHER ──────────────────────────────── */
 function renderBudgetPage(){
-  loadBudgetFromStore();autoUpdateIncomeStatuses();generateIncomeWeeks();
-  const now=new Date();
-  if(!budgetCurrentWeekStart)budgetCurrentWeekStart=getFridayWeekStart(now);
-  if(!budgetCurrentMonth)budgetCurrentMonth=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-  if(!budgetCurrentDate)budgetCurrentDate=fd(now);
-  setBudgetMainTab("overview");
+  // Check if there's an active session profile
+  const sessionProfile=sessionStorage.getItem("budgetProfile");
+  if(sessionProfile&&BUDGET_PROFILES.some(p=>p.id===sessionProfile)){
+    // Already unlocked this session
+    if(!activeBudgetProfile){
+      unlockBudget(sessionProfile);
+    } else {
+      loadProfileBudgetData();
+      autoUpdateIncomeStatuses();generateIncomeWeeks();
+      const now=new Date();
+      if(!budgetCurrentWeekStart)budgetCurrentWeekStart=getFridayWeekStart(now);
+      if(!budgetCurrentMonth)budgetCurrentMonth=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+      if(!budgetCurrentDate)budgetCurrentDate=fd(now);
+      setBudgetMainTab("overview");
+    }
+    return;
+  }
+  // Show lock screen
+  document.getElementById("budget-lock-screen").style.display="flex";
+  document.getElementById("budget-unlocked-content").style.display="none";
+  renderBudgetLockScreen();
 }
 
 function renderBudgetOverview(){
@@ -4640,6 +5280,9 @@ function deleteExpenseB(id){
 /* ── SETTINGS TAB ────────────────────────────────────────────── */
 function renderBudgetSettings(){
   const rec=budgetData.recurring;
+  const profile=BUDGET_PROFILES.find(p=>p.id===activeBudgetProfile);
+  const piEl=document.getElementById("bs-profile-info");
+  if(piEl&&profile)piEl.textContent="Currently viewing: "+profile.name+"'s budget";
   // Income sources
   const isEl=document.getElementById("bs-income-sources");
   if(isEl)isEl.innerHTML=rec.incomeSources.map(s=>`<div class="rec-edit-row" onclick="openEditIncomeSource(${s.id})" style="cursor:pointer">
