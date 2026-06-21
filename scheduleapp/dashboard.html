@@ -576,6 +576,52 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 </div>
 
+
+<!-- PERSONAL HOME (shown when ?profile=britt or ?profile=christian) -->
+<div class="page" id="page-personal-home">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div>
+      <div id="ph-greeting" style="font-size:22px;font-weight:600"></div>
+      <div id="ph-date" style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px"></div>
+    </div>
+    <div id="ph-time" style="font-size:28px;font-weight:300;letter-spacing:-1px;color:var(--text)"></div>
+  </div>
+  <div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="section-label" style="margin-bottom:0" id="ph-day-label">Today</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="padding:4px 8px" onclick="phDayNav(-1)"><i class="ti ti-chevron-left"></i></button>
+        <button class="btn" style="padding:4px 8px;font-size:15px" onclick="phDayNav(0)">Today</button>
+        <button class="btn" style="padding:4px 8px" onclick="phDayNav(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card"><div class="col-header" style="margin-bottom:8px"><i class="ti ti-home" style="font-size:18px"></i> Chores <span class="count-badge" id="ph-chore-count">0</span></div><div id="ph-chores"></div></div>
+      <div class="card"><div class="col-header" style="margin-bottom:8px"><i class="ti ti-check" style="font-size:18px"></i> To-do <span class="count-badge" id="ph-todo-count">0</span></div><div id="ph-todos"></div></div>
+      <div class="card"><div class="col-header" style="margin-bottom:8px"><i class="ti ti-calendar-event" style="font-size:18px"></i> Appointments <span class="count-badge" id="ph-appt-count">0</span></div><div id="ph-appts"></div></div>
+    </div>
+  </div>
+  <div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="section-label" style="margin-bottom:0" id="ph-wsd-label">This week</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="padding:4px 8px" onclick="phWsdNav(-1)"><i class="ti ti-chevron-left"></i></button>
+        <button class="btn" style="padding:4px 8px;font-size:15px" onclick="phWsdNav(0)">Now</button>
+        <button class="btn" style="padding:4px 8px" onclick="phWsdNav(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="week-strip" id="ph-week-strip"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="col-header" style="margin-bottom:10px"><i class="ti ti-shopping-cart"></i> Shopping <span class="count-badge" id="ph-shop-count">0</span><button class="btn" style="margin-left:auto;padding:3px 8px;font-size:15px" onclick="openAddShopItem()"><i class="ti ti-plus"></i></button></div>
+      <div id="ph-shop-list" style="flex:1;overflow-y:auto;max-height:180px"></div>
+    </div>
+    <div class="card lock-card" id="ph-lock-card"></div>
+  </div>
+  <button class="btn btn-primary" onclick="openAddModal(null)" style="width:100%;justify-content:center;padding:12px;font-size:16px"><i class="ti ti-plus"></i> Add task</button>
+</div>
+
 <div class="page" id="page-calendar">
   <div class="cal-toolbar">
     <div class="nav-group">
@@ -596,6 +642,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
   <div class="filter-row" id="filter-row"></div>
+<div class="filter-row" id="person-filter-row" style="margin-top:-6px"></div>
   <div id="cal"></div>
   <div class="cal-person-panels">
     <div class="cal-person-panel" id="panel-britt-wrap" ondragover="panelDragOver(event,'britt')" ondragleave="panelDragLeave(event)" ondrop="panelDrop(event,'britt')">
@@ -2125,6 +2172,7 @@ let shopNid=JSON.parse(localStorage.getItem("shopNid")||"1");
 let wsdWeekOffset=0; // 0=this week, -1=last week, +1=next week
 let homeDayOffset=0; // 0=today, 1=tomorrow, -1=yesterday etc
 let activeFilters=new Set(ALL_TYPES);
+let activePersonFilters=new Set(["britt","christian","unassigned"]); // all on by default
 // workHours now in members[]
 
 /* ── MEMBER SYSTEM ── */
@@ -2829,13 +2877,15 @@ rollover();
 function goTab(id,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
-  document.getElementById("page-"+id).classList.add("active");
+  const pageEl=document.getElementById("page-"+id);
+  if(pageEl)pageEl.classList.add("active");
   if(btn)btn.classList.add("active");
-  const TITLES={home:"Home",calendar:"Calendar",shopping:"Shopping",budget:"Budget",lights:"Lights",rules:"Rules & Automations",devices:"Devices",settings:"Settings"};
+  const TITLES={home:"Home","personal-home":"Home",calendar:"Calendar",shopping:"Shopping",budget:"Budget",lights:"Lights",rules:"Rules & Automations",devices:"Devices",settings:"Settings"};
   const ttEl=document.getElementById("topbar-title");if(ttEl)ttEl.textContent=TITLES[id]||id;
   closeSidebar();
   if(id==="home")renderHome();
-  if(id==="calendar"){buildFilterRow();render();}
+  if(id==="personal-home")renderPersonalHome();
+  if(id==="calendar"){buildFilterRow();buildPersonFilterRow();render();}
   if(id==="shopping")renderShopPage();
   if(id==="budget")renderBudgetPage();
   if(id==="lights")renderLights();
@@ -2860,6 +2910,174 @@ function goToSettings(){
 }
 
 /* CLOCK */
+/* ══════════════════════════════════════════════════════════════
+   PERSONAL HOME SCREEN
+   Shown when ?profile=britt or ?profile=christian is in URL
+══════════════════════════════════════════════════════════════ */
+
+let urlProfile = null; // "britt" | "christian" | null
+let phDayOffset = 0;
+let phWsdOffset = 0;
+
+function detectUrlProfile(){
+  const params = new URLSearchParams(window.location.search);
+  const p = params.get("profile");
+  if(p && ["britt","christian"].includes(p)){
+    urlProfile = p;
+    return true;
+  }
+  return false;
+}
+
+function initPersonalHome(){
+  // Swap "Home" nav tab to go to personal home
+  const homeTab = document.querySelector('.nav-tab[onclick*="home"]');
+  if(homeTab) homeTab.setAttribute("onclick", "goTab('personal-home',this)");
+  // Activate personal home
+  goTab("personal-home", homeTab);
+}
+
+function renderPersonalHome(){
+  if(!urlProfile) return;
+  const profile = urlProfile;
+  const m = getMember(profile);
+  const color = m?.baseColor || (profile==="britt"?"#e85d8a":"#3db87a");
+  const name = m?.name || (profile==="britt"?"Brittni":"Christian");
+
+  // Greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const grEl = document.getElementById("ph-greeting");
+  if(grEl){ grEl.textContent = greeting + ", " + name + "!"; grEl.style.color = color; }
+
+  // Date/time
+  const now = new Date();
+  const dtEl = document.getElementById("ph-date");
+  if(dtEl) dtEl.textContent = now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}).toUpperCase();
+  const tmEl = document.getElementById("ph-time");
+  if(tmEl) tmEl.textContent = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+
+  // Day offset label
+  const dayBase = new Date();
+  dayBase.setDate(dayBase.getDate() + phDayOffset);
+  const tod = fd(dayBase);
+  const lblEl = document.getElementById("ph-day-label");
+  if(lblEl){
+    if(phDayOffset===0) lblEl.textContent="Today";
+    else if(phDayOffset===1) lblEl.textContent="Tomorrow";
+    else if(phDayOffset===-1) lblEl.textContent="Yesterday";
+    else lblEl.textContent = dayBase.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});
+  }
+
+  // Filter tasks for this person on this day
+  const allTasks = tasks.filter(t=>t.date===tod&&t.person===profile&&t.type!=="work"&&!t.skipped);
+  const chores = allTasks.filter(t=>t.type==="chore");
+  const todos = allTasks.filter(t=>t.type==="todo");
+  const appts = allTasks.filter(t=>t.type==="appointment");
+
+  function taskRowPh(t){
+    const {text} = memberColor(t);
+    const tt = t.time ? `<span class="time-tag">${fmtTime(t.time)}</span>` : "";
+    return `<div class="task-row${t.done?" done":""}" onclick="toggleDone(${t.id});renderPersonalHome()">
+      <div class="cb"></div>
+      <div class="task-title" style="color:${text}">${t.title}</div>${tt}
+      <button class="edit-pencil" onclick="event.stopPropagation();openEditModal(${t.id})"><i class="ti ti-pencil"></i></button>
+    </div>`;
+  }
+
+  const chEl = document.getElementById("ph-chores");
+  const chCt = document.getElementById("ph-chore-count");
+  if(chEl) chEl.innerHTML = chores.length ? chores.map(taskRowPh).join("") : '<div class="empty">None</div>';
+  if(chCt) chCt.textContent = chores.length;
+
+  const tdEl = document.getElementById("ph-todos");
+  const tdCt = document.getElementById("ph-todo-count");
+  if(tdEl) tdEl.innerHTML = todos.length ? todos.map(taskRowPh).join("") : '<div class="empty">None</div>';
+  if(tdCt) tdCt.textContent = todos.length;
+
+  const apEl = document.getElementById("ph-appts");
+  const apCt = document.getElementById("ph-appt-count");
+  if(apEl) apEl.innerHTML = appts.length ? appts.map(taskRowPh).join("") : '<div class="empty">None</div>';
+  if(apCt) apCt.textContent = appts.length;
+
+  // Shopping
+  renderPhShopList();
+
+  // Lock card
+  const lcEl = document.getElementById("ph-lock-card");
+  if(lcEl){
+    const isLocked = lock.status==="locked";
+    const clr = isLocked?"#3db87a":"#e05555";
+    lcEl.innerHTML=`<div class="lock-icon-wrap ${isLocked?"locked":"unlocked"}"><i class="ti ${isLocked?"ti-lock":"ti-lock-open"}"></i></div>
+      <div class="lock-info">
+        <div class="lock-name">${lock.name}</div>
+        <div class="lock-status ${isLocked?"locked":"unlocked"}"><span class="lock-status-dot"></span>${isLocked?"Locked":"Unlocked"}</div>
+      </div>
+      <button class="lock-toggle-btn ${isLocked?"to-unlock":"to-lock"}" onclick="handleLockToggle()">${isLocked?"Unlock":"Lock"}</button>`;
+  }
+
+  // Week strip
+  renderPhWeekStrip();
+
+  // Attach touch draggables
+  attachTouchDraggables();
+}
+
+function renderPhShopList(){
+  const el = document.getElementById("ph-shop-list");
+  const ct = document.getElementById("ph-shop-count");
+  if(!el) return;
+  const unchecked = shoppingList.filter(i=>!i.checked);
+  if(ct) ct.textContent = unchecked.length;
+  if(!unchecked.length){ el.innerHTML='<div class="empty">All clear</div>'; return; }
+  el.innerHTML = unchecked.slice(0,10).map(i=>`
+    <div class="shop-item${i.checked?" checked":""}">
+      <div class="shop-cb" onclick="toggleShopItem(${i.id});renderPersonalHome()"></div>
+      <span class="shop-label">${i.name}</span>
+      ${i.qty?`<span class="shop-qty">${i.qty}</span>`:""}
+    </div>`).join("");
+}
+
+function renderPhWeekStrip(){
+  const strip = document.getElementById("ph-week-strip");
+  if(!strip) return;
+  const todStr = fd(new Date());
+  const sun = new Date();
+  sun.setDate(sun.getDate() - sun.getDay() + phWsdOffset*7);
+  strip.innerHTML = "";
+  for(let i=0;i<7;i++){
+    const d=new Date(sun);d.setDate(sun.getDate()+i);
+    const ds=fd(d);
+    const dt=tasks.filter(t=>t.date===ds&&t.person===urlProfile&&t.type!=="work"&&!t.skipped);
+    const col=document.createElement("div");
+    col.className="wsd"+(ds===todStr?" today-col":"");
+    col.dataset.date=ds;
+    let h=`<div class="wsd-label">${DAYS[i].slice(0,3)}</div><div class="wsd-num">${d.getDate()}</div><div class="wsd-scroll">`;
+    dt.forEach(t=>{
+      const{bg,text}=memberColor(t);
+      const done=t.done?"text-decoration:line-through;opacity:0.45":"";
+      h+=`<div class="wsd-ev-row" style="${done}">
+        <div class="wsd-ev-pill" style="background:${bg};color:${text};flex:1;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis" onclick="event.stopPropagation();toggleDone(${t.id});renderPersonalHome()">${t.title}</div>
+      </div>`;
+    });
+    h+=`</div>`;
+    col.innerHTML=h;
+    strip.appendChild(col);
+  }
+  // Week label
+  const lbl = document.getElementById("ph-wsd-label");
+  if(lbl) lbl.textContent = phWsdOffset===0?"This week":phWsdOffset===-1?"Last week":phWsdOffset===1?"Next week":(phWsdOffset>0?"+"+phWsdOffset+" weeks":phWsdOffset+" weeks");
+}
+
+function phDayNav(dir){
+  if(dir===0) phDayOffset=0; else phDayOffset+=dir;
+  renderPersonalHome();
+}
+function phWsdNav(dir){
+  if(dir===0) phWsdOffset=0; else phWsdOffset+=dir;
+  renderPhWeekStrip();
+}
+
 function clock(){
   const n=new Date();
   document.getElementById("home-date").textContent=n.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}).toUpperCase();
@@ -2869,6 +3087,29 @@ function clock(){
 clock();setInterval(clock,10000);
 
 /* FILTERS */
+function buildPersonFilterRow(){
+  const el=document.getElementById("person-filter-row");if(!el)return;
+  const people=[
+    {id:"britt",   label:"Brittni",   color:"var(--britt-t)"},
+    {id:"christian",label:"Christian", color:"var(--chris-t)"},
+    {id:"unassigned",label:"Unclaimed",color:"var(--muted)"},
+  ];
+  el.innerHTML=people.map(p=>`
+    <button class="filter-btn${activePersonFilters.has(p.id)?" active":""}"
+      style="${activePersonFilters.has(p.id)?"border-color:"+p.color+";color:"+p.color+"":""}"
+      onclick="togglePersonFilter('${p.id}',this)" data-person="${p.id}">
+      ${p.label}
+    </button>`).join("");
+}
+
+function togglePersonFilter(person, btn){
+  if(activePersonFilters.has(person)) activePersonFilters.delete(person);
+  else activePersonFilters.add(person);
+  buildPersonFilterRow();
+  render();
+  renderPersonPanels();
+}
+
 function buildFilterRow(){
   const allOn=activeFilters.size===ALL_TYPES.length;
   let h=`<button class="filter-btn f-all${allOn?" active":""}" onclick="toggleAll()">All</button>`;
@@ -2879,13 +3120,11 @@ function toggleFilter(type,btn){
   if(activeFilters.has(type))activeFilters.delete(type);else activeFilters.add(type);
   btn.classList.toggle("active",activeFilters.has(type));
   const ab=document.querySelector(".f-all");if(ab)ab.classList.toggle("active",activeFilters.size===ALL_TYPES.length);
-  render();
-  renderPersonPanels();
+  render();renderPersonPanels();
 }
 function toggleAll(){
   if(activeFilters.size===ALL_TYPES.length)activeFilters.clear();else ALL_TYPES.forEach(t=>activeFilters.add(t));
-  buildFilterRow();render();
-  renderPersonPanels();
+  buildFilterRow();render();renderPersonPanels();
 }
 
 /* HOME TASK ROW */
@@ -3126,7 +3365,7 @@ function getViewRange(){
   const yr=cur.getFullYear(),mo=cur.getMonth();return{start:fd(new Date(yr,mo,1)),end:fd(new Date(yr,mo+1,0))};
 }
 function tf(ds){
-  const dt=tasks.filter(t=>activeFilters.has(t.type)&&t.date===ds&&!t.skipped);
+  const dt=tasks.filter(t=>activeFilters.has(t.type)&&activePersonFilters.has(t.person||"unassigned")&&t.date===ds&&!t.skipped);
   return [...dt.filter(t=>t.type==="work"),...dt.filter(t=>t.type!=="work")];
 }
 
@@ -3159,6 +3398,7 @@ function renderPersonPanels(){
   // - Non-recurring tasks in the view range show normally
   // - For each recurring group, show only the NEXT undone instance (globally, not just in range)
   function buildDisplayList(person){
+    if(!activePersonFilters.has(person))return{oneOff:[],recurNext:[]};
     const all=tasks.filter(t=>t.person===person&&t.type!=="work"&&!t.skipped&&activeFilters.has(t.type));
     // Partition into one-off and recurring
     const oneOff=all.filter(t=>!t.recurGroupId&&t.date>=start&&t.date<=end);
@@ -3216,9 +3456,9 @@ function renderPersonPanels(){
   renderPanel("panel-christian","christian",christianColor);
 
   // Unclaimed: only non-recurring or next recurring instance, in view range
-  const uOneOff=tasks.filter(t=>t.person==="unassigned"&&!t.recurGroupId&&t.date>=start&&t.date<=end&&t.type!=="work"&&!t.skipped&&activeFilters.has(t.type));
+  const uOneOff=!activePersonFilters.has("unassigned")?[]:tasks.filter(t=>t.person==="unassigned"&&!t.recurGroupId&&t.date>=start&&t.date<=end&&t.type!=="work"&&!t.skipped&&activeFilters.has(t.type));
   const uRecurSeen=new Set();
-  const uRecurNext=tasks.filter(t=>t.person==="unassigned"&&t.recurGroupId&&!t.done&&!t.skipped&&activeFilters.has(t.type))
+  const uRecurNext=!activePersonFilters.has("unassigned")?[]:tasks.filter(t=>t.person==="unassigned"&&t.recurGroupId&&!t.done&&!t.skipped&&activeFilters.has(t.type))
     .sort((a,b)=>a.date.localeCompare(b.date))
     .filter(t=>{if(uRecurSeen.has(t.recurGroupId))return false;uRecurSeen.add(t.recurGroupId);return true;});
   const allU=[...uOneOff,...uRecurNext];
@@ -5676,9 +5916,16 @@ _debouncedPush=function(){
   await pullFromServer(); // wait for real saved data first
   fetchLastUpdated();
   _bootComplete=true;
-  renderHome(); // now safe to render/push local state
+  // Check for personal profile URL
+  if(detectUrlProfile()){
+    initPersonalHome();
+  } else {
+    renderHome();
+  }
   setInterval(pullFromServer,60000);
   setInterval(fetchLastUpdated,300000);
+  // Personal home clock refresh
+  if(urlProfile) setInterval(renderPersonalHome, 60000);
 })();
 </script>
 </body>
