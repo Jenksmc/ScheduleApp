@@ -932,10 +932,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">SAVINGS</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Household</div>
-          <div id="w-sav-household"></div>
-          <div style="font-size:13px;color:var(--muted);margin:8px 0 6px">Personal</div>
-          <div id="w-sav-personal"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+            <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:3px">HOUSEHOLD</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-hh-amt">$0</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:3px">PERSONAL</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-pers-amt">$0</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -978,8 +984,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div class="budget-card bcompact-card"><div class="bcompact-title">HOUSEHOLD SAVINGS</div><div id="m-sav-household"></div></div>
-        <div class="budget-card bcompact-card"><div class="bcompact-title">PERSONAL SAVINGS</div><div id="m-sav-personal"></div></div>
+        <div class="budget-card bcompact-card">
+          <div class="bcompact-title">HOUSEHOLD SAVINGS</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add;margin-top:6px" id="m-sav-household">$0</div>
+        </div>
+        <div class="budget-card bcompact-card">
+          <div class="bcompact-title">PERSONAL SAVINGS</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add;margin-top:6px" id="m-sav-personal">$0</div>
+        </div>
       </div>
     </div>
 
@@ -1119,15 +1131,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-receipt"></i> Variable Budgets</div><button class="btn" onclick="openAddRecurring('variable')"><i class="ti ti-plus"></i></button></div>
       <div id="bs-var-list"></div>
     </div>
-    <!-- Savings goals -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-      <div class="budget-card">
-        <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-home"></i> Household Goals</div><button class="btn" onclick="openAddRecurring('savings_household')"><i class="ti ti-plus"></i></button></div>
-        <div id="bs-sav-hh-list"></div>
+    <!-- Savings -->
+    <div class="budget-card" style="margin-bottom:14px">
+      <div class="budget-section-hdr">
+        <div class="bsect-title"><i class="ti ti-piggy-bank"></i> Savings</div>
       </div>
-      <div class="budget-card">
-        <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-user"></i> Personal Goals</div><button class="btn" onclick="openAddRecurring('savings_personal')"><i class="ti ti-plus"></i></button></div>
-        <div id="bs-sav-pers-list"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500">Household</div>
+          <div id="bs-sav-hh-total" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add;margin-bottom:4px">$0.00</div>
+          <div id="bs-sav-hh-list"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500">Personal</div>
+          <div id="bs-sav-pers-total" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add;margin-bottom:4px">$0.00</div>
+          <div id="bs-sav-pers-list"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -5103,12 +5122,8 @@ function initBudgetDataV3(){
         {id:budgetNid++,name:"Car",weeklyBudget:50},{id:budgetNid++,name:"Shopping",weeklyBudget:0},
         {id:budgetNid++,name:"Entertainment",weeklyBudget:0},{id:budgetNid++,name:"Misc",weeklyBudget:0},
       ],
-      savings_household:[
-        {id:budgetNid++,name:"Emergency Funds",goalTotal:10000},{id:budgetNid++,name:"House Deposit",goalTotal:50000},
-      ],
-      savings_personal:[
-        {id:budgetNid++,name:"Holiday",goalTotal:2000},
-      ],
+      savings_household:[],
+      savings_personal:[],
     },
     // Income weeks: auto-generated every Thursday
     // {id, weekStartDate, hours, rate, status:"pending"|"received", payDate, sourceId}
@@ -5431,8 +5446,10 @@ function renderWeeklyView(){
   renderBlineGroup("w-bills-lines","w-bills-total",rec.bills,period,"weekly");
   renderBlineGroup("w-subs-lines","w-subs-total",rec.subscriptions,period,"weekly");
   renderVarLines("w-var-lines","w-var-total",rec.variable,varActuals,"weekly");
-  renderSavingsGroup("w-sav-household",rec.savings_household,period);
-  renderSavingsGroup("w-sav-personal",rec.savings_personal,period);
+  const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  t("w-sav-hh-amt",$f(hhAmt));
+  t("w-sav-pers-amt",$f(persAmt));
 
   setTimeout(()=>{
     drawBarChart("chart-inc-exp",["Income","Bills","Subs","Variable","Savings"],[weekIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
@@ -5477,8 +5494,10 @@ function renderMonthlyView(){
   renderBlineGroup("m-bills-lines","m-bills-total",rec.bills,period,"monthly");
   renderBlineGroup("m-subs-lines","m-subs-total",rec.subscriptions,period,"monthly");
   renderVarLines("m-var-lines","m-var-total",rec.variable,varActuals,"monthly");
-  renderSavingsGroup("m-sav-household",rec.savings_household,period);
-  renderSavingsGroup("m-sav-personal",rec.savings_personal,period);
+  const mHhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const mPersAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  t("m-sav-household",$f(mHhAmt));
+  t("m-sav-personal",$f(mPersAmt));
 
   setTimeout(()=>{
     drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Variable","Savings"],[monthIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
@@ -5740,8 +5759,19 @@ function renderBudgetSettings(){
   renderRecEditList("bs-bills-list",rec.bills,"bills",r=>`${r.name} — ${$f(r.amount)}/mo${r.isDebt?" (debt)":""}`);
   renderRecEditList("bs-subs-list",rec.subscriptions,"subscriptions",r=>`${r.name} — ${$f(r.amount)}/mo`);
   renderRecEditList("bs-var-list",rec.variable,"variable",r=>`${r.name} — ${$f(r.weeklyBudget||0)}/wk budget`);
-  renderRecEditList("bs-sav-hh-list",rec.savings_household,"savings_household",r=>`${r.name} — goal: ${$f(r.goalTotal)}`);
-  renderRecEditList("bs-sav-pers-list",rec.savings_personal,"savings_personal",r=>`${r.name} — goal: ${$f(r.goalTotal)}`);
+  // Savings - show total amounts logged, no sub-goals
+  const allExps = budgetData.expenses||[];
+  const hhSaved = allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persSaved = allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const hhTotEl=document.getElementById("bs-sav-hh-total");if(hhTotEl)hhTotEl.textContent=$f(hhSaved);
+  const persTotEl=document.getElementById("bs-sav-pers-total");if(persTotEl)persTotEl.textContent=$f(persSaved);
+  // Recent savings entries
+  const hhExps=allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="household").slice(-5).reverse();
+  const persExps=allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").slice(-5).reverse();
+  const hhEl=document.getElementById("bs-sav-hh-list");
+  if(hhEl)hhEl.innerHTML=hhExps.length?hhExps.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${e.date}</span><span style="font-family:'DM Mono',monospace;font-weight:600">${$f(e.amount)}</span></div>`).join(""):'<div class="empty-msg" style="font-size:13px">No transfers yet</div>';
+  const persEl=document.getElementById("bs-sav-pers-list");
+  if(persEl)persEl.innerHTML=persExps.length?persExps.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${e.date}</span><span style="font-family:'DM Mono',monospace;font-weight:600">${$f(e.amount)}</span></div>`).join(""):'<div class="empty-msg" style="font-size:13px">No transfers yet</div>';
 }
 
 function renderRecEditList(elId,items,type,labelFn){
