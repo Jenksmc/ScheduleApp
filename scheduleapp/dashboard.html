@@ -847,6 +847,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- ══ OVERVIEW TAB ══════════════════════════════════════════ -->
   <div id="btab-overview-content">
+    <!-- MOBILE budget view (shown only in mobile-mode) -->
+    <div id="mobile-budget-view" style="display:none"></div>
+    <!-- DESKTOP budget view -->
+    <div id="desktop-budget-view">
     <!-- Period nav + view dropdown -->
     <div class="budget-period-nav" style="margin-bottom:14px">
       <button class="cnav-btn" onclick="budgetNav(-1)"><i class="ti ti-chevron-left"></i></button>
@@ -1020,6 +1024,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div id="d-expenses-list"></div>
       </div>
     </div>
+    </div><!-- /desktop-budget-view -->
   </div>
 
   <!-- ══ TRACKERS TAB ═══════════════════════════════════════════ -->
@@ -5301,6 +5306,11 @@ function renderBudgetOverview(){
     renderMobileBudgetView();
     return;
   }
+  // Ensure desktop div is visible on non-mobile
+  const mobileDiv=document.getElementById("mobile-budget-view");
+  const desktopDiv=document.getElementById("desktop-budget-view");
+  if(mobileDiv)mobileDiv.style.display="none";
+  if(desktopDiv)desktopDiv.style.display="block";
   if(budgetView==="weekly")renderWeeklyView();
   else if(budgetView==="monthly")renderMonthlyView();
   else if(budgetView==="daily")renderDailyView();
@@ -5415,7 +5425,12 @@ function renderMobileBudgetView(){
     periodLabel=s2.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+e2.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
   }
 
-  const content=document.getElementById("btab-overview-content");
+  // Show mobile div, hide desktop div
+  const mobileDiv=document.getElementById("mobile-budget-view");
+  const desktopDiv=document.getElementById("desktop-budget-view");
+  if(mobileDiv)mobileDiv.style.display="block";
+  if(desktopDiv)desktopDiv.style.display="none";
+  const content=mobileDiv;
   if(!content)return;
 
   // Pre-compute summary HTML to avoid IIFE issues in template literals
