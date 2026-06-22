@@ -606,6 +606,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .mobile-mode .lock-status { font-size: 13px; }
 .mobile-mode .lock-icon-wrap { width: 42px; height: 42px; flex-shrink: 0; }
 
+/* BUDGET SETTINGS ACCORDION */
+.bs-acc-row{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;user-select:none}
+.bs-acc-row:hover{background:var(--tag-bg)}
+.bs-acc-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.bs-acc-info{flex:1;min-width:0}
+.bs-acc-title{font-size:15px;font-weight:500;color:var(--text)}
+.bs-acc-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.bs-acc-chevron{font-size:16px;color:var(--muted);transition:transform 0.2s;flex-shrink:0}
+.bs-acc-chevron.open{transform:rotate(90deg)}
+.bs-acc-body{display:none;border-bottom:1px solid var(--border);background:var(--tag-bg)}
+.bs-acc-body.open{display:block}
+
 </style>
 </head>
 <body data-theme="dark">
@@ -1099,53 +1111,102 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- ══ SETTINGS TAB ══════════════════════════════════════════ -->
   <div id="btab-bsettings-content" style="display:none">
-    <!-- Profile & PIN -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-shield-lock"></i> Profile & PIN</div></div>
-      <div id="bs-profile-info" style="font-size:14px;color:var(--muted);margin-bottom:10px"></div>
-      <button class="btn" onclick="openChangePinModal(activeBudgetProfile)"><i class="ti ti-key"></i> Change PIN</button>
-    </div>
-    <!-- Income config -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-cash"></i> Income Sources</div><button class="btn" onclick="openAddIncomeSource()"><i class="ti ti-plus"></i></button></div>
-      <div id="bs-income-sources"></div>
-    </div>
-    <!-- Savings auto-transfer config -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-transfer"></i> Auto-Transfers</div><button class="btn" onclick="openAddAutoTransfer()"><i class="ti ti-plus"></i></button></div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:10px">Recurring savings transfers per paycheck</div>
-      <div id="bs-auto-transfers"></div>
-    </div>
-    <!-- Bills & Debt -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-file-invoice"></i> Bills & Debt</div><button class="btn" onclick="openAddRecurring('bills')"><i class="ti ti-plus"></i></button></div>
-      <div id="bs-bills-list"></div>
-    </div>
-    <!-- Subscriptions -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-device-tv"></i> Subscriptions</div><button class="btn" onclick="openAddRecurring('subscriptions')"><i class="ti ti-plus"></i></button></div>
-      <div id="bs-subs-list"></div>
-    </div>
-    <!-- Variable budgets -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-receipt"></i> Variable Budgets</div><button class="btn" onclick="openAddRecurring('variable')"><i class="ti ti-plus"></i></button></div>
-      <div id="bs-var-list"></div>
-    </div>
-    <!-- Savings -->
-    <div class="budget-card" style="margin-bottom:14px">
-      <div class="budget-section-hdr">
-        <div class="bsect-title"><i class="ti ti-piggy-bank"></i> Savings</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500">Household</div>
-          <div id="bs-sav-hh-total" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add;margin-bottom:4px">$0.00</div>
-          <div id="bs-sav-hh-list"></div>
+    <div class="budget-card" id="bs-rows-container">
+      <!-- Profile & PIN -->
+      <div class="bs-acc-row" onclick="bsToggle('pin')">
+        <div class="bs-acc-icon" style="background:rgba(55,138,221,0.15);color:#378add"><i class="ti ti-shield-lock"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Profile & PIN</div>
+          <div class="bs-acc-sub" id="bs-pin-sub">Manage your PIN</div>
         </div>
-        <div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500">Personal</div>
-          <div id="bs-sav-pers-total" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add;margin-bottom:4px">$0.00</div>
-          <div id="bs-sav-pers-list"></div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-pin"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-pin">
+        <div style="padding:14px 16px">
+          <div style="font-size:14px;color:var(--muted);margin-bottom:10px" id="bs-profile-info"></div>
+          <button class="btn" onclick="openChangePinModal(activeBudgetProfile)"><i class="ti ti-key"></i> Change PIN</button>
+        </div>
+      </div>
+
+      <!-- Income -->
+      <div class="bs-acc-row" onclick="bsToggle('income')">
+        <div class="bs-acc-icon" style="background:rgba(61,184,122,0.15);color:#3db87a"><i class="ti ti-cash"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Income sources</div>
+          <div class="bs-acc-sub" id="bs-income-sub">—</div>
+        </div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-income"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-income">
+        <div style="padding:0 16px 14px">
+          <button class="btn" style="margin-bottom:10px;margin-top:14px" onclick="openAddIncomeSource()"><i class="ti ti-plus"></i> Add source</button>
+          <div id="bs-income-sources"></div>
+        </div>
+      </div>
+
+      <!-- Bills & Debt -->
+      <div class="bs-acc-row" onclick="bsToggle('bills')">
+        <div class="bs-acc-icon" style="background:rgba(224,160,64,0.15);color:#e0a040"><i class="ti ti-file-invoice"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Bills & debt</div>
+          <div class="bs-acc-sub" id="bs-bills-sub">—</div>
+        </div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-bills"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-bills">
+        <div style="padding:0 16px 14px">
+          <button class="btn" style="margin-bottom:10px;margin-top:14px" onclick="openAddRecurring('bills')"><i class="ti ti-plus"></i> Add bill</button>
+          <div id="bs-bills-list"></div>
+        </div>
+      </div>
+
+      <!-- Subscriptions -->
+      <div class="bs-acc-row" onclick="bsToggle('subs')">
+        <div class="bs-acc-icon" style="background:rgba(191,90,242,0.15);color:#bf5af2"><i class="ti ti-device-tv"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Subscriptions</div>
+          <div class="bs-acc-sub" id="bs-subs-sub">—</div>
+        </div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-subs"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-subs">
+        <div style="padding:0 16px 14px">
+          <button class="btn" style="margin-bottom:10px;margin-top:14px" onclick="openAddRecurring('subscriptions')"><i class="ti ti-plus"></i> Add subscription</button>
+          <div id="bs-subs-list"></div>
+        </div>
+      </div>
+
+      <!-- Savings -->
+      <div class="bs-acc-row" onclick="bsToggle('savings')">
+        <div class="bs-acc-icon" style="background:rgba(55,138,221,0.15);color:#378add"><i class="ti ti-piggy-bank"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Savings</div>
+          <div class="bs-acc-sub" id="bs-savings-sub">—</div>
+        </div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-savings"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-savings">
+        <div style="padding:0 16px 14px">
+          <div style="font-size:13px;color:var(--muted);margin:14px 0 8px">Recurring savings transfers — deducted from variable budget pool</div>
+          <button class="btn" style="margin-bottom:10px" onclick="openAddSavingsTransfer()"><i class="ti ti-plus"></i> Add transfer</button>
+          <div id="bs-savings-list"></div>
+        </div>
+      </div>
+
+      <!-- Variable categories -->
+      <div class="bs-acc-row" onclick="bsToggle('var')" style="border-bottom:none">
+        <div class="bs-acc-icon" style="background:rgba(232,93,138,0.15);color:#e85d8a"><i class="ti ti-receipt"></i></div>
+        <div class="bs-acc-info">
+          <div class="bs-acc-title">Variable expense categories</div>
+          <div class="bs-acc-sub" id="bs-var-sub">—</div>
+        </div>
+        <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-var"></i>
+      </div>
+      <div class="bs-acc-body" id="bs-body-var">
+        <div style="padding:0 16px 14px">
+          <div style="font-size:13px;color:var(--muted);margin:14px 0 8px">Add or remove categories. Budget amounts are set per week/month in the Overview tab.</div>
+          <button class="btn" style="margin-bottom:10px" onclick="openAddRecurring('variable')"><i class="ti ti-plus"></i> Add category</button>
+          <div id="bs-var-list"></div>
         </div>
       </div>
     </div>
@@ -1423,6 +1484,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <div class="mfooter">
         <button class="btn-cancel" onclick="closeModal('modal-adjust-var')">Cancel</button>
         <button class="btn-save" onclick="saveAdjustVarBudget()">Save for this week</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVINGS TRANSFER MODAL -->
+<div id="modal-savings-transfer" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-savings-transfer')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:380px">
+      <div class="modal-hdr"><h3 id="st-heading">Add Savings Transfer</h3><button class="close-x" onclick="closeModal('modal-savings-transfer')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div class="field"><label>Name</label><input type="text" id="st-name" placeholder="e.g. Emergency Fund"/></div>
+        <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="st-amount" placeholder="557"/></div>
+        <div class="field"><label>Frequency</label>
+          <select id="st-freq">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly" selected>Every 2 weeks (per paycheck)</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div class="field"><label>Bucket</label>
+          <select id="st-bucket">
+            <option value="household">Household</option>
+            <option value="personal">Personal</option>
+          </select>
+        </div>
+      </div>
+      <div class="mfooter">
+        <button class="btn-danger" id="st-delete" style="display:none" onclick="deleteSavingsTransfer(_editSavTransferId)"><i class="ti ti-trash"></i></button>
+        <button class="btn-cancel" onclick="closeModal('modal-savings-transfer')">Cancel</button>
+        <button class="btn-save" onclick="saveSavingsTransfer()">Save</button>
       </div>
     </div>
   </div>
@@ -5093,8 +5185,9 @@ function initBudgetDataV3(){
       incomeSources:[
         {id:budgetNid++,name:"Microsoft/Accenture",hourlyRate:HOURLY_RATE_DEFAULT,defaultHours:DEFAULT_HOURS,processingWeeks:2,startDate:today,endDate:null},
       ],
-      autoTransfers:[
-        {id:budgetNid++,name:"Emergency Fund",amount:557,bucket:"household"},
+      autoTransfers:[], // legacy - kept for compat
+      savingsTransfers:[
+        {id:budgetNid++,name:"Emergency Fund",amount:557,frequency:"biweekly",bucket:"household"},
       ],
       bills:[
         {id:budgetNid++,name:"Rent",amount:1300,frequency:"monthly",dueDay:1,isDebt:false},
@@ -5396,7 +5489,7 @@ function renderWeeklyView(){
 
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
-  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:"biweekly"}),0);
+  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
 
   // AUTO-CALCULATE total variable budget: income - bills due this week - subs due this week - savings
   const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
@@ -5473,7 +5566,10 @@ function renderMonthlyView(){
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,ym),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,ym),0);
   const budgVar=rec.variable.reduce((s,v)=>s+(v.weeklyBudget||0)*4.3,0);
-  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+at.amount*2.17,0);
+  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>{
+    const f=at.frequency||"biweekly";
+    return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:f==="per-paycheck"?at.amount*2.17:at.amount*2.17);
+  },0);
 
   const totalBills=rec.bills.reduce((s,b)=>s+actual(b.id),0);
   const totalSubs=rec.subscriptions.reduce((s,b)=>s+actual(b.id),0);
@@ -5735,11 +5831,28 @@ function deleteExpenseB(id){
 }
 
 /* ── SETTINGS TAB ────────────────────────────────────────────── */
+/* ── BUDGET SETTINGS ACCORDION ── */
+function bsToggle(id){
+  const body=document.getElementById("bs-body-"+id);
+  const chev=document.getElementById("bs-chev-"+id);
+  if(!body)return;
+  const isOpen=body.classList.contains("open");
+  // Close all
+  document.querySelectorAll(".bs-acc-body").forEach(el=>el.classList.remove("open"));
+  document.querySelectorAll(".bs-acc-chevron").forEach(el=>el.classList.remove("open"));
+  if(!isOpen){
+    body.classList.add("open");
+    if(chev)chev.classList.add("open");
+  }
+}
+
 function renderBudgetSettings(){
   const rec=budgetData.recurring;
   const profile=BUDGET_PROFILES.find(p=>p.id===activeBudgetProfile);
   const piEl=document.getElementById("bs-profile-info");
   if(piEl&&profile)piEl.textContent="Currently viewing: "+profile.name+"'s budget";
+  const pinSubEl=document.getElementById("bs-pin-sub");
+  if(pinSubEl&&profile)pinSubEl.textContent=profile.name+" · PIN set";
   // Income sources
   const isEl=document.getElementById("bs-income-sources");
   if(isEl)isEl.innerHTML=rec.incomeSources.map(s=>`<div class="rec-edit-row" onclick="openEditIncomeSource(${s.id})" style="cursor:pointer">
@@ -5748,30 +5861,41 @@ function renderBudgetSettings(){
     <i class="ti ti-pencil" style="color:var(--muted);font-size:14px"></i>
   </div>`).join("")||'<div class="empty-msg">No income sources</div>';
 
-  // Auto transfers
-  const atEl=document.getElementById("bs-auto-transfers");
-  if(atEl)atEl.innerHTML=(rec.autoTransfers||[]).map(at=>`<div class="auto-transfer-row" onclick="openEditAutoTransfer(${at.id})">
-    <div style="flex:1"><div class="rec-edit-name">${at.name}</div><div style="font-size:13px;color:var(--muted)">${$f(at.amount)}/paycheck → ${at.bucket}</div></div>
-    <i class="ti ti-pencil" style="color:var(--muted);font-size:14px"></i>
-  </div>`).join("")||'<div class="empty-msg">No auto-transfers</div>';
+  // Auto-transfers removed - replaced by savings transfers
 
   // Bills
   renderRecEditList("bs-bills-list",rec.bills,"bills",r=>`${r.name} — ${$f(r.amount)}/mo${r.isDebt?" (debt)":""}`);
   renderRecEditList("bs-subs-list",rec.subscriptions,"subscriptions",r=>`${r.name} — ${$f(r.amount)}/mo`);
   renderRecEditList("bs-var-list",rec.variable,"variable",r=>`${r.name} — ${$f(r.weeklyBudget||0)}/wk budget`);
-  // Savings - show total amounts logged, no sub-goals
-  const allExps = budgetData.expenses||[];
-  const hhSaved = allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const persSaved = allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  const hhTotEl=document.getElementById("bs-sav-hh-total");if(hhTotEl)hhTotEl.textContent=$f(hhSaved);
-  const persTotEl=document.getElementById("bs-sav-pers-total");if(persTotEl)persTotEl.textContent=$f(persSaved);
-  // Recent savings entries
-  const hhExps=allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="household").slice(-5).reverse();
-  const persExps=allExps.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").slice(-5).reverse();
-  const hhEl=document.getElementById("bs-sav-hh-list");
-  if(hhEl)hhEl.innerHTML=hhExps.length?hhExps.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${e.date}</span><span style="font-family:'DM Mono',monospace;font-weight:600">${$f(e.amount)}</span></div>`).join(""):'<div class="empty-msg" style="font-size:13px">No transfers yet</div>';
-  const persEl=document.getElementById("bs-sav-pers-list");
-  if(persEl)persEl.innerHTML=persExps.length?persExps.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${e.date}</span><span style="font-family:'DM Mono',monospace;font-weight:600">${$f(e.amount)}</span></div>`).join(""):'<div class="empty-msg" style="font-size:13px">No transfers yet</div>';
+  // Sub-labels for accordion rows
+  const incomeSub=document.getElementById("bs-income-sub");
+  if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+(s2.hourlyRate||0)*(s2.defaultHours||40),0))+"/wk expected":"No income sources";}
+  const billsSub=document.getElementById("bs-bills-sub");
+  if(billsSub){const b=rec.bills||[];const tot=b.reduce((t,x)=>t+x.amount,0);billsSub.textContent=b.length?b.length+" bill"+(b.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No bills";}
+  const subsSub=document.getElementById("bs-subs-sub");
+  if(subsSub){const s=rec.subscriptions||[];const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
+  const savSub=document.getElementById("bs-savings-sub");
+  if(savSub){const sv=rec.savingsTransfers||[];const tot=sv.reduce((t,x)=>t+x.amount,0);savSub.textContent=sv.length?sv.length+" transfer"+(sv.length!==1?"s":"")+" · "+$f(tot)+" per period":"No savings transfers";}
+  const varSub=document.getElementById("bs-var-sub");
+  if(varSub){const v=rec.variable||[];varSub.textContent=v.length?v.length+" categor"+(v.length!==1?"ies":"y"):"No categories";}
+
+  // Render list content
+  renderRecEditList("bs-bills-list",rec.bills,"bills",r=>`${r.name} — ${$f(r.amount)}/mo${r.isDebt?" (debt)":""} · due ${r.dueDay||1}${r.dueDay===1?"st":r.dueDay===2?"nd":r.dueDay===3?"rd":"th"}`);
+  renderRecEditList("bs-subs-list",rec.subscriptions,"subscriptions",r=>`${r.name} — ${$f(r.amount)}/mo · due ${r.dueDay||1}${r.dueDay===1?"st":r.dueDay===2?"nd":r.dueDay===3?"rd":"th"}`);
+  renderRecEditList("bs-var-list",rec.variable,"variable",r=>`${r.name}`);
+  // Savings transfers list
+  const svEl=document.getElementById("bs-savings-list");
+  if(svEl){
+    const transfers=rec.savingsTransfers||[];
+    svEl.innerHTML=transfers.length?transfers.map(sv=>`<div class="rec-edit-row">
+      <div>
+        <div class="rec-edit-name">${sv.name}</div>
+        <div style="font-size:12px;color:var(--muted)">${$f(sv.amount)} ${sv.frequency||"monthly"} → ${sv.bucket||"household"}</div>
+      </div>
+      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;margin-right:4px" onclick="openEditSavingsTransfer(${sv.id})"><i class="ti ti-pencil"></i></button>
+      <button style="background:none;border:none;cursor:pointer;color:#e05555;font-size:13px" onclick="deleteSavingsTransfer(${sv.id})"><i class="ti ti-trash"></i></button>
+    </div>`).join(""):'<div class="empty-msg" style="font-size:13px">No savings transfers yet. Add one to auto-deduct from your variable budget pool.</div>';
+  }
 }
 
 function renderRecEditList(elId,items,type,labelFn){
@@ -6026,7 +6150,7 @@ function openAdjustVarBudget(){
   const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
-  const budgSav=(rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:"biweekly"}),0);
+  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
   _avbAutoTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
   const currentTotal=period.varBudgetTotal??_avbAutoTotal;
 
@@ -6368,6 +6492,56 @@ function renderMbSection(){
   }
 }
 
+
+
+/* ── SAVINGS TRANSFERS (settings) ─────────────────────────── */
+let _editSavTransferId = null;
+
+function openAddSavingsTransfer(){
+  _editSavTransferId = null;
+  document.getElementById("st-name").value="";
+  document.getElementById("st-amount").value="";
+  document.getElementById("st-freq").value="biweekly";
+  document.getElementById("st-bucket").value="household";
+  document.getElementById("st-delete").style.display="none";
+  document.getElementById("st-heading").textContent="Add Savings Transfer";
+  document.getElementById("modal-savings-transfer").style.display="block";
+  setTimeout(()=>document.getElementById("st-name").focus(),50);
+}
+
+function openEditSavingsTransfer(id){
+  const sv=(budgetData.recurring.savingsTransfers||[]).find(x=>x.id===id);
+  if(!sv)return;
+  _editSavTransferId=id;
+  document.getElementById("st-name").value=sv.name;
+  document.getElementById("st-amount").value=sv.amount;
+  document.getElementById("st-freq").value=sv.frequency||"biweekly";
+  document.getElementById("st-bucket").value=sv.bucket||"household";
+  document.getElementById("st-delete").style.display="flex";
+  document.getElementById("st-heading").textContent="Edit Savings Transfer";
+  document.getElementById("modal-savings-transfer").style.display="block";
+}
+
+function saveSavingsTransfer(){
+  const name=document.getElementById("st-name").value.trim();if(!name)return;
+  const amount=parseFloat(document.getElementById("st-amount").value)||0;
+  const frequency=document.getElementById("st-freq").value;
+  const bucket=document.getElementById("st-bucket").value;
+  if(!budgetData.recurring.savingsTransfers)budgetData.recurring.savingsTransfers=[];
+  if(_editSavTransferId){
+    const sv=budgetData.recurring.savingsTransfers.find(x=>x.id===_editSavTransferId);
+    if(sv){sv.name=name;sv.amount=amount;sv.frequency=frequency;sv.bucket=bucket;}
+  } else {
+    budgetData.recurring.savingsTransfers.push({id:budgetNid++,name,amount,frequency,bucket});
+  }
+  saveBudgetData();closeModal("modal-savings-transfer");renderBudgetSettings();
+}
+
+function deleteSavingsTransfer(id){
+  if(!confirm("Remove this savings transfer?"))return;
+  budgetData.recurring.savingsTransfers=(budgetData.recurring.savingsTransfers||[]).filter(x=>x.id!==id);
+  saveBudgetData();renderBudgetSettings();
+}
 
 /* ── CATCH-ALL SYNC ─────────────────────────────────────────
    Drag-and-drop (mouse AND touch) mutates the tasks array
