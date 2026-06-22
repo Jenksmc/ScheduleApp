@@ -5487,7 +5487,7 @@ function renderMobileBudgetView(){
     </div>
 
     <!-- Summary (always visible, adapts to view) -->
-    \${mobileSummaryHtml}
+    <div id="mobile-summary-area"></div>
 
     <!-- Chart dropdown -->
     <div class="mobile-budget-section">
@@ -5517,6 +5517,10 @@ function renderMobileBudgetView(){
   `;
 
   // Render chart
+  // Inject pre-computed summary into placeholder
+  const summEl=document.getElementById("mobile-summary-area");
+  if(summEl)summEl.outerHTML=mobileSummaryHtml;
+
   setTimeout(()=>{
     renderMobileChart(_mobileChartView, totalBills, totalSubs, totalVar, totalSav, weekIncome, ws, expenses);
     renderMobileSection(_mobileSectionView, rec, period, varActuals, expenses, savExps, ws);
