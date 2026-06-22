@@ -5409,22 +5409,22 @@ function renderBudgetPage(){
 function renderBudgetOverview(){
   const mbContainer = document.getElementById("mb-container");
   const isMobile = document.body.classList.contains("mobile-mode");
-  // Show/hide mobile vs desktop areas
-  if(mbContainer) mbContainer.style.display = isMobile ? "block" : "none";
-  // Hide desktop period nav and view rows on mobile
-  const periodNav = document.querySelector(".budget-period-nav");
-  const viewRows = document.querySelectorAll("#bview-weekly,#bview-monthly,#bview-daily");
-  if(periodNav) periodNav.style.display = isMobile ? "none" : "";
-  viewRows.forEach(el=>{ if(el) el.style.display = "none"; });
   if(isMobile){
-    // Sync _mbView with budgetView so nav arrows work
+    if(mbContainer) mbContainer.style.display = "block";
     _mbView = budgetView||"weekly";
     renderMobileBudget();
     return;
   }
-  if(budgetView==="weekly")renderWeeklyView();
-  else if(budgetView==="monthly")renderMonthlyView();
-  else if(budgetView==="daily")renderDailyView();
+  // Desktop: hide mobile container, show correct desktop view
+  if(mbContainer) mbContainer.style.display = "none";
+  // Hide all view panels first, then show correct one
+  ["bview-weekly","bview-monthly","bview-daily"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display="none";
+  });
+  if(budgetView==="weekly"){renderWeeklyView();const el=document.getElementById("bview-weekly");if(el)el.style.display="block";}
+  else if(budgetView==="monthly"){renderMonthlyView();const el=document.getElementById("bview-monthly");if(el)el.style.display="block";}
+  else if(budgetView==="daily"){renderDailyView();const el=document.getElementById("bview-daily");if(el)el.style.display="block";}
 }
 
 /* ── MOBILE BUDGET VIEW ─────────────────────────────────────── */
