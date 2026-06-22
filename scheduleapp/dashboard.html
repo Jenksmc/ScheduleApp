@@ -5173,6 +5173,20 @@ function unlockBudget(profileId){
 function lockBudget(){
   activeBudgetProfile=null;
   sessionStorage.removeItem("budgetProfile");
+  // Fully reset all PIN state — nothing pre-filled
+  _pinBuffer=[];
+  _pinTarget=null;
+  _pinSetupPhase=1;
+  _pinSetupFirst="";
+  // Hide both PIN panels, show profile selection
+  document.getElementById("budget-pin-entry").style.display="none";
+  document.getElementById("budget-pin-setup").style.display="none";
+  document.getElementById("budget-profile-buttons").style.display="flex";
+  const selLbl=document.getElementById("budget-select-label");
+  if(selLbl)selLbl.style.display="";
+  // Clear dots so nothing shows as filled
+  updatePinDots("budget-pin-dots",0);
+  updatePinDots("budget-setup-dots",0);
   document.getElementById("budget-lock-screen").style.display="flex";
   document.getElementById("budget-unlocked-content").style.display="none";
   renderBudgetLockScreen();
