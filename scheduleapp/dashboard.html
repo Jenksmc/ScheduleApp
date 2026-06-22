@@ -2757,6 +2757,21 @@ const BUILTIN_THEMES=[
 let customThemes=JSON.parse(localStorage.getItem("customThemes")||"[]");
 let activeThemeId=localStorage.getItem("activeThemeId")||"dark";
 
+// Apply saved theme immediately on load (before boot)
+(function initTheme(){
+  const allThemes=[...THEMES,...customThemes];
+  const saved=allThemes.find(t=>t.id===activeThemeId)||allThemes.find(t=>t.id==="dark");
+  if(saved){
+    const r=document.documentElement;
+    if(saved.id==="dark"||saved.id==="light"){
+      document.body.dataset.theme=saved.id;
+    } else {
+      document.body.dataset.theme="custom";
+      Object.entries(saved.vars||{}).forEach(([k,v])=>r.style.setProperty("--"+k,v));
+    }
+  }
+})();
+
 function applyTheme(t){
   activeThemeId=t.id;
   const r=document.documentElement;
