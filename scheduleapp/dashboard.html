@@ -5297,7 +5297,7 @@ function renderBudgetPage(){
 }
 
 function renderBudgetOverview(){
-  if(urlProfile && document.body.classList.contains("mobile-mode")){
+  if(document.body.classList.contains("mobile-mode")){
     renderMobileBudgetView();
     return;
   }
@@ -5418,6 +5418,60 @@ function renderMobileBudgetView(){
   const content=document.getElementById("btab-overview-content");
   if(!content)return;
 
+  // Pre-compute summary HTML to avoid IIFE issues in template literals
+  let mobileSummaryHtml;
+  if(budgetView==="daily"){
+    const barW=Math.round(weekPct);
+    const barClr=weekPct>100?"#e05555":weekPct>80?"#e0a040":"#3db87a";
+    const wkClr=leftThisWeek>=0?"#3db87a":"#e05555";
+    mobileSummaryHtml=`<div class="budget-card bcompact-card" style="margin-bottom:10px">
+      <div class="bcompact-title">DAILY SUMMARY</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">DAILY ALLOWANCE</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--today-color)">${$f(Math.max(0,todayAllowance))}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">SPENT TODAY</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#e05555">${$f(totalToday)}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px;grid-column:span 2">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">WEEK REMAINING</div>
+          <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:${wkClr}">${$f(Math.max(0,leftThisWeek))}</div>
+          <div style="height:6px;background:var(--border);border-radius:3px;margin-top:6px">
+            <div style="height:100%;border-radius:3px;width:${barW}%;background:${barClr}"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    const ebClr=endActual>=0?"#3db87a":"#e05555";
+    const viewLabel=budgetView==="monthly"?"MONTHLY":"WEEKLY";
+    mobileSummaryHtml=`<div class="budget-card bcompact-card" style="margin-bottom:10px">
+      <div class="bcompact-title">${viewLabel} SUMMARY</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">INCOME</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#3db87a">${$f(weekIncome)}</div>
+          <div style="font-size:10px;color:var(--muted)">of ${$f(budgIncome)} expected</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">END BALANCE</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${ebClr}">${$f(endActual)}</div>
+          <div style="font-size:10px;color:var(--muted)">of ${$f(endBudget)} budget</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">SPENT</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#e05555">${$f(totalVar+totalBills+totalSubs)}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">SAVED</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add">${$f(totalSav)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   content.innerHTML=`
     <!-- Period nav + view selector -->
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
@@ -5433,28 +5487,7 @@ function renderMobileBudgetView(){
     </div>
 
     <!-- Summary (always visible, adapts to view) -->
-    <div class="budget-card bcompact-card" style="margin-bottom:10px">
-      <div class="bcompact-title">\${budgetView.toUpperCase()} SUMMARY</div>
-      \${(()=>{
-        if(budgetView==="daily"){
-          const barW=Math.round(weekPct);
-          const barClr=weekPct>100?"#e05555":weekPct>80?"#e0a040":"#3db87a";
-          const wkClr=leftThisWeek>=0?"#3db87a":"#e05555";
-          return "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px'>"
-            +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>DAILY ALLOWANCE</div><div style='font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:var(--today-color)'>"+$f(Math.max(0,todayAllowance))+"</div></div>"
-            +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>SPENT TODAY</div><div style='font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:#e05555'>"+$f(totalToday)+"</div></div>"
-            +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px;grid-column:span 2'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>WEEK REMAINING</div><div style='font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:"+wkClr+"'>"+$f(Math.max(0,leftThisWeek))+"</div><div style='height:6px;background:var(--border);border-radius:3px;margin-top:6px'><div style='height:100%;border-radius:3px;width:"+barW+"%;background:"+barClr+"'></div></div></div>"
-            +"</div>";
-        }
-        const ebClr=endActual>=0?"#3db87a":"#e05555";
-        return "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px'>"
-          +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>INCOME</div><div style='font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:#3db87a'>"+$f(weekIncome)+"</div><div style='font-size:10px;color:var(--muted)'>of "+$f(budgIncome)+" expected</div></div>"
-          +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>END BALANCE</div><div style='font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:"+ebClr+"'>"+$f(endActual)+"</div><div style='font-size:10px;color:var(--muted)'>of "+$f(endBudget)+" budget</div></div>"
-          +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>SPENT</div><div style='font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:#e05555'>"+$f(totalVar+totalBills+totalSubs)+"</div></div>"
-          +"<div style='text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px'><div style='font-size:11px;color:var(--muted);margin-bottom:3px'>SAVED</div><div style='font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:#378add'>"+$f(totalSav)+"</div></div>"
-          +"</div>";
-      })()}
-    </div>
+    \${mobileSummaryHtml}
 
     <!-- Chart dropdown -->
     <div class="mobile-budget-section">
