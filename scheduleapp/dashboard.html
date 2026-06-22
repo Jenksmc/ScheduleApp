@@ -6149,7 +6149,22 @@ function populateMIS(s){
 }
 function saveIncomeSource(){
   const name=document.getElementById("mis-name").value.trim();if(!name)return;
-  const data={name,hourlyRate:parseFloat(document.getElementById("mis-rate").value)||49.80,defaultHours:parseFloat(document.getElementById("mis-hours").value)||40,processingWeeks:parseInt(document.getElementById("mis-delay").value)||2,startDate:document.getElementById("mis-start").value||fd(new Date()),endDate:document.getElementById("mis-end").value||null};
+  const payfreq=document.getElementById("mis-payfreq")?.value||"biweekly";
+  const weekday=parseInt(document.querySelector("#b-mis-weekday .badge.active")?.dataset.v??"4");
+  const monthday=parseInt(document.getElementById("mis-monthday")?.value||"15");
+  const customdates=(document.getElementById("mis-customdates")?.value||"").split(",").map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
+  const data={
+    name,
+    hourlyRate:parseFloat(document.getElementById("mis-rate").value)||49.80,
+    defaultHours:parseFloat(document.getElementById("mis-hours").value)||40,
+    payFrequency:payfreq,
+    payWeekday:weekday,
+    payMonthday:monthday,
+    payCustomDates:customdates,
+    processingWeeks:2,
+    startDate:document.getElementById("mis-start").value||fd(new Date()),
+    endDate:document.getElementById("mis-end").value||null
+  };
   if(_editMIS){const s=budgetData.recurring.incomeSources.find(x=>x.id===_editMIS);if(s)Object.assign(s,data);}
   else{budgetData.recurring.incomeSources.push({id:budgetNid++,...data});}
   generateIncomeWeeks();saveBudgetData();closeModal("modal-income-source");renderBudgetSettings();
