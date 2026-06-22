@@ -632,6 +632,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .bs-acc-chevron.open{transform:rotate(90deg)}
 .bs-acc-body{display:none;border-bottom:1px solid var(--border);background:var(--tag-bg)}
 .bs-acc-body.open{display:block}
+.bs-add-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--tag-bg);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:all 0.15s;margin-right:6px}
+.bs-add-btn:hover{background:var(--today-color);color:#fff;border-color:var(--today-color)}
 
 </style>
 </head>
@@ -1151,11 +1153,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bs-acc-title">Income sources</div>
           <div class="bs-acc-sub" id="bs-income-sub">—</div>
         </div>
+        <button class="bs-add-btn" onclick="event.stopPropagation();openAddIncomeSource()" title="Add income source"><i class="ti ti-plus"></i></button>
         <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-income"></i>
       </div>
       <div class="bs-acc-body" id="bs-body-income">
-        <div style="padding:0 16px 14px">
-          <button class="btn" style="margin-bottom:10px;margin-top:14px" onclick="openAddIncomeSource()"><i class="ti ti-plus"></i> Add source</button>
+        <div style="padding:10px 16px 14px">
           <div id="bs-income-sources"></div>
         </div>
       </div>
@@ -1167,11 +1169,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bs-acc-title">Bills & debt</div>
           <div class="bs-acc-sub" id="bs-bills-sub">—</div>
         </div>
+        <button class="bs-add-btn" onclick="event.stopPropagation();openAddBillItem()" title="Add bill"><i class="ti ti-plus"></i></button>
         <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-bills"></i>
       </div>
       <div class="bs-acc-body" id="bs-body-bills">
-        <div style="padding:0 16px 14px">
-          <button class="btn" style="margin-bottom:10px;margin-top:14px" onclick="openAddBillItem()"><i class="ti ti-plus"></i> Add bill</button>
+        <div style="padding:10px 16px 14px">
           <div id="bs-bills-list"></div>
         </div>
       </div>
@@ -1199,12 +1201,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bs-acc-title">Savings</div>
           <div class="bs-acc-sub" id="bs-savings-sub">—</div>
         </div>
+        <button class="bs-add-btn" onclick="event.stopPropagation();openAddSavingsTransfer()" title="Add savings transfer"><i class="ti ti-plus"></i></button>
         <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-savings"></i>
       </div>
       <div class="bs-acc-body" id="bs-body-savings">
-        <div style="padding:0 16px 14px">
-          <div style="font-size:13px;color:var(--muted);margin:14px 0 8px">Recurring savings transfers — deducted from variable budget pool</div>
-          <button class="btn" style="margin-bottom:10px" onclick="openAddSavingsTransfer()"><i class="ti ti-plus"></i> Add transfer</button>
+        <div style="padding:10px 16px 14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Recurring transfers deducted from variable budget pool</div>
           <div id="bs-savings-list"></div>
         </div>
       </div>
@@ -1216,12 +1218,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bs-acc-title">Variable expense categories</div>
           <div class="bs-acc-sub" id="bs-var-sub">—</div>
         </div>
+        <button class="bs-add-btn" onclick="event.stopPropagation();openAddVarCategory()" title="Add category"><i class="ti ti-plus"></i></button>
         <i class="ti ti-chevron-right bs-acc-chevron" id="bs-chev-var"></i>
       </div>
       <div class="bs-acc-body" id="bs-body-var">
-        <div style="padding:0 16px 14px">
-          <div style="font-size:13px;color:var(--muted);margin:14px 0 8px">Add or remove categories. Budget amounts are set per week/month in the Overview tab.</div>
-          <button class="btn" style="margin-bottom:10px" onclick="openAddVarCategory()"><i class="ti ti-plus"></i> Add category</button>
+        <div style="padding:10px 16px 14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Budget amounts are set per week/month in Overview.</div>
           <div id="bs-var-list"></div>
         </div>
       </div>
@@ -1403,27 +1405,51 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <!-- ADD INCOME SOURCE MODAL -->
 <div id="modal-income-source" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-income-source')">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
       <div class="modal-hdr"><h3 id="mis-heading">Add Income Source</h3><button class="close-x" onclick="closeModal('modal-income-source')"><i class="ti ti-x"></i></button></div>
-<div class="modal-body">
-      <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
-      <div class="two-col">
-        <div class="field"><label>Hourly rate ($)</label><input type="number" step="0.01" id="mis-rate" placeholder="49.80"/></div>
-        <div class="field"><label>Default hours/wk</label><input type="number" step="0.5" id="mis-hours" placeholder="40"/></div>
+      <div class="modal-body">
+        <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
+        <div class="two-col">
+          <div class="field"><label>Hourly rate ($)</label><input type="number" step="0.01" id="mis-rate" placeholder="49.80"/></div>
+          <div class="field"><label>Default hours/wk</label><input type="number" step="0.5" id="mis-hours" placeholder="40"/></div>
+        </div>
+        <div class="field"><label>Pay frequency</label>
+          <select id="mis-payfreq" onchange="updateIncomeScheduleFields()">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly" selected>Biweekly (every 2 weeks)</option>
+            <option value="monthly">Monthly</option>
+            <option value="custom">Custom (specific dates)</option>
+          </select>
+        </div>
+        <!-- Weekly / Biweekly: pick weekday -->
+        <div class="field" id="mis-weekday-field">
+          <label>Pay day</label>
+          <div class="badges" id="b-mis-weekday">
+            <button class="badge" data-v="0" onclick="pick(this,'mis-weekday')">Sun</button>
+            <button class="badge" data-v="1" onclick="pick(this,'mis-weekday')">Mon</button>
+            <button class="badge" data-v="2" onclick="pick(this,'mis-weekday')">Tue</button>
+            <button class="badge" data-v="3" onclick="pick(this,'mis-weekday')">Wed</button>
+            <button class="badge active" data-v="4" onclick="pick(this,'mis-weekday')">Thu</button>
+            <button class="badge" data-v="5" onclick="pick(this,'mis-weekday')">Fri</button>
+            <button class="badge" data-v="6" onclick="pick(this,'mis-weekday')">Sat</button>
+          </div>
+        </div>
+        <!-- Monthly: pick date -->
+        <div class="field" id="mis-monthday-field" style="display:none">
+          <label>Pay date (day of month)</label>
+          <input type="number" id="mis-monthday" min="1" max="31" placeholder="15"/>
+        </div>
+        <!-- Custom: specific dates -->
+        <div class="field" id="mis-custom-field" style="display:none">
+          <label>Pay dates (comma separated, e.g. 1, 15)</label>
+          <input type="text" id="mis-customdates" placeholder="1, 15"/>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Start date</label><input type="date" id="mis-start"/></div>
+          <div class="field"><label>End date <span class="opt-label">(opt)</span></label><input type="date" id="mis-end"/></div>
+        </div>
       </div>
-      <div class="two-col">
-        <div class="field"><label>Start date</label><input type="date" id="mis-start"/></div>
-        <div class="field"><label>End date <span class="opt-label">(opt)</span></label><input type="date" id="mis-end"/></div>
-      </div>
-      <div class="field"><label>Processing delay</label>
-        <select id="mis-delay">
-          <option value="1">1 week (paid next Thursday)</option>
-          <option value="2" selected>2 weeks (paid 2 Thursdays later)</option>
-          <option value="0">Same week</option>
-        </select>
-      </div>
-      </div>
-<div class="mfooter">
+      <div class="mfooter">
         <button class="btn-danger" id="mis-delete" style="display:none" onclick="deleteIncomeSource()"><i class="ti ti-trash"></i></button>
         <button class="btn-cancel" onclick="closeModal('modal-income-source')">Cancel</button>
         <button class="btn-save" onclick="saveIncomeSource()">Save</button>
@@ -1524,12 +1550,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <option value="annual">Annual</option>
           </select>
         </div>
-        <div class="field"><label>Start date</label><input type="date" id="re-startdate"/></div>
-        <div class="field" id="re-debt-field">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="re-isdebt" style="accent-color:var(--today-color);width:15px;height:15px"/>
-            This is a debt (loan, credit card, etc.)
-          </label>
+        <div class="two-col">
+          <div class="field"><label>Start date</label><input type="date" id="re-startdate"/></div>
+          <div class="field"><label>End date <span class="opt-label">(opt)</span></label><input type="date" id="re-enddate"/></div>
         </div>
       </div>
       <div class="mfooter">
@@ -5166,6 +5189,8 @@ function unlockBudget(profileId){
   if(nm)nm.textContent=profile.name;
   // Load this profile's budget data
   loadProfileBudgetData();
+  // Start inactivity timer
+  resetBudgetActivityTimer();
   // Render budget
   setBudgetMainTab("overview");
 }
@@ -5173,6 +5198,9 @@ function unlockBudget(profileId){
 function lockBudget(){
   activeBudgetProfile=null;
   sessionStorage.removeItem("budgetProfile");
+  // Clear auto-lock timers
+  clearTimeout(_budgetActivityTimer);
+  clearTimeout(_budgetTabAwayTimer);
   // Fully reset all PIN state — nothing pre-filled
   _pinBuffer=[];
   _pinTarget=null;
@@ -5191,6 +5219,54 @@ function lockBudget(){
   document.getElementById("budget-unlocked-content").style.display="none";
   renderBudgetLockScreen();
 }
+
+/* ── BUDGET AUTO-LOCK ─────────────────────────────────────── */
+let _budgetActivityTimer = null;   // 15 min inactivity
+let _budgetTabAwayTimer  = null;   // 2 min after leaving budget tab
+
+const BUDGET_INACTIVITY_MS = 15 * 60 * 1000;  // 15 minutes
+const BUDGET_TAB_AWAY_MS   =  2 * 60 * 1000;  // 2 minutes
+
+function resetBudgetActivityTimer(){
+  if(!activeBudgetProfile) return; // only matters when unlocked
+  clearTimeout(_budgetActivityTimer);
+  _budgetActivityTimer = setTimeout(()=>{
+    if(activeBudgetProfile) lockBudget();
+  }, BUDGET_INACTIVITY_MS);
+}
+
+function onBudgetTabLeft(){
+  // Start the 2-min tab-away timer
+  clearTimeout(_budgetTabAwayTimer);
+  _budgetTabAwayTimer = setTimeout(()=>{
+    if(activeBudgetProfile) lockBudget();
+  }, BUDGET_TAB_AWAY_MS);
+}
+
+function onBudgetTabReturned(){
+  // Cancel tab-away timer if user comes back before 2 min
+  clearTimeout(_budgetTabAwayTimer);
+  // Reset inactivity timer
+  resetBudgetActivityTimer();
+}
+
+// Hook into goTab to detect budget tab enter/leave
+const _origGoTab = goTab;
+goTab = function(id, btn){
+  const wasBudget = document.getElementById("page-budget")?.classList.contains("active");
+  const goingToBudget = (id === "budget");
+  _origGoTab(id, btn);
+  if(wasBudget && !goingToBudget) onBudgetTabLeft();
+  if(goingToBudget) onBudgetTabReturned();
+};
+
+// Activity events that reset the 15-min inactivity timer (only inside budget tab)
+["click","keydown","touchstart"].forEach(evt=>{
+  document.addEventListener(evt, ()=>{
+    const budgetActive = document.getElementById("page-budget")?.classList.contains("active");
+    if(budgetActive && activeBudgetProfile) resetBudgetActivityTimer();
+  }, {passive:true});
+});
 
 /* ── Settings: change PIN ── */
 function openChangePinModal(profileId){
@@ -5917,25 +5993,36 @@ function deleteExpenseB(id){
 /* ── BUDGET SETTINGS ACCORDION ── */
 function renderBsItemCards(containerId, items, type, onEdit, onDelete){
   const el=document.getElementById(containerId);if(!el)return;
-  if(!items||!items.length){
-    el.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">None yet — add one above.</div>';
-    return;
-  }
-  const FREQ_LABELS={weekly:"Weekly",biweekly:"Every 2 wks",monthly:"Monthly","per-paycheck":"Per paycheck",annual:"Annual",once:"One-time"};
+  if(!items||!items.length){el.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">None yet.</div>';return;}
+  const FREQ={weekly:"Weekly",biweekly:"Biweekly","per-paycheck":"Per paycheck",monthly:"Monthly",annual:"Annual",once:"One-time",custom:"Custom"};
+  const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   el.innerHTML='<div class="bs-item-grid">'+items.map(item=>{
-    const freqLabel=FREQ_LABELS[item.frequency||item.freq||"monthly"]||item.frequency||"Monthly";
-    const startDate=item.startDate?new Date(item.startDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
-    const debtBadge=item.isDebt?'<span class="bs-item-debt-badge">DEBT</span>':"";
+    let topLine="",midLine="",dateLine="";
+    if(type==="income"){
+      const pf=item.payFrequency||"biweekly";
+      let sched=FREQ[pf]||pf;
+      if(pf==="weekly"||pf==="biweekly") sched+=" · "+DOW[item.payWeekday??4]+"s";
+      else if(pf==="monthly") sched+=" · "+(""+(""+item.payMonthday||"15"))+"th";
+      else if(pf==="custom") sched="Custom: "+(item.payCustomDates||[]).join(" & ");
+      topLine=`<span class="bs-item-amount">${$f(item.hourlyRate||0)}/hr</span><span class="bs-item-freq">${item.defaultHours||40}h/wk</span>`;
+      midLine=`<div style="font-size:12px;color:var(--muted);margin-top:3px">${sched}</div>`;
+      if(item.startDate) dateLine=`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> ${new Date(item.startDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>`;
+    } else {
+      const freqLabel=FREQ[item.frequency||"monthly"]||item.frequency||"Monthly";
+      topLine=`<span class="bs-item-amount">${$f(item.amount)}</span><span class="bs-item-freq">${freqLabel}</span>`;
+      if(item.startDate){
+        const sd=new Date(item.startDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+        const ed=item.endDate?new Date(item.endDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"";
+        dateLine=`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> ${sd}${ed?" → "+ed:""}</div>`;
+      }
+    }
     return `<div class="bs-item-card">
-      <div class="bs-item-name">${item.name}${debtBadge}</div>
-      <div class="bs-item-detail">
-        <span class="bs-item-amount">${$f(item.amount)}</span>
-        <span class="bs-item-freq">${freqLabel}</span>
-      </div>
-      ${startDate?`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> starts ${startDate}</div>`:""}
+      <div class="bs-item-name">${item.name}</div>
+      <div class="bs-item-detail">${topLine}</div>
+      ${midLine}${dateLine}
       <div class="bs-item-actions">
-        <button class="bs-item-btn" onclick="${onEdit}(${item.id})" title="Edit"><i class="ti ti-pencil"></i></button>
-        <button class="bs-item-btn del" onclick="${onDelete}(${item.id})" title="Remove"><i class="ti ti-x"></i></button>
+        <button class="bs-item-btn" onclick="${onEdit}(${item.id})"><i class="ti ti-pencil"></i></button>
+        <button class="bs-item-btn del" onclick="${onDelete}(${item.id})"><i class="ti ti-x"></i></button>
       </div>
     </div>`;
   }).join("")+'</div>';
@@ -6006,14 +6093,25 @@ function renderBudgetSettings(){
   const svEl=document.getElementById("bs-savings-list");
   if(svEl){
     const transfers=rec.savingsTransfers||[];
-    svEl.innerHTML=transfers.length?transfers.map(sv=>`<div class="rec-edit-row">
-      <div>
-        <div class="rec-edit-name">${sv.name}</div>
-        <div style="font-size:12px;color:var(--muted)">${$f(sv.amount)} ${sv.frequency||"monthly"} → ${sv.bucket||"household"}</div>
-      </div>
-      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;margin-right:4px" onclick="openEditSavingsTransfer(${sv.id})"><i class="ti ti-pencil"></i></button>
-      <button style="background:none;border:none;cursor:pointer;color:#e05555;font-size:13px" onclick="deleteSavingsTransfer(${sv.id})"><i class="ti ti-trash"></i></button>
-    </div>`).join(""):'<div class="empty-msg" style="font-size:13px">No savings transfers yet. Add one to auto-deduct from your variable budget pool.</div>';
+    if(!transfers.length){
+      svEl.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
+    } else {
+      svEl.innerHTML='<div class="bs-item-grid">'+transfers.map(sv=>{
+        const FREQ={weekly:"Weekly",biweekly:"Biweekly",monthly:"Monthly","per-paycheck":"Per paycheck"};
+        return `<div class="bs-item-card">
+          <div class="bs-item-name">${sv.name}</div>
+          <div class="bs-item-detail">
+            <span class="bs-item-amount">${$f(sv.amount)}</span>
+            <span class="bs-item-freq">${FREQ[sv.frequency]||sv.frequency}</span>
+          </div>
+          <div class="bs-item-date" style="margin-top:3px;font-size:12px;color:var(--muted)">${sv.bucket==="personal"?"Personal":"Household"}</div>
+          <div class="bs-item-actions">
+            <button class="bs-item-btn" onclick="openEditSavingsTransfer(${sv.id})"><i class="ti ti-pencil"></i></button>
+            <button class="bs-item-btn del" onclick="deleteSavingsTransfer(${sv.id})"><i class="ti ti-x"></i></button>
+          </div>
+        </div>`;
+      }).join("")+'</div>';
+    }
   }
 }
 
@@ -6028,6 +6126,16 @@ function renderRecEditList(elId,items,type,labelFn){
 }
 
 /* Income source add/edit */
+function updateIncomeScheduleFields(){
+  const freq=document.getElementById("mis-payfreq")?.value||"biweekly";
+  const wf=document.getElementById("mis-weekday-field");
+  const mf=document.getElementById("mis-monthday-field");
+  const cf=document.getElementById("mis-custom-field");
+  if(wf)wf.style.display=(freq==="weekly"||freq==="biweekly")?"block":"none";
+  if(mf)mf.style.display=(freq==="monthly")?"block":"none";
+  if(cf)cf.style.display=(freq==="custom")?"block":"none";
+}
+
 function openAddIncomeSource(){_editMIS=null;populateMIS({name:"",hourlyRate:49.80,defaultHours:40,processingWeeks:2,startDate:fd(new Date()),endDate:""});document.getElementById("mis-delete").style.display="none";t("mis-heading","Add Income Source");document.getElementById("modal-income-source").style.display="block";}
 function openEditIncomeSource(id){
   const s=budgetData.recurring.incomeSources.find(x=>x.id===id);if(!s)return;
@@ -6039,7 +6147,12 @@ function populateMIS(s){
   document.getElementById("mis-hours").value=s.defaultHours||40;
   document.getElementById("mis-start").value=s.startDate||fd(new Date());
   document.getElementById("mis-end").value=s.endDate||"";
-  document.getElementById("mis-delay").value=s.processingWeeks||2;
+  const pfEl=document.getElementById("mis-payfreq");if(pfEl)pfEl.value=s.payFrequency||"biweekly";
+  const wd=s.payWeekday??4;
+  document.querySelectorAll("#b-mis-weekday .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===wd));
+  if(document.getElementById("mis-monthday"))document.getElementById("mis-monthday").value=s.payMonthday||15;
+  if(document.getElementById("mis-customdates"))document.getElementById("mis-customdates").value=(s.payCustomDates||[1,15]).join(", ");
+  updateIncomeScheduleFields();
 }
 function saveIncomeSource(){
   const name=document.getElementById("mis-name").value.trim();if(!name)return;
@@ -6048,6 +6161,12 @@ function saveIncomeSource(){
   else{budgetData.recurring.incomeSources.push({id:budgetNid++,...data});}
   generateIncomeWeeks();saveBudgetData();closeModal("modal-income-source");renderBudgetSettings();
 }
+function deleteIncomeSourceById(id){
+  if(!confirm("Remove this income source?"))return;
+  budgetData.recurring.incomeSources=(budgetData.recurring.incomeSources||[]).filter(x=>x.id!==id);
+  saveBudgetData();renderBudgetSettings();
+}
+
 function deleteIncomeSource(){
   if(!confirm("Remove this income source?"))return;
   budgetData.recurring.incomeSources=budgetData.recurring.incomeSources.filter(s=>s.id!==_editMIS);
@@ -6638,9 +6757,7 @@ function _openRecExpenseModal(title, isEdit, item){
   document.getElementById("re-amount").value=item?.amount||"";
   document.getElementById("re-frequency").value=item?.frequency||"monthly";
   document.getElementById("re-startdate").value=item?.startDate||"";
-  document.getElementById("re-isdebt").checked=!!item?.isDebt;
-  const debtField=document.getElementById("re-debt-field");
-  if(debtField)debtField.style.display=_reType==="bills"?"block":"none";
+  const endEl=document.getElementById("re-enddate");if(endEl)endEl.value=item?.endDate||"";
   const delBtn=document.getElementById("re-delete");
   if(delBtn)delBtn.style.display=isEdit?"flex":"none";
   document.getElementById("modal-rec-expense").style.display="block";
@@ -6652,15 +6769,14 @@ function saveRecExpense(){
   const amount=parseFloat(document.getElementById("re-amount").value)||0;
   const frequency=document.getElementById("re-frequency").value;
   const startDate=document.getElementById("re-startdate").value;
-  const isDebt=_reType==="bills"&&document.getElementById("re-isdebt").checked;
-  // Compute dueDay from startDate for backward compat
+  const endDate=document.getElementById("re-enddate")?.value||null;
   const dueDay=startDate?new Date(startDate+"T12:00:00").getDate():1;
   const arr=budgetData.recurring[_reType]||(budgetData.recurring[_reType]=[]);
   if(_reEditId){
     const item=arr.find(x=>x.id===_reEditId);
-    if(item){Object.assign(item,{name,amount,frequency,startDate,dueDay,isDebt});}
+    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay});}
   } else {
-    arr.push({id:budgetNid++,name,amount,frequency,startDate,dueDay,isDebt});
+    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay});
   }
   saveBudgetData();
   closeModal("modal-rec-expense");
