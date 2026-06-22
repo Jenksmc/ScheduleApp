@@ -607,7 +607,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .mobile-mode .lock-icon-wrap { width: 42px; height: 42px; flex-shrink: 0; }
 
 /* BUDGET SETTINGS ITEM CARDS */
-.bs-item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:4px}
+.bs-item-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
 .bs-item-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;position:relative;transition:border-color 0.15s}
 .bs-item-card:hover{border-color:var(--today-color)}
 .bs-item-name{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;padding-right:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -6061,18 +6061,11 @@ function renderBudgetSettings(){
   if(pinSubEl&&profile)pinSubEl.textContent=profile.name+" · PIN set";
   // Income sources
   const isEl=document.getElementById("bs-income-sources");
-  if(isEl)isEl.innerHTML=rec.incomeSources.map(s=>`<div class="rec-edit-row" onclick="openEditIncomeSource(${s.id})" style="cursor:pointer">
-    <div style="flex:1"><div class="rec-edit-name">${s.name}</div>
-    <div style="font-size:13px;color:var(--muted)">$${s.hourlyRate}/hr · ${s.defaultHours}h default · ${s.processingWeeks}wk delay · from ${s.startDate}${s.endDate?" to "+s.endDate:""}</div></div>
-    <i class="ti ti-pencil" style="color:var(--muted);font-size:14px"></i>
-  </div>`).join("")||'<div class="empty-msg">No income sources</div>';
+  renderBsItemCards("bs-income-sources",rec.incomeSources,"income","openEditIncomeSource","deleteIncomeSourceById");
+  renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
+  renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
+  renderBsVarCards("bs-var-list",rec.variable);
 
-  // Auto-transfers removed - replaced by savings transfers
-
-  // Bills
-  renderRecEditList("bs-bills-list",rec.bills,"bills",r=>`${r.name} — ${$f(r.amount)}/mo${r.isDebt?" (debt)":""}`);
-  renderRecEditList("bs-subs-list",rec.subscriptions,"subscriptions",r=>`${r.name} — ${$f(r.amount)}/mo`);
-  renderRecEditList("bs-var-list",rec.variable,"variable",r=>`${r.name} — ${$f(r.weeklyBudget||0)}/wk budget`);
   // Sub-labels for accordion rows
   const incomeSub=document.getElementById("bs-income-sub");
   if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+(s2.hourlyRate||0)*(s2.defaultHours||40),0))+"/wk expected":"No income sources";}
