@@ -2317,6 +2317,11 @@ async function pushToServer(){
       shopNid,
       wsNid,
     };
+    // Also push profile-specific budget data
+    if(activeBudgetProfile){
+      payload["budgetData_"+activeBudgetProfile]=budgetData;
+      payload["budgetNid_"+activeBudgetProfile]=budgetNid;
+    }
     await fetch(API_BASE+"/api/data",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -2335,8 +2340,16 @@ async function pullFromServer(){
     if(d.customHolidays)customHolidays=d.customHolidays;
     if(d.workSchedules)workSchedules=d.workSchedules;
     if(d.members)members=d.members;
-    if(d.budgetData)budgetData=d.budgetData;
-    if(d.budgetNid)budgetNid=d.budgetNid;
+    // Load profile-specific budget data if a profile is active
+    if(activeBudgetProfile){
+      const profileKey="budgetData_"+activeBudgetProfile;
+      const profileNidKey="budgetNid_"+activeBudgetProfile;
+      if(d[profileKey])budgetData=d[profileKey];
+      if(d[profileNidKey])budgetNid=d[profileNidKey];
+    } else {
+      if(d.budgetData)budgetData=d.budgetData;
+      if(d.budgetNid)budgetNid=d.budgetNid;
+    }
     if(d.budgetPins)budgetPins=d.budgetPins;
     if(d.nid)nid=d.nid;
     if(d.shopNid)shopNid=d.shopNid;
@@ -5034,10 +5047,29 @@ function loadPinsFromServer(serverData){
 }
 
 /* ── Load / save budget data for active profile ── */
-function loadProfileBudgetData(){
+async function loadProfileBudgetData(){
   if(!activeBudgetProfile)return;
   const key=getDataKey(activeBudgetProfile);
   const nidKey=getNidKey(activeBudgetProfile);
+  // Try server first for freshest data
+  try{
+    const r=await fetch(API_BASE+"/api/data");
+    if(r.ok){
+      const d=await r.json();
+      const profileKey="budgetData_"+activeBudgetProfile;
+      const profileNidKey="budgetNid_"+activeBudgetProfile;
+      if(d[profileKey]){
+        budgetData=d[profileKey];
+        budgetNid=d[profileNidKey]||200;
+        localStorage.setItem(key,JSON.stringify(budgetData));
+        localStorage.setItem(nidKey,String(budgetNid));
+        if(d.budgetPins)budgetPins=d.budgetPins;
+        if(!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
+        return;
+      }
+    }
+  }catch(e){}
+  // Fall back to localStorage
   try{
     const d=localStorage.getItem(key);
     budgetData=d?JSON.parse(d):null;
@@ -5050,6 +5082,14 @@ function saveProfileBudgetData(){
   if(!activeBudgetProfile)return;
   localStorage.setItem(getDataKey(activeBudgetProfile), JSON.stringify(budgetData));
   localStorage.setItem(getNidKey(activeBudgetProfile), String(budgetNid));
+  // Push profile data to server immediately
+  try{
+    const payload={};
+    payload["budgetData_"+activeBudgetProfile]=budgetData;
+    payload["budgetNid_"+activeBudgetProfile]=budgetNid;
+    payload.budgetPins=budgetPins;
+    fetch(API_BASE+"/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  }catch(e){console.warn("Profile budget push failed:",e);}
 }
 
 /* Override saveBudgetData to also save to profile key */
@@ -5502,7 +5542,7 @@ function getMonthPeriodKey(ym){return"month:"+ym;}
 function getExpensesFor(start,end,type){
   return(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&(!type||e.type===type));
 }
-function expenseTotalByCat(exps,cat){return exps.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0);}
+function expenseTotalByCat(exps,cat){return exps.filter(e=>(e.effectiveCategory||e.category)===cat).reduce((s,e)=>s+e.amount,0);}
 function $f(n){const v=parseFloat(n)||0;const s=v<0?"-":"";return s+"$"+Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",");}
 function t(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 function ta(id,actual,budget,lowerIsBetter){
