@@ -5778,7 +5778,8 @@ function renderWeeklyView(){
     }
   });
 
-  const budgVar=activeVarCats.reduce((s,v)=>s+(v._weeklyBudget||0),0);
+  // budgVar = the actual total (manual or auto) — categories sum to this
+  const budgVar=varTotalBudget;
   // Update budget source label
   const srcLbl=document.getElementById("w-var-budget-source");
   if(srcLbl){
@@ -6475,7 +6476,7 @@ function renderVarLines(listId,totalId,items,actuals,view){
     <span class="bvar-col">BUDGET</span>
     <span class="bvar-col">ACTUAL</span>
     <span class="bvar-col">LEFT</span>
-  </div>`+items.filter(v=>(v.weeklyBudget||0)>0||actuals[v.id]>0).map(v=>{
+  </div>`+items.map(v=>{
     const act=actuals[v.id]||0;totalAct+=act;
     const budg=((mult===1&&v._weeklyBudget!==undefined)?v._weeklyBudget:(v.weeklyBudget||0)*mult);totalBudg+=budg;
     const left=budg-act;const over=budg>0&&act>budg;
@@ -6606,7 +6607,13 @@ let _avbAutoTotal=0;
 function openAdjustVarBudget(){
   const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
   const rec=budgetData.recurring;
-  const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
+  const ws2=budgetCurrentWeekStart;
+  const we2=fd(new Date(new Date(ws2+"T12:00:00").getTime()+6*86400000));
+  const budgIncome=rec.incomeSources.reduce((s,src2)=>{
+    const weekEntry=(budgetData.incomeWeeks||[]).find(w=>w.sourceId===src2.id&&w.payDate>=ws2&&w.payDate<=we2);
+    const hrs=weekEntry?weekEntry.hours:(src2.defaultHours||40);
+    return s+(src2.hourlyRate||0)*hrs;
+  },0);
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
   const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
@@ -6671,7 +6678,7 @@ function saveAdjustVarBudget(){
   });
   saveBudgetData();
   closeModal("modal-adjust-var");
-  renderWeeklyView();
+  renderBudgetOverview();
 }
 
 
