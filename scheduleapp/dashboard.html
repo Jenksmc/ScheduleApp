@@ -5781,7 +5781,10 @@ function renderWeeklyView(){
 
   t("ws-start",$f(sb));t("wa-start",$f(sb));
   t("ws-income",$f(budgIncome));ta("wa-income",weekIncome,budgIncome,false);
-  t("ws-fixed",$f(budgBills));ta("wa-fixed",totalBills,budgBills,true);
+  // Expenses row = bills + subs + variable all combined
+  const totalActualExpenses=totalBills+totalSubs+totalVar;
+  const totalBudgetExpenses=budgBills+budgSubs+budgVar;
+  t("ws-fixed",$f(totalBudgetExpenses));ta("wa-fixed",totalActualExpenses,totalBudgetExpenses,true);
   t("ws-subs",$f(budgSubs));ta("wa-subs",totalSubs,budgSubs,true);
   t("ws-var",$f(budgVar));ta("wa-var",totalVar,budgVar,true);
   t("ws-sav",$f(budgSav));t("wa-sav",$f(totalSav));
