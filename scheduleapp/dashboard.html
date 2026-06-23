@@ -5494,16 +5494,17 @@ function generateIncomeWeeks(){
   sources.forEach(src=>{
     if(!src.startDate)return;
     const endStr=src.endDate||todayStr;
-    // Walk from startDate to today in 7-day steps, adding Thursdays
+    // Use payWeekday from income source settings (default Thursday=4)
+    const payWd = src.payWeekday??4;
     let cur=new Date(src.startDate+"T12:00:00");
-    // Snap to first Thursday on or after startDate
-    while(cur.getDay()!==4)cur.setDate(cur.getDate()+1);
+    // Snap to first payWeekday on or after startDate
+    while(cur.getDay()!==payWd)cur.setDate(cur.getDate()+1);
     while(fd(cur)<=todayStr){
       const ws=fd(cur);
       const key=ws+":"+src.id;
       if(!existing.has(key)&&ws>=src.startDate&&ws<=endStr){
         existing.add(key);
-        // Pay date = ws + processingWeeks * 7 days (also a Thursday)
+        // Pay date = ws + processingWeeks * 7 days (same weekday)
         const payD=new Date(cur.getTime()+(src.processingWeeks||2)*7*86400000);
         const payDateStr=fd(payD);
         // Auto-mark received if payDate has passed
