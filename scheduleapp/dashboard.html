@@ -5487,6 +5487,16 @@ function getLastThursday(fromDate){
 function generateIncomeWeeks(){
   if(!budgetData)return;
   const sources=budgetData.recurring.incomeSources||[];
+  // Remove pending weeks with wrong weekday for their source (stale from old settings)
+  if(budgetData.incomeWeeks){
+    budgetData.incomeWeeks=budgetData.incomeWeeks.filter(w=>{
+      if(w.status==="received")return true; // always keep received
+      const src2=sources.find(s=>s.id===w.sourceId);if(!src2)return false;
+      const payWd2=src2.payWeekday??4;
+      const wDay=new Date(w.weekStartDate+"T12:00:00").getDay();
+      return wDay===payWd2; // only keep pending weeks with correct weekday
+    });
+  }
   const existing=new Set((budgetData.incomeWeeks||[]).map(w=>w.weekStartDate+":"+w.sourceId));
   const today=new Date();
   const todayStr=fd(today);
