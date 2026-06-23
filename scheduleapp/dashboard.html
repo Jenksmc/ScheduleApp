@@ -5632,7 +5632,8 @@ function renderBudgetPage(){
     if(!activeBudgetProfile){
       unlockBudget(sessionProfile);
     } else {
-      loadProfileBudgetData();
+      // DO NOT reload from server here - just re-render from current in-memory budgetData
+      // Loading from server would overwrite any unsaved period adjustments
       autoUpdateIncomeStatuses();generateIncomeWeeks();
       const now=new Date();
       if(!budgetCurrentWeekStart)budgetCurrentWeekStart=getFridayWeekStart(now);
