@@ -5748,7 +5748,12 @@ function renderWeeklyView(){
 
   // Income from weeks that have payDate in this window
   const weekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=weekEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40),0);
+  const budgIncome=rec.incomeSources.reduce((s,src2)=>{
+    // Use hours from the specific income week entry if it exists, else default
+    const weekEntry=(budgetData.incomeWeeks||[]).find(w=>w.sourceId===src2.id&&w.weekStartDate>=ws&&w.weekStartDate<=weekEnd);
+    const hrs=weekEntry?weekEntry.hours:(src2.defaultHours||40);
+    return s+(src2.hourlyRate||0)*hrs;
+  },0);
 
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
