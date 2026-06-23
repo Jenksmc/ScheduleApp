@@ -1395,6 +1395,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <!-- Amazon links — only shown when Amazon is selected -->
         <div id="exp-amazon-section" style="display:none">
+          <div class="field" style="margin-bottom:10px">
+            <label style="margin-bottom:4px;display:block"><i class="ti ti-tag" style="font-size:13px"></i> Counts toward category <span class="opt-label">(opt)</span></label>
+            <select id="exp-subcategory" style="width:100%"><option value="">Amazon (default)</option></select>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">If set, counts toward that category in your spending totals instead of Amazon.</div>
+          </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <label style="margin:0"><i class="ti ti-brand-amazon" style="font-size:15px"></i> Amazon order links</label>
             <button class="btn" style="padding:3px 8px;font-size:13px" onclick="addAmazonLinkField()"><i class="ti ti-plus"></i> Add link</button>
@@ -5929,7 +5934,7 @@ function renderTrackerVariable(){
           +'<span class="exp-desc">'+(e.title||e.note||e.category)+'</span>'
           +(hasAmazon?'<span style="font-size:11px;color:var(--muted);background:var(--tag-bg);padding:1px 6px;border-radius:10px"><i class="ti ti-brand-amazon"></i> '+e.amazonLinks.length+'</span>':"")
         +'</div>'
-        +'<div class="exp-meta">'+e.category+' &middot; '+e.date+'</div>'
+        +'<div class="exp-meta">'+e.category+(e.subcategory?' <span style="font-size:11px;background:var(--tag-bg);padding:1px 5px;border-radius:8px;color:var(--muted)">'+e.subcategory+'</span>':'') +' &middot; '+e.date+'</div>'
       +'</div>'
       +(hasNotes?'<div style="font-size:12px;color:var(--muted);max-width:180px;text-align:right;line-height:1.4;padding-left:8px;flex-shrink:0">'+e.note+'</div>':"")
       +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
@@ -6049,6 +6054,17 @@ function showAmazonFields(){
   const cat=document.getElementById("exp-category")?.value||"";
   const sec=document.getElementById("exp-amazon-section");
   if(sec)sec.style.display=cat==="Amazon"?"block":"none";
+  if(cat==="Amazon"){
+    // Populate subcategory dropdown with other variable categories
+    const subSel=document.getElementById("exp-subcategory");
+    if(subSel){
+      const cats=(budgetData?.recurring?.variable||[]).map(v=>v.name).filter(c=>c!=="Amazon");
+      const defaults=["Groceries","DoorDash","Eating Out","Pets","Household Items","Car","Shopping","Entertainment","Misc"];
+      const all=[...new Set([...cats,...defaults])];
+      const cur=subSel.value;
+      subSel.innerHTML='<option value="">Amazon (default)</option>'+all.map(c=>'<option value="'+c+'"'+(c===cur?' selected':'')+'>'+c+'</option>').join("");
+    }
+  }
 }
 
 function addAmazonLinkField(url){
@@ -6069,6 +6085,7 @@ function openAddExpenseSheet(){
   document.getElementById("exp-note").value="";
   document.getElementById("exp-amazon-links").innerHTML="";
   document.getElementById("exp-amazon-section").style.display="none";
+  const subSelR=document.getElementById("exp-subcategory");if(subSelR)subSelR.value="";
   document.getElementById("exp-delete").style.display="none";
   document.getElementById("exp-modal-heading").textContent="Log Expense";
   document.querySelectorAll("#exp-type-badges .badge").forEach((b,i)=>b.classList.toggle("active",i===0));
@@ -6090,6 +6107,7 @@ function openEditExpense(id){
   document.getElementById("exp-modal-heading").textContent="Edit Expense";
   document.getElementById("exp-amazon-links").innerHTML="";
   (e.amazonLinks||[]).forEach(url=>addAmazonLinkField(url));
+  setTimeout(()=>{const ss=document.getElementById("exp-subcategory");if(ss)ss.value=e.subcategory||"";},20);
   document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.type));
   pickExpType(e.type,null);
   if(e.savingsBucket){document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.savingsBucket));}
@@ -6112,12 +6130,15 @@ function saveExpenseFromModal(){
   const date=document.getElementById("exp-date").value||fd(new Date());
   const note=document.getElementById("exp-note").value.trim();
   const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
+  const subcategory=category==="Amazon"?(document.getElementById("exp-subcategory")?.value||""):"";
+  // effectiveCategory: if Amazon + subcategory set, count toward subcategory in totals
+  const effectiveCategory=subcategory||category;
   if(!budgetData.expenses)budgetData.expenses=[];
   if(_editExpenseId){
     const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
-    if(ex)Object.assign(ex,{title,type:expType,category,savingsBucket:bucket,amount,date,note,amazonLinks});
+    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,amount,date,note,amazonLinks});
   } else {
-    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,savingsBucket:bucket,amount,date,note,amazonLinks});
+    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,amount,date,note,amazonLinks});
   }
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
