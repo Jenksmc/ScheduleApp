@@ -334,7 +334,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .bchart-title{font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:500}
 .bline{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer}
 .bline:last-child{border-bottom:none}
-.bline:hover{background:rgba(255,255,255,0.03);border-radius:6px}
+.bline:hover{background:var(--tag-bg);border-radius:6px}
 .bline-name{flex:1;font-size:15px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bline-budget{font-family:"DM Mono",monospace;font-size:13px;color:var(--muted);min-width:60px;text-align:right}
 .bline-actual{font-family:"DM Mono",monospace;font-size:15px;font-weight:600;min-width:60px;text-align:right}
@@ -915,10 +915,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bcompact-title">SPENDING BREAKDOWN</div>
           <canvas id="chart-breakdown" height="140"></canvas>
         </div>
-        <!-- Income vs Expenses bar -->
+        <!-- Variable Budget vs Actual -->
         <div class="budget-card bcompact-card">
-          <div class="bcompact-title">INCOME vs EXPENSES</div>
-          <canvas id="chart-inc-exp" height="140"></canvas>
+          <div class="bcompact-title">VARIABLE EXPENSE - BUDGET vs ACTUAL</div>
+          <canvas id="chart-w-bva" height="80"></canvas>
+          <div style="text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--today-color)">LEFT TO SPEND</div>
+            <div style="font-size:10px;color:var(--muted)">(Variable Expense)</div>
+            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:var(--today-color);margin-top:2px" id="w-var-left">$0.00</div>
+          </div>
         </div>
       </div>
 
@@ -962,14 +967,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">SAVINGS</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-            <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:3px">HOUSEHOLD</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+            <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
+              <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">HOUSEHOLD</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period</div>
               <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-hh-amt">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total saved</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#378add" id="w-sav-hh-total">$0</div>
             </div>
-            <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:3px">PERSONAL</div>
+            <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
+              <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">PERSONAL</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period</div>
               <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-pers-amt">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total saved</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#378add" id="w-sav-pers-total">$0</div>
             </div>
           </div>
         </div>
@@ -1016,11 +1027,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">HOUSEHOLD SAVINGS</div>
-          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add;margin-top:6px" id="m-sav-household">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add" id="m-sav-household">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">Total saved</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#378add" id="m-sav-hh-total">$0</div>
         </div>
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">PERSONAL SAVINGS</div>
-          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add;margin-top:6px" id="m-sav-personal">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month</div>
+          <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add" id="m-sav-personal">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">Total saved</div>
+          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#378add" id="m-sav-pers-total">$0</div>
         </div>
       </div>
     </div>
@@ -5632,8 +5649,14 @@ function renderBudgetPage(){
     if(!activeBudgetProfile){
       unlockBudget(sessionProfile);
     } else {
-      // DO NOT reload from server here - just re-render from current in-memory budgetData
-      // Loading from server would overwrite any unsaved period adjustments
+      // Only reload if budgetData is missing or stale
+      if(!budgetData||!budgetData.recurring){
+        loadProfileBudgetData().then(()=>{
+          autoUpdateIncomeStatuses();generateIncomeWeeks();
+          setBudgetMainTab("overview");
+        });
+        return;
+      }
       autoUpdateIncomeStatuses();generateIncomeWeeks();
       const now=new Date();
       if(!budgetCurrentWeekStart)budgetCurrentWeekStart=getFridayWeekStart(now);
@@ -5692,11 +5715,30 @@ function renderBlineGroup(listId,totalId,items,period,view,weekStart){
     else if(weekStart) budg=billDueInWeek(item,weekStart);
     else budg=proRateToWeek(item);
     const over=budg>0&&act>budg;
-    return`<div class="bline" onclick="openEditBillActual('${item.id}')">
+    // Find due date string for display
+    const dueDay2=getDueDay(item);
+    let dueDateLabel="";
+    if(budg>0&&weekStart){
+      if(view==="monthly"){
+        const ms=new Date(weekStart+"T12:00:00");
+        const dd=new Date(ms.getFullYear(),ms.getMonth(),dueDay2);
+        if(fd(dd)>=fd(ms)){dueDateLabel=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+      } else {
+        const ws2=new Date(weekStart+"T12:00:00");
+        const we2=new Date(ws2.getTime()+6*86400000);
+        const months2=new Set([ws2.getMonth()+"-"+ws2.getFullYear(), we2.getMonth()+"-"+we2.getFullYear()]);
+        for(const mo of months2){
+          const [m2,y2]=mo.split("-").map(Number);
+          const dd=new Date(y2,m2,dueDay2);
+          if(fd(dd)>=fd(ws2)&&fd(dd)<=fd(we2)){dueDateLabel=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});break;}
+        }
+      }
+    }
+    return`<div class="bline">
       <span class="bline-name">${item.name}</span>
-      ${budg>0?`<span class="bline-budget">${$f(budg)}</span>`:'<span class="bline-budget" style="color:var(--muted);font-size:12px">not due</span>'}
+      ${budg>0?`<span class="bline-budget">${$f(budg)}${dueDateLabel?'<span style="font-size:10px;color:var(--muted);margin-left:4px">due '+dueDateLabel+'</span>':''}</span>`:'<span class="bline-budget" style="color:var(--muted);font-size:12px">not due</span>'}
       <span class="bline-actual${over?" over":""}">${$f(act)}</span>
-      <button class="bline-edit"><i class="ti ti-pencil"></i></button>
+      <button class="bline-edit" onclick="openEditBillActual('${item.id}')" title="Edit actual"><i class="ti ti-pencil"></i></button>
     </div>`;
   }).join("")||'<div class="empty-msg">None configured</div>';
   if(totalId)t(totalId,$f(total));
@@ -5711,6 +5753,12 @@ function proRateToWeek(rec){
 }
 
 // Returns the full amount if this bill/sub is due in the given week, 0 otherwise
+function getDueDay(rec){
+  if(rec.dueDay) return rec.dueDay;
+  if(rec.startDate) return new Date(rec.startDate+"T12:00:00").getDate();
+  return 1;
+}
+
 function billDueInWeek(rec, weekStart){
   if(!rec.amount||rec.amount===0)return 0;
   const dueDay=rec.dueDay||1;
@@ -5736,77 +5784,120 @@ function billDueInMonth(rec, yearMonth){
 }
 
 function renderWeeklyView(){
+  try{
+  if(!budgetData||!budgetData.recurring)return;
   if(!budgetCurrentWeekStart) budgetCurrentWeekStart=getFridayWeekStart(new Date());
   const ws=budgetCurrentWeekStart;
-  const weekEnd=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
-  const period=getPeriod(getWeekPeriodKey(ws));
+  const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
   const rec=budgetData.recurring;
-  const expenses=getExpensesFor(ws,weekEnd,"variable");
-  const savExps=getExpensesFor(ws,weekEnd,"savings");
 
-  const actual=(id)=>parseFloat(period.actualMap?.[id])||0;
-  const varActuals={};rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  // ── Previous week end balance as start balance ──
+  const prevWs=fd(new Date(new Date(ws+"T12:00:00").getTime()-7*86400000));
+  const prevPeriod=budgetData.periods?.[getWeekPeriodKey(prevWs)];
+  const prevIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevWs&&w.payDate<=fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000))&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  const prevBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
+  const prevSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
+  const prevSav=(rec.savingsTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
+  const prevVarActuals={};
+  rec.variable.forEach(v=>{prevVarActuals[v.id]=expenseTotalByCat(getExpensesFor(prevWs,fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000)),"variable"),v.name);});
+  const prevVar=Object.values(prevVarActuals).reduce((s,v)=>s+v,0);
+  const prevSb=parseFloat(prevPeriod?.startBalance)||0;
+  const sb=prevPeriod?prevSb+prevIncome-prevBills-prevSubs-prevVar-prevSav:parseFloat(budgetData.periods?.[getWeekPeriodKey(ws)]?.startBalance)||0;
 
-  // Income from weeks that have payDate in this window
-  const weekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=weekEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const budgIncome=rec.incomeSources.reduce((s,src2)=>{
-    // Match income week whose payDate falls in this budget week
-    const weekEntry=(budgetData.incomeWeeks||[]).find(w=>w.sourceId===src2.id&&w.payDate>=ws&&w.payDate<=weekEnd);
-    const hrs=weekEntry?weekEntry.hours:(src2.defaultHours||40);
-    return s+(src2.hourlyRate||0)*hrs;
-  },0);
+  // ── This week period ──
+  const period=getPeriod(getWeekPeriodKey(ws));
+  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
 
+  // ── Income: pending + received ──
+  const allWeekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=we);
+  const budgIncome=allWeekIncome.reduce((s,w)=>s+(w.hours*w.rate),0);
+  const actualIncome=allWeekIncome.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+
+  // ── Bills & Subs ──
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
-  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
-
-  // AUTO-CALCULATE total variable budget: income - bills due this week - subs due this week - savings
-  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
-  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
-
-  // Split equally among categories unless per-category override set
-  const activeVarCats=rec.variable.filter(v=>v.weeklyBudget!==undefined); // all categories
-  const catCount=activeVarCats.length||1;
-  const defaultCatBudget=varTotalBudget/catCount;
-
-  // Apply overrides or equal split to each category
-  activeVarCats.forEach(v=>{
-    if(period.varBudgetOverrides[v.id]!==undefined){
-      v._weeklyBudget=period.varBudgetOverrides[v.id];
-    } else {
-      v._weeklyBudget=defaultCatBudget;
+  // Auto-populate bill/sub actuals: use actualMap override if set,
+  // otherwise auto-populate with bill amount once due date has passed
+  const today=fd(new Date());
+  function getAutoActual(item){
+    if(period.actualMap?.[item.id]!=null) return parseFloat(period.actualMap[item.id])||0;
+    const dueAmt=billDueInWeek(item,ws);
+    if(dueAmt<=0) return 0;
+    const dueDay2=getDueDay(item);
+    const wsD=new Date(ws+"T12:00:00"), weD=new Date(we+"T12:00:00");
+    const months2=[wsD.getMonth()+"-"+wsD.getFullYear(), weD.getMonth()+"-"+weD.getFullYear()];
+    for(const mo of [...new Set(months2)]){
+      const [m2,y2]=mo.split("-").map(Number);
+      const dd=new Date(y2,m2,dueDay2);
+      const dds=fd(dd);
+      if(dds>=ws&&dds<=we&&dds<=today) return item.amount;
     }
-  });
+    return 0;
+  }
+  const totalBills=rec.bills.reduce((s,b)=>s+getAutoActual(b),0);
+  const totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActual(b),0);
 
-  // budgVar = the actual total (manual or auto) — categories sum to this
-  const budgVar=varTotalBudget;
-  // Update budget source label
+  // ── Savings ──
+  const budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
+  const savExps=getExpensesFor(ws,we,"savings");
+  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+
+  // ── Variable: auto-pool or manual override ──
+  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
+  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
+  const catCount=rec.variable.length||1;
+  const defaultCatBudget=varTotalBudget/catCount;
+  rec.variable.forEach(v=>{
+    v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:defaultCatBudget;
+  });
+  // budgVar = sum of per-category budgets (what the table actually shows)
+  const budgVar=rec.variable.reduce((s,v)=>s+(v._weeklyBudget||0),0);
+  const expenses=getExpensesFor(ws,we,"variable");
+  const varActuals={};
+  rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
+
+  // ── Summary totals ──
+  const budgExpenses=budgBills+budgSubs+budgVar;
+  const actualExpenses=totalBills+totalSubs+totalVar;
+  const budgEnd=sb+budgIncome-budgExpenses-budgSav;
+  const actualEnd=sb+actualIncome-actualExpenses-totalSav;
+
+  // ── Update summary elements ──
+  t("ws-start",$f(sb));     t("wa-start",$f(sb));
+  t("ws-income",$f(budgIncome)); ta("wa-income",actualIncome,budgIncome,false);
+  t("ws-fixed",$f(budgExpenses)); ta("wa-fixed",actualExpenses,budgExpenses,true);
+  t("ws-subs",$f(budgSubs));  ta("wa-subs",totalSubs,budgSubs,true);
+  t("ws-var",$f(budgVar));   ta("wa-var",totalVar,budgVar,true);
+  t("ws-sav",$f(budgSav));   t("wa-sav",$f(totalSav));
+  t("ws-end",$f(budgEnd));   ta("wa-end",actualEnd,budgEnd,false);
+
+  // ── Variable budget source label ──
   const srcLbl=document.getElementById("w-var-budget-source");
   if(srcLbl){
     const isOverride=period.varBudgetTotal!=null&&period.varBudgetTotal>0;
-    srcLbl.textContent=isOverride?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`:`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills due this week − ${$f(budgSubs)} subs due this week − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
+    srcLbl.textContent=isOverride
+      ?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`
+      :`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills − ${$f(budgSubs)} subs − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
   }
 
-  const totalBills=rec.bills.reduce((s,b)=>s+actual(b.id),0);
-  const totalSubs=rec.subscriptions.reduce((s,b)=>s+actual(b.id),0);
-  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
-  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+  // ── Charts ──
+  drawDonutChart("chart-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
+  drawBudgetVsActualChart("chart-w-bva",[budgVar],[totalVar],["Variable"]);
+  const varLeft=budgVar-totalVar;
+  const varLeftEl=document.getElementById("w-var-left");
+  if(varLeftEl){varLeftEl.textContent=$f(Math.max(0,varLeft));varLeftEl.style.color=varLeft<0?"#e05555":"var(--today-color)";}
 
-  const sb=parseFloat(period.startBalance)||0;
-  const endActual=sb+weekIncome-totalBills-totalSubs-totalVar-totalSav;
-  const endBudget=sb+budgIncome-budgBills-budgSubs-budgVar-budgSav;
-
-  t("ws-start",$f(sb));t("wa-start",$f(sb));
-  t("ws-income",$f(budgIncome));ta("wa-income",weekIncome,budgIncome,false);
-  // Expenses row = bills + subs + variable all combined
-  const totalActualExpenses=totalBills+totalSubs+totalVar;
-  const totalBudgetExpenses=budgBills+budgSubs+budgVar;
-  t("ws-fixed",$f(totalBudgetExpenses));ta("wa-fixed",totalActualExpenses,totalBudgetExpenses,true);
-  t("ws-subs",$f(budgSubs));ta("wa-subs",totalSubs,budgSubs,true);
-  t("ws-var",$f(budgVar));ta("wa-var",totalVar,budgVar,true);
-  t("ws-sav",$f(budgSav));t("wa-sav",$f(totalSav));
-  t("ws-end",$f(endBudget));ta("wa-end",endActual,endBudget,false);
+  // ── Detail panels ──
+  // Build donut: each bill individually, subs grouped, each variable cat individually
+  const donutLabels=[];const donutValues=[];const donutColors=[];
+  const BILL_COLORS=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
+  const VAR_COLORS=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
+  rec.bills.forEach((b,i)=>{const a=getAutoActual(b);if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BILL_COLORS[i%BILL_COLORS.length]);}});
+  if(totalSubs>0){donutLabels.push("Subscriptions");donutValues.push(totalSubs);donutColors.push("#7b68ee");}
+  rec.variable.forEach((v,i)=>{const a=varActuals[v.id]||0;if(a>0){donutLabels.push(v.name);donutValues.push(a);donutColors.push(VAR_COLORS[i%VAR_COLORS.length]);}});
+  if(totalSav>0){donutLabels.push("Savings");donutValues.push(totalSav);donutColors.push("#e0a040");}
+  drawDonutChart("chart-breakdown",donutLabels,donutValues,donutColors);
 
   renderBudgetDailyStrip(ws,expenses,"w-daily-strip","w-daily-total");
   renderBlineGroup("w-bills-lines","w-bills-total",rec.bills,period,"weekly",ws);
@@ -5814,69 +5905,121 @@ function renderWeeklyView(){
   renderVarLines("w-var-lines","w-var-total",rec.variable,varActuals,"weekly");
   const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
   const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
+  const hhTotal=allSavExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persTotal=allSavExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   t("w-sav-hh-amt",$f(hhAmt));
   t("w-sav-pers-amt",$f(persAmt));
-
-  setTimeout(()=>{
-    drawBarChart("chart-inc-exp",["Income","Bills","Subs","Variable","Savings"],[weekIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
-    drawDonutChart("chart-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
-  },50);
+  t("w-sav-hh-total",$f(hhTotal));
+  t("w-sav-pers-total",$f(persTotal));
+  }catch(e){console.error("renderWeeklyView crash:",e);document.getElementById("bview-weekly").innerHTML='<div style="color:red;padding:20px">Weekly view error: '+e.message+'</div>';}
 }
 
-/* ── MONTHLY ─────────────────────────────────────────────────── */
 function renderMonthlyView(){
+  try{
+  if(!budgetData||!budgetData.recurring)return;
   if(!budgetCurrentMonth){const n=new Date();budgetCurrentMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
-  const ym=budgetCurrentMonth;const[y,m]=ym.split("-").map(Number);
-  const monthStart=fd(new Date(y,m-1,1));const monthEnd=fd(new Date(y,m,0));
-  const period=getPeriod(getMonthPeriodKey(ym));
+  const ym=budgetCurrentMonth;
+  const [y,m]=ym.split("-").map(Number);
+  const monthStart=fd(new Date(y,m-1,1));
+  const monthEnd=fd(new Date(y,m,0));
   const rec=budgetData.recurring;
-  const expenses=getExpensesFor(monthStart,monthEnd,"variable");
-  const savExps=getExpensesFor(monthStart,monthEnd,"savings");
-  const actual=(id)=>parseFloat(period.actualMap?.[id])||0;
-  const varActuals={};rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  const period=getPeriod(getMonthPeriodKey(ym));
+  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
 
-  const monthIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=monthStart&&w.payDate<=monthEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const budgIncome=rec.incomeSources.reduce((s,src)=>s+(src.hourlyRate||0)*(src.defaultHours||40)*4.3,0);
+  // ── Start balance from previous month end ──
+  const prevM=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,"0")}`;
+  const prevPeriod=budgetData.periods?.[getMonthPeriodKey(prevM)];
+  const sb=parseFloat(period.startBalance)||0;
+
+  // ── Income ──
+  const allMonthIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=monthStart&&w.payDate<=monthEnd);
+  const budgIncome=allMonthIncome.reduce((s,w)=>s+(w.hours*w.rate),0);
+  const actualIncome=allMonthIncome.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+
+  // ── Bills & Subs ──
   const budgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,ym),0);
   const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,ym),0);
-  const budgVar=rec.variable.reduce((s,v)=>s+(v.weeklyBudget||0)*4.3,0);
-  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>{
+  const todayM=fd(new Date());
+  function getAutoActualM(item){
+    if(period.actualMap?.[item.id]!=null) return parseFloat(period.actualMap[item.id])||0;
+    const dueAmt=billDueInMonth(item,ym);
+    if(dueAmt<=0) return 0;
+    const dueDay2=getDueDay(item);
+    const dd=new Date(y,m-1,dueDay2);
+    const dds=fd(dd);
+    return dds>=monthStart&&dds<=monthEnd&&dds<=todayM?item.amount:0;
+  }
+  const totalBills=rec.bills.reduce((s,b)=>s+getAutoActualM(b),0);
+  const totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActualM(b),0);
+
+  // ── Savings ──
+  const budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>{
     const f=at.frequency||"biweekly";
-    return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:f==="per-paycheck"?at.amount*2.17:at.amount*2.17);
+    return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:at.amount*2.17);
   },0);
-
-  const totalBills=rec.bills.reduce((s,b)=>s+actual(b.id),0);
-  const totalSubs=rec.subscriptions.reduce((s,b)=>s+actual(b.id),0);
-  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
+  const savExps=getExpensesFor(monthStart,monthEnd,"savings");
   const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
-  const totalExp=totalBills+totalSubs+totalVar;
 
-  const sb=parseFloat(period.startBalance)||0;
-  const endActual=sb+monthIncome-totalExp-totalSav;
-  const endBudget=sb+budgIncome-budgBills-budgSubs-budgVar-budgSav;
+  // ── Variable ──
+  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
+  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
+  const catCount=rec.variable.length||1;
+  const defaultCatBudget=varTotalBudget/catCount;
+  rec.variable.forEach(v=>{
+    v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:defaultCatBudget;
+  });
+  const budgVar=varTotalBudget;
+  const expenses=getExpensesFor(monthStart,monthEnd,"variable");
+  const varActuals={};
+  rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
+  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
 
-  t("ms-start",$f(sb));t("ma-start",$f(sb));
-  t("ms-income",$f(budgIncome));ta("ma-income",monthIncome,budgIncome,false);
-  t("ms-exp",$f(budgBills+budgSubs+budgVar));ta("ma-exp",totalExp,budgBills+budgSubs+budgVar,true);
-  t("ms-sav",$f(budgSav));t("ma-sav",$f(totalSav));
-  t("ms-end",$f(endBudget));ta("ma-end",endActual,endBudget,false);
+  // ── Totals ──
+  const budgExpenses=budgBills+budgSubs+budgVar;
+  const actualExpenses=totalBills+totalSubs+totalVar;
+  const budgEnd=sb+budgIncome-budgExpenses-budgSav;
+  const actualEnd=sb+actualIncome-actualExpenses-totalSav;
 
-  renderBlineGroup("m-bills-lines","m-bills-total",rec.bills,period,"monthly");
-  renderBlineGroup("m-subs-lines","m-subs-total",rec.subscriptions,period,"monthly");
+  // ── Update summary ──
+  t("ms-start",$f(sb));     t("ma-start",$f(sb));
+  t("ms-income",$f(budgIncome)); ta("ma-income",actualIncome,budgIncome,false);
+  t("ms-exp",$f(budgExpenses)); ta("ma-exp",actualExpenses,budgExpenses,true);
+  t("ms-sav",$f(budgSav));   t("ma-sav",$f(totalSav));
+  t("ms-end",$f(budgEnd));   ta("ma-end",actualEnd,budgEnd,false);
+
+  // ── Charts ──
+  drawDonutChart("chart-m-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
+  drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Var","Savings"],[actualIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
+
+  // ── Detail panels ──
+  const donutLabelsM=[];const donutValuesM=[];const donutColorsM=[];
+  const BILL_COLORS_M=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
+  const VAR_COLORS_M=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
+  rec.bills.forEach((b,i)=>{const a=getAutoActualM(b);if(a>0){donutLabelsM.push(b.name);donutValuesM.push(a);donutColorsM.push(BILL_COLORS_M[i%BILL_COLORS_M.length]);}});
+  if(totalSubs>0){donutLabelsM.push("Subscriptions");donutValuesM.push(totalSubs);donutColorsM.push("#7b68ee");}
+  rec.variable.forEach((v,i)=>{const a=varActuals[v.id]||0;if(a>0){donutLabelsM.push(v.name);donutValuesM.push(a);donutColorsM.push(VAR_COLORS_M[i%VAR_COLORS_M.length]);}});
+  if(totalSav>0){donutLabelsM.push("Savings");donutValuesM.push(totalSav);donutColorsM.push("#e0a040");}
+  drawDonutChart("chart-m-breakdown",donutLabelsM,donutValuesM,donutColorsM);
+  drawBudgetVsActualChart("chart-m-bva",[budgBills,budgSubs,budgVar],[totalBills,totalSubs,totalVar],["Bills","Subscriptions","Variable Exp."]);
+  drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Var","Savings"],[actualIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#378add","#e0a040"]);
+  renderBlineGroup("m-bills-lines","m-bills-total",rec.bills,period,"monthly",monthStart);
+  renderBlineGroup("m-subs-lines","m-subs-total",rec.subscriptions,period,"monthly",monthStart);
   renderVarLines("m-var-lines","m-var-total",rec.variable,varActuals,"monthly");
-  const mHhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const mPersAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  t("m-sav-household",$f(mHhAmt));
-  t("m-sav-personal",$f(mPersAmt));
-
-  setTimeout(()=>{
-    drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Variable","Savings"],[monthIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
-    drawDonutChart("chart-m-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
-    drawBudgetVsActualChart("chart-m-bva",rec,period,varActuals);
-  },50);
+  const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const allSavExpsM=budgetData.expenses?.filter(e=>e.type==="savings")||[];
+  const hhTotalM=allSavExpsM.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persTotalM=allSavExpsM.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  t("m-sav-household",$f(hhAmt));
+  t("m-sav-personal",$f(persAmt));
+  t("m-sav-hh-total",$f(hhTotalM));
+  t("m-sav-pers-total",$f(persTotalM));
+  const periodLabel=new Date(y,m-1,15).toLocaleDateString("en-US",{month:"long",year:"numeric"});
+  t("m-period-label",periodLabel);
+  }catch(e){console.error("renderMonthlyView crash:",e);document.getElementById("bview-monthly").innerHTML='<div style="color:red;padding:20px">Monthly view error: '+e.message+'</div>';}
 }
 
-/* ── DAILY ───────────────────────────────────────────────────── */
 function renderDailyView(){
   if(!budgetCurrentDate) budgetCurrentDate=fd(new Date());
   const ds=budgetCurrentDate;
@@ -6556,46 +6699,134 @@ function drawBarChart(canvasId,labels,values,colors){
     const x=i*(barW+8)+4;const barH=Math.max(2,(values[i]/max)*chartH);const y=padT+chartH-barH;
     ctx.fillStyle=colors[i]||"#888";ctx.beginPath();
     if(ctx.roundRect)ctx.roundRect(x,y,barW,barH,3);else ctx.rect(x,y,barW,barH);ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.45)";ctx.font=`9px "DM Sans",sans-serif`;ctx.textAlign="center";
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()||"#888";ctx.font=`9px "DM Sans",sans-serif`;ctx.textAlign="center";
     ctx.fillText(lbl.substring(0,7),x+barW/2,H-5);
   });
 }
 
 function drawDonutChart(canvasId,labels,values,colors){
   const canvas=document.getElementById(canvasId);if(!canvas)return;
-  const ctx=canvas.getContext("2d");const W=canvas.offsetWidth||300;canvas.width=W;
-  const H=canvas.height;ctx.clearRect(0,0,W,H);const total=values.reduce((s,v)=>s+v,0)||1;
-  const cx=W/2,cy=H/2,r=Math.min(cx,cy)-18,ir=r*0.55;let angle=-Math.PI/2;
+  const ctx=canvas.getContext("2d");
+  const W=canvas.offsetWidth||300;canvas.width=W;
+  const H=canvas.height||200;canvas.height=H;
+  const total=values.reduce((s,v)=>s+v,0)||1;
+  const cx=W/2,cy=H/2,r=Math.min(cx,cy)-10,ir=r*0.55;
+  // Build slice data
+  const slices=[];let angle=-Math.PI/2;
   values.forEach((v,i)=>{
     const slice=(v/total)*Math.PI*2;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
-    ctx.fillStyle=colors[i]||"#888";ctx.fill();
-    if(v>0){const ma=angle+slice/2;ctx.fillStyle="rgba(255,255,255,0.55)";ctx.font=`9px "DM Sans",sans-serif`;ctx.textAlign="center";ctx.fillText(labels[i].substring(0,8),cx+Math.cos(ma)*(r+12),cy+Math.sin(ma)*(r+12));}
+    slices.push({label:labels[i],value:v,color:colors[i]||"#888",start:angle,end:angle+slice});
     angle+=slice;
   });
-  ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);
-  const bgClr=getComputedStyle(document.documentElement).getPropertyValue("--surface").trim()||"#16161a";
-  ctx.fillStyle=bgClr;ctx.fill();
-  ctx.fillStyle="rgba(255,255,255,0.6)";ctx.font=`bold 12px "DM Mono",monospace`;ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.fillText("$"+(total/1000).toFixed(1)+"k",cx,cy);
+  function draw(hovIdx){
+    ctx.clearRect(0,0,W,H);
+    slices.forEach((s,i)=>{
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      const expand=i===hovIdx?6:0;
+      const ma=(s.start+s.end)/2;
+      const ox=Math.cos(ma)*expand,oy=Math.sin(ma)*expand;
+      ctx.arc(cx+ox,cy+oy,r,s.start,s.end);ctx.closePath();
+      ctx.fillStyle=s.color;ctx.fill();
+    });
+    // Center hole
+    ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);
+    const cs=getComputedStyle(document.documentElement);
+    // Get card background by creating a test element
+    let bgClr;
+    try{
+      const probe=document.createElement("div");
+      probe.className="budget-card";
+      probe.style.cssText="position:absolute;visibility:hidden;pointer-events:none";
+      document.body.appendChild(probe);
+      bgClr=getComputedStyle(probe).backgroundColor;
+      document.body.removeChild(probe);
+    }catch(e){}
+    if(!bgClr||bgClr==="rgba(0, 0, 0, 0)"||bgClr==="transparent"){
+      bgClr=cs.getPropertyValue("--surface").trim()||cs.getPropertyValue("--color-background-primary").trim()||"#fff";
+    }
+    const textClr=cs.getPropertyValue("--text").trim()||"#fff";
+    const mutedClr=cs.getPropertyValue("--muted").trim()||"#888";
+    ctx.fillStyle=bgClr;ctx.fill();
+    // Center text
+    if(hovIdx>=0&&hovIdx<slices.length){
+      const s=slices[hovIdx];
+      ctx.fillStyle=s.color;
+      ctx.font=`bold 11px "DM Sans",sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText(s.label.length>12?s.label.substring(0,11)+"…":s.label,cx,cy-8);
+      ctx.fillStyle=textClr;
+      ctx.font=`bold 13px "DM Mono",monospace`;
+      ctx.fillText("$"+s.value.toFixed(2),cx,cy+8);
+      const pct=((s.value/total)*100).toFixed(1);
+      ctx.fillStyle=mutedClr;ctx.font=`10px "DM Sans",sans-serif`;
+      ctx.fillText(pct+"%",cx,cy+22);
+    } else {
+      ctx.fillStyle=mutedClr;ctx.font=`bold 12px "DM Mono",monospace`;
+      ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillText("$"+(total/1000).toFixed(1)+"k",cx,cy);
+    }
+  }
+  draw(-1);
+  // Hover detection
+  const prevHandler=canvas._donutHandler;
+  if(prevHandler){canvas.removeEventListener("mousemove",prevHandler);canvas.removeEventListener("mouseleave",prevHandler);}
+  function getSliceAt(mx,my){
+    const dx=mx-cx,dy=my-cy,dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<ir||dist>r+10)return -1;
+    let a=Math.atan2(dy,dx);
+    if(a<-Math.PI/2)a+=Math.PI*2;
+    for(let i=0;i<slices.length;i++){
+      let s=slices[i].start,e=slices[i].end;
+      if(s<-Math.PI/2){s+=Math.PI*2;e+=Math.PI*2;}
+      if(a>=s&&a<=e)return i;
+    }
+    return -1;
+  }
+  function onMove(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    const idx=getSliceAt(mx,my);
+    canvas.style.cursor=idx>=0?"pointer":"default";
+    draw(idx);
+  }
+  function onLeave(){canvas.style.cursor="default";draw(-1);}
+  canvas._donutHandler=onMove;
+  canvas.addEventListener("mousemove",onMove);
+  canvas.addEventListener("mouseleave",onLeave);
 }
 
-function drawBudgetVsActualChart(canvasId,rec,period,varActuals){
+function drawBudgetVsActualChart(canvasId,budgVals,actlVals,rowLabels){
   const canvas=document.getElementById(canvasId);if(!canvas)return;
-  const ctx=canvas.getContext("2d");const W=canvas.offsetWidth||300;canvas.width=W;
-  const H=canvas.height;ctx.clearRect(0,0,W,H);
-  const cats=["Bills","Subs","Variable"];
-  const budg=[rec.bills.reduce((s,b)=>s+b.amount,0),rec.subscriptions.reduce((s,b)=>s+b.amount,0),rec.variable.reduce((s,v)=>(v.weeklyBudget||0)*4.3+s,0)];
-  const actl=[rec.bills.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0),rec.subscriptions.reduce((s,b)=>s+(parseFloat(period.actualMap?.[b.id])||0),0),Object.values(varActuals).reduce((s,v)=>s+v,0)];
-  const max=Math.max(...budg,...actl,1);
-  const gW=Math.floor(W/cats.length);const bW=Math.floor(gW*0.35)-2;const padB=22;const padT=10;const cH=H-padB-padT;
-  cats.forEach((cat,i)=>{
-    const gx=i*gW+gW*0.1;
-    const bH=Math.max(2,(budg[i]/max)*cH);ctx.fillStyle="rgba(255,255,255,0.18)";
-    if(ctx.roundRect)ctx.roundRect(gx,padT+cH-bH,bW,bH,3);else ctx.rect(gx,padT+cH-bH,bW,bH);ctx.fill();
-    const aH=Math.max(2,(actl[i]/max)*cH);ctx.fillStyle=actl[i]>budg[i]?"#e05555":"#3db87a";
-    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(gx+bW+2,padT+cH-aH,bW,aH,3);else ctx.rect(gx+bW+2,padT+cH-aH,bW,aH);ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.45)";ctx.font=`9px "DM Sans",sans-serif`;ctx.textAlign="center";ctx.fillText(cat,gx+bW,H-5);
+  const ctx=canvas.getContext("2d");
+  const W=canvas.offsetWidth||300;canvas.width=W;
+  const H=canvas.height||160;canvas.height=H;
+  ctx.clearRect(0,0,W,H);
+  const cs2=getComputedStyle(document.documentElement);
+  const BUDGET_CLR=cs2.getPropertyValue("--border").trim()||"rgba(200,200,200,0.35)";
+  const ACTUAL_CLR=cs2.getPropertyValue("--today-color").trim()||"#e0a040";
+  const TEXT_CLR=cs2.getPropertyValue("--muted").trim()||"#888";
+  const labelW=90;const barAreaW=W-labelW-10;
+  const rowH=Math.floor(H/(rowLabels.length+1));
+  const barH=Math.floor(rowH*0.35);
+  const max=Math.max(...budgVals,...actlVals,1);
+  // Legend
+  ctx.fillStyle=BUDGET_CLR;ctx.fillRect(labelW,4,20,8);
+  ctx.fillStyle=TEXT_CLR;ctx.font=`9px "DM Sans",sans-serif`;ctx.textAlign="left";ctx.fillText("BUDGET",labelW+24,12);
+  ctx.fillStyle=ACTUAL_CLR;ctx.fillRect(labelW+80,4,20,8);
+  ctx.fillText("ACTUAL",labelW+104,12);
+  rowLabels.forEach((lbl,i)=>{
+    const y=rowH*(i+1);
+    // Label
+    ctx.fillStyle=TEXT_CLR;ctx.font=`10px "DM Sans",sans-serif`;ctx.textAlign="right";
+    ctx.fillText(lbl.toUpperCase(),labelW-6,y+barH/2+3);
+    // Budget bar
+    const bW=Math.max(2,(budgVals[i]/max)*barAreaW);
+    ctx.fillStyle=BUDGET_CLR;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(labelW,y-2,bW,barH,2);else ctx.rect(labelW,y-2,bW,barH);ctx.fill();
+    // Actual bar
+    const aW=Math.max(2,(actlVals[i]/max)*barAreaW);
+    const overBudget=actlVals[i]>budgVals[i];
+    ctx.fillStyle=overBudget?"#e05555":ACTUAL_CLR;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(labelW,y+barH,aW,barH,2);else ctx.rect(labelW,y+barH,aW,barH);ctx.fill();
   });
 }
 
@@ -6671,33 +6902,22 @@ function avbResetTotal(){
 }
 
 function saveAdjustVarBudget(){
-  const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
-  const _avbVal=parseFloat(document.getElementById("avb-total").value);
-  period.varBudgetTotal=isNaN(_avbVal)?null:_avbVal;
+  const ws=budgetCurrentWeekStart;
+  const key=getWeekPeriodKey(ws);
+  if(!budgetData.periods)budgetData.periods={};
+  if(!budgetData.periods[key])budgetData.periods[key]={startBalance:0,actualMap:{},dailyLog:{}};
+  const period=budgetData.periods[key];
+  const rawTotal=parseFloat(document.getElementById("avb-total").value);
+  period.varBudgetTotal=isNaN(rawTotal)||rawTotal<=0?null:rawTotal;
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
   document.querySelectorAll(".avb-cat-input").forEach(inp=>{
-    period.varBudgetOverrides[inp.dataset.id]=parseFloat(inp.value)||0;
+    const v=parseFloat(inp.value);
+    period.varBudgetOverrides[inp.dataset.id]=isNaN(v)?0:v;
   });
   saveBudgetData();
   closeModal("modal-adjust-var");
-  // Re-render after a tick to ensure budgetData is fully saved
-  setTimeout(()=>renderBudgetOverview(), 50);
+  renderBudgetOverview();
 }
-
-
-
-
-/* ══════════════════════════════════════════════════════════════
-   MOBILE BUDGET - Clean implementation
-   Summary always on top
-   Dropdown 1: Spending Breakdown / Income vs Expenses / Total Expenses  
-   Dropdown 2: Variable Budget vs Actual / Bills & Debt / Subscriptions / Savings
-══════════════════════════════════════════════════════════════ */
-
-let _mbChart = "breakdown";
-let _mbSection = "variable";
-let _mbView = "weekly";
-
 function setMobileBudgetView(v){
   _mbView = v;
   renderMobileBudget();
