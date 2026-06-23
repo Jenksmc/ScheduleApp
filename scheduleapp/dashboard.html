@@ -5926,7 +5926,7 @@ function renderTrackerVariable(){
       +'<div class="exp-cat-dot" style="background:'+catColor(e.category)+'"></div>'
       +'<div class="exp-info" style="flex:1;min-width:0">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
-          +'<span class="exp-desc">'+(e.title||e.category)+'</span>'
+          +'<span class="exp-desc">'+(e.title||e.note||e.category)+'</span>'
           +(hasAmazon?'<span style="font-size:11px;color:var(--muted);background:var(--tag-bg);padding:1px 6px;border-radius:10px"><i class="ti ti-brand-amazon"></i> '+e.amazonLinks.length+'</span>':"")
         +'</div>'
         +'<div class="exp-meta">'+e.category+' &middot; '+e.date+'</div>'
@@ -6102,18 +6102,29 @@ function deleteExpenseFromModal(){
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
 
+function saveExpenseFromModal(){
+  const amount=parseFloat(document.getElementById("exp-amount").value);
+  if(!amount||amount<=0)return;
+  const title=document.getElementById("exp-title").value.trim();
+  const expType=document.querySelector("#exp-type-badges .badge.active")?.dataset.v||"variable";
+  const category=document.getElementById("exp-category")?.value||"";
+  const bucket=expType==="savings"?(document.querySelector("#exp-sav-field .badge.active")?.dataset.v||"household"):null;
+  const date=document.getElementById("exp-date").value||fd(new Date());
+  const note=document.getElementById("exp-note").value.trim();
+  const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
+  if(!budgetData.expenses)budgetData.expenses=[];
+  if(_editExpenseId){
+    const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
+    if(ex)Object.assign(ex,{title,type:expType,category,savingsBucket:bucket,amount,date,note,amazonLinks});
+  } else {
+    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,savingsBucket:bucket,amount,date,note,amazonLinks});
+  }
+  saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
+}
+
 let _editExpenseId=null;
 
-function saveExpenseFromModal(){
-  const amount=parseFloat(document.getElementById("exp-amount")?.value)||0;if(!amount)return;
-  const date=document.getElementById("exp-date")?.value||fd(new Date());
-  const note=document.getElementById("exp-note")?.value.trim()||"";
-  const entry={id:budgetNid++,date,amount,type:_expType,note};
-  if(_expType==="variable"){entry.category=document.getElementById("exp-category")?.value||"Misc";}
-  else{entry.category="Savings";entry.savingsBucket=_savBucket;}
-  budgetData.expenses.push(entry);
-  saveBudgetData();closeModal("modal-add-expense");renderBudgetOverview();renderTrackerView();
-}
+
 function deleteExpenseB(id){
   budgetData.expenses=budgetData.expenses.filter(e=>e.id!==id);
   saveBudgetData();renderBudgetOverview();renderTrackerView();
