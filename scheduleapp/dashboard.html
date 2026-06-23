@@ -5762,7 +5762,7 @@ function renderWeeklyView(){
   // AUTO-CALCULATE total variable budget: income - bills due this week - subs due this week - savings
   const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
-  const varTotalBudget=period.varBudgetTotal??autoVarTotal;
+  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
 
   // Split equally among categories unless per-category override set
   const activeVarCats=rec.variable.filter(v=>v.weeklyBudget!==undefined); // all categories
@@ -5783,7 +5783,7 @@ function renderWeeklyView(){
   // Update budget source label
   const srcLbl=document.getElementById("w-var-budget-source");
   if(srcLbl){
-    const isOverride=period.varBudgetTotal!==undefined;
+    const isOverride=period.varBudgetTotal!=null&&period.varBudgetTotal>0;
     srcLbl.textContent=isOverride?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`:`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills due this week − ${$f(budgSubs)} subs due this week − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
   }
 
@@ -6671,14 +6671,16 @@ function avbResetTotal(){
 
 function saveAdjustVarBudget(){
   const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
-  period.varBudgetTotal=parseFloat(document.getElementById("avb-total").value)||0;
+  const _avbVal=parseFloat(document.getElementById("avb-total").value);
+  period.varBudgetTotal=isNaN(_avbVal)?null:_avbVal;
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
   document.querySelectorAll(".avb-cat-input").forEach(inp=>{
     period.varBudgetOverrides[inp.dataset.id]=parseFloat(inp.value)||0;
   });
   saveBudgetData();
   closeModal("modal-adjust-var");
-  renderBudgetOverview();
+  // Re-render after a tick to ensure budgetData is fully saved
+  setTimeout(()=>renderBudgetOverview(), 50);
 }
 
 
