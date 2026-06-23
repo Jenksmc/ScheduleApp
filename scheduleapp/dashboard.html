@@ -1364,40 +1364,49 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <!-- ADD EXPENSE SHEET -->
 <div id="modal-add-expense" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-add-expense')">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
-      <div class="modal-hdr"><h3>Log Expense / Transfer</h3><button class="close-x" onclick="closeModal('modal-add-expense')"><i class="ti ti-x"></i></button></div>
-<div class="modal-body">
-      <div class="field"><label>Amount</label><input type="number" step="0.01" id="exp-amount" placeholder="0.00" style="font-size:20px;font-weight:600"/></div>
-      <div class="field"><label>Type</label>
-        <div class="badges" id="exp-type-badges">
-          <button class="badge active" data-v="variable" onclick="pickExpType('variable',this)">Variable Expense</button>
-          <button class="badge" data-v="savings" onclick="pickExpType('savings',this)">Savings Transfer</button>
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+      <div class="modal-hdr">
+        <h3 id="exp-modal-heading">Log Expense</h3>
+        <button class="close-x" onclick="closeModal('modal-add-expense')"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Title</label><input type="text" id="exp-title" placeholder="e.g. Trader Joe's run"/></div>
+        <div class="two-col">
+          <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="exp-amount" placeholder="0.00" style="font-size:18px;font-weight:600"/></div>
+          <div class="field"><label>Date</label><input type="date" id="exp-date"/></div>
+        </div>
+        <div class="field"><label>Type</label>
+          <div class="badges" id="exp-type-badges">
+            <button class="badge active" data-v="variable" onclick="pickExpType('variable',this)">Variable Expense</button>
+            <button class="badge" data-v="savings" onclick="pickExpType('savings',this)">Savings Transfer</button>
+          </div>
+        </div>
+        <div class="field" id="exp-cat-field"><label>Category</label>
+          <select id="exp-category" onchange="showAmazonFields()"></select>
+        </div>
+        <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
+          <div class="badges">
+            <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
+            <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+          </div>
+        </div>
+        <div class="field"><label>Notes <span class="opt-label">(optional)</span></label>
+          <textarea id="exp-note" placeholder="Any details..." rows="2" style="resize:vertical"></textarea>
+        </div>
+        <!-- Amazon links — only shown when Amazon is selected -->
+        <div id="exp-amazon-section" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0"><i class="ti ti-brand-amazon" style="font-size:15px"></i> Amazon order links</label>
+            <button class="btn" style="padding:3px 8px;font-size:13px" onclick="addAmazonLinkField()"><i class="ti ti-plus"></i> Add link</button>
+          </div>
+          <div id="exp-amazon-links"></div>
         </div>
       </div>
-      <div class="field" id="exp-cat-field"><label>Category</label>
-        <select id="exp-category">
-          <option value="Groceries">Groceries</option>
-          <option value="DoorDash">DoorDash</option>
-          <option value="Eating Out">Eating Out</option>
-          <option value="Amazon">Amazon</option>
-          <option value="Pets">Pets</option>
-          <option value="Household Items">Household Items</option>
-          <option value="Car">Car</option>
-          <option value="Shopping">Shopping</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Misc">Misc</option>
-        </select>
+      <div class="mfooter">
+        <button class="btn-danger" id="exp-delete" style="display:none" onclick="deleteExpenseFromModal()"><i class="ti ti-trash"></i></button>
+        <button class="btn-cancel" onclick="closeModal('modal-add-expense')">Cancel</button>
+        <button class="btn-save" onclick="saveExpenseFromModal()">Save</button>
       </div>
-      <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
-        <div class="badges">
-          <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
-          <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
-        </div>
-      </div>
-      <div class="field"><label>Date</label><input type="date" id="exp-date"/></div>
-      <div class="field"><label>Note <span class="opt-label">(optional)</span></label><input type="text" id="exp-note" placeholder="e.g. Trader Joe's, Costco run"/></div>
-      </div>
-<div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-expense')">Cancel</button><button class="btn-save" onclick="saveExpenseFromModal()">Save</button></div>
     </div>
   </div>
 </div>
@@ -1543,15 +1552,33 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Name</label><input type="text" id="re-name" placeholder="e.g. Rent"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="re-amount" placeholder="0.00"/></div>
         <div class="field"><label>Frequency</label>
-          <select id="re-frequency">
+          <select id="re-frequency" onchange="updateReScheduleFields()">
             <option value="weekly">Weekly</option>
             <option value="biweekly">Every 2 weeks</option>
             <option value="monthly" selected>Monthly</option>
             <option value="annual">Annual</option>
           </select>
         </div>
+        <!-- Weekly / Biweekly: pick weekday -->
+        <div class="field" id="re-weekday-field" style="display:none">
+          <label>Which day of the week</label>
+          <div class="badges" id="b-re-weekday">
+            <button class="badge" data-v="0" onclick="pick(this,'re-weekday')">Sun</button>
+            <button class="badge" data-v="1" onclick="pick(this,'re-weekday')">Mon</button>
+            <button class="badge" data-v="2" onclick="pick(this,'re-weekday')">Tue</button>
+            <button class="badge" data-v="3" onclick="pick(this,'re-weekday')">Wed</button>
+            <button class="badge active" data-v="4" onclick="pick(this,'re-weekday')">Thu</button>
+            <button class="badge" data-v="5" onclick="pick(this,'re-weekday')">Fri</button>
+            <button class="badge" data-v="6" onclick="pick(this,'re-weekday')">Sat</button>
+          </div>
+        </div>
+        <!-- Monthly / Annual: pick date of month -->
+        <div class="field" id="re-monthday-field">
+          <label>Day of month due</label>
+          <input type="number" id="re-monthday" min="1" max="31" placeholder="1"/>
+        </div>
         <div class="two-col">
-          <div class="field"><label>Start date</label><input type="date" id="re-startdate"/></div>
+          <div class="field"><label>Start date <span class="opt-label">(opt)</span></label><input type="date" id="re-startdate"/></div>
           <div class="field"><label>End date <span class="opt-label">(opt)</span></label><input type="date" id="re-enddate"/></div>
         </div>
       </div>
@@ -5598,6 +5625,26 @@ function openBudgetStartBalance(){
 }
 
 /* ── WEEKLY ──────────────────────────────────────────────────── */
+function renderBlineGroup(listId,totalId,items,period,view,weekStart){
+  const el=document.getElementById(listId);if(!el)return;
+  let total=0;
+  el.innerHTML=items.map(item=>{
+    const act=parseFloat(period.actualMap?.[item.id])||0;total+=act;
+    let budg=0;
+    if(view==="monthly") budg=item.amount;
+    else if(weekStart) budg=billDueInWeek(item,weekStart);
+    else budg=proRateToWeek(item);
+    const over=budg>0&&act>budg;
+    return`<div class="bline" onclick="openEditBillActual('${item.id}')">
+      <span class="bline-name">${item.name}</span>
+      ${budg>0?`<span class="bline-budget">${$f(budg)}</span>`:'<span class="bline-budget" style="color:var(--muted);font-size:12px">not due</span>'}
+      <span class="bline-actual${over?" over":""}">${$f(act)}</span>
+      <button class="bline-edit"><i class="ti ti-pencil"></i></button>
+    </div>`;
+  }).join("")||'<div class="empty-msg">None configured</div>';
+  if(totalId)t(totalId,$f(total));
+}
+
 function proRateToWeek(rec){
   // Legacy: used only for auto-calc variable budget estimate
   if(!rec.amount)return 0;
@@ -5632,6 +5679,7 @@ function billDueInMonth(rec, yearMonth){
 }
 
 function renderWeeklyView(){
+  if(!budgetCurrentWeekStart) budgetCurrentWeekStart=getFridayWeekStart(new Date());
   const ws=budgetCurrentWeekStart;
   const weekEnd=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
   const period=getPeriod(getWeekPeriodKey(ws));
@@ -5695,8 +5743,8 @@ function renderWeeklyView(){
   t("ws-end",$f(endBudget));ta("wa-end",endActual,endBudget,false);
 
   renderBudgetDailyStrip(ws,expenses,"w-daily-strip","w-daily-total");
-  renderBlineGroup("w-bills-lines","w-bills-total",rec.bills,period,"weekly");
-  renderBlineGroup("w-subs-lines","w-subs-total",rec.subscriptions,period,"weekly");
+  renderBlineGroup("w-bills-lines","w-bills-total",rec.bills,period,"weekly",ws);
+  renderBlineGroup("w-subs-lines","w-subs-total",rec.subscriptions,period,"weekly",ws);
   renderVarLines("w-var-lines","w-var-total",rec.variable,varActuals,"weekly");
   const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
   const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
@@ -5711,6 +5759,7 @@ function renderWeeklyView(){
 
 /* ── MONTHLY ─────────────────────────────────────────────────── */
 function renderMonthlyView(){
+  if(!budgetCurrentMonth){const n=new Date();budgetCurrentMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
   const ym=budgetCurrentMonth;const[y,m]=ym.split("-").map(Number);
   const monthStart=fd(new Date(y,m-1,1));const monthEnd=fd(new Date(y,m,0));
   const period=getPeriod(getMonthPeriodKey(ym));
@@ -5763,6 +5812,7 @@ function renderMonthlyView(){
 
 /* ── DAILY ───────────────────────────────────────────────────── */
 function renderDailyView(){
+  if(!budgetCurrentDate) budgetCurrentDate=fd(new Date());
   const ds=budgetCurrentDate;
   const dayExp=getExpensesFor(ds,ds,"variable");
   const totalToday=dayExp.reduce((s,e)=>s+e.amount,0);
@@ -5869,12 +5919,23 @@ function renderTrackerVariable(){
   t("tv-total",$f(total));
   const el=document.getElementById("tv-list");if(!el)return;
   if(!exps.length){el.innerHTML='<div class="empty-msg">No expenses found</div>';return;}
-  el.innerHTML=exps.map(e=>`<div class="exp-tracker-row">
-    <div class="exp-cat-dot" style="background:${catColor(e.category)}"></div>
-    <div class="exp-info"><div class="exp-desc">${e.note||e.category}</div><div class="exp-meta">${e.category} · ${e.date}</div></div>
-    <div class="exp-amt">${$f(e.amount)}</div>
-    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="deleteExpenseB(${e.id})"><i class="ti ti-trash"></i></button>
-  </div>`).join("");
+  el.innerHTML=exps.map(e=>{
+    const hasAmazon=e.amazonLinks&&e.amazonLinks.length>0;
+    const hasNotes=e.note&&e.note.trim();
+    return '<div class="exp-tracker-row">'
+      +'<div class="exp-cat-dot" style="background:'+catColor(e.category)+'"></div>'
+      +'<div class="exp-info" style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+          +'<span class="exp-desc">'+(e.title||e.category)+'</span>'
+          +(hasAmazon?'<span style="font-size:11px;color:var(--muted);background:var(--tag-bg);padding:1px 6px;border-radius:10px"><i class="ti ti-brand-amazon"></i> '+e.amazonLinks.length+'</span>':"")
+        +'</div>'
+        +'<div class="exp-meta">'+e.category+' &middot; '+e.date+'</div>'
+      +'</div>'
+      +(hasNotes?'<div style="font-size:12px;color:var(--muted);max-width:180px;text-align:right;line-height:1.4;padding-left:8px;flex-shrink:0">'+e.note+'</div>':"")
+      +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
+      +'<button class="bs-item-btn" style="flex-shrink:0" onclick="openEditExpense('+e.id+')" title="Edit"><i class="ti ti-pencil"></i></button>'
+    +'</div>';
+  }).join("");
 }
 
 function renderTrackerSavings(){
@@ -5974,6 +6035,75 @@ function pickSavBucket(bucket,btn){
   _savBucket=bucket;
   document.querySelectorAll("[data-savbucket]").forEach(b=>b.classList.toggle("active",b===btn));
 }
+
+function populateExpCategories(){
+  const sel=document.getElementById("exp-category");if(!sel)return;
+  const cats=(budgetData?.recurring?.variable||[]).map(v=>v.name);
+  const defaults=["Groceries","DoorDash","Eating Out","Amazon","Pets","Household Items","Car","Shopping","Entertainment","Misc"];
+  const all=[...new Set([...cats,...defaults])];
+  const cur=sel.value;
+  sel.innerHTML=all.map(c=>'<option value="'+c+'"'+( c===cur?' selected':'')+'>'+c+'</option>').join("");
+}
+
+function showAmazonFields(){
+  const cat=document.getElementById("exp-category")?.value||"";
+  const sec=document.getElementById("exp-amazon-section");
+  if(sec)sec.style.display=cat==="Amazon"?"block":"none";
+}
+
+function addAmazonLinkField(url){
+  url=url||"";
+  const container=document.getElementById("exp-amazon-links");if(!container)return;
+  const div=document.createElement("div");
+  div.style.cssText="display:flex;gap:6px;margin-bottom:6px;align-items:center";
+  div.innerHTML='<input type="url" placeholder="https://amazon.com/dp/..." value="'+url+'" style="flex:1;background:var(--tag-bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:DM Sans,sans-serif"/><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#e05555;font-size:16px"><i class="ti ti-x"></i></button>';
+  container.appendChild(div);
+}
+
+function openAddExpenseSheet(){
+  _editExpenseId=null;
+  populateExpCategories();
+  document.getElementById("exp-title").value="";
+  document.getElementById("exp-amount").value="";
+  document.getElementById("exp-date").value=fd(new Date());
+  document.getElementById("exp-note").value="";
+  document.getElementById("exp-amazon-links").innerHTML="";
+  document.getElementById("exp-amazon-section").style.display="none";
+  document.getElementById("exp-delete").style.display="none";
+  document.getElementById("exp-modal-heading").textContent="Log Expense";
+  document.querySelectorAll("#exp-type-badges .badge").forEach((b,i)=>b.classList.toggle("active",i===0));
+  pickExpType("variable",document.querySelector("#exp-type-badges .badge.active"));
+  document.getElementById("modal-add-expense").style.display="block";
+  setTimeout(()=>document.getElementById("exp-title").focus(),50);
+}
+
+function openEditExpense(id){
+  const e=(budgetData.expenses||[]).find(x=>x.id===id);if(!e)return;
+  _editExpenseId=id;
+  populateExpCategories();
+  document.getElementById("exp-title").value=e.title||"";
+  document.getElementById("exp-amount").value=e.amount||"";
+  document.getElementById("exp-date").value=e.date||fd(new Date());
+  document.getElementById("exp-note").value=e.note||"";
+  setTimeout(()=>{document.getElementById("exp-category").value=e.category||"";showAmazonFields();},10);
+  document.getElementById("exp-delete").style.display="flex";
+  document.getElementById("exp-modal-heading").textContent="Edit Expense";
+  document.getElementById("exp-amazon-links").innerHTML="";
+  (e.amazonLinks||[]).forEach(url=>addAmazonLinkField(url));
+  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.type));
+  pickExpType(e.type,null);
+  if(e.savingsBucket){document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.savingsBucket));}
+  document.getElementById("modal-add-expense").style.display="block";
+}
+
+function deleteExpenseFromModal(){
+  if(!_editExpenseId||!confirm("Delete this expense?"))return;
+  budgetData.expenses=(budgetData.expenses||[]).filter(x=>x.id!==_editExpenseId);
+  saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
+}
+
+let _editExpenseId=null;
+
 function saveExpenseFromModal(){
   const amount=parseFloat(document.getElementById("exp-amount")?.value)||0;if(!amount)return;
   const date=document.getElementById("exp-date")?.value||fd(new Date());
@@ -6236,21 +6366,6 @@ function deleteRecurringItem(type,id){
 }
 
 /* ── SHARED RENDER HELPERS ───────────────────────────────────── */
-function renderBlineGroup(listId,totalId,items,period,view){
-  const el=document.getElementById(listId);if(!el)return;
-  let total=0;
-  el.innerHTML=items.map(item=>{
-    const act=parseFloat(period.actualMap?.[item.id])||0;total+=act;
-    const budg=view==="monthly"?item.amount:proRateToWeek(item);const over=budg>0&&act>budg;
-    return`<div class="bline" onclick="openEditBillActual('${item.id}')">
-      <span class="bline-name">${item.name}${item.isDebt?` <span style="font-size:11px;padding:1px 5px;background:var(--tag-bg);border-radius:3px;color:var(--muted)">debt</span>`:""}</span>
-      ${budg>0?`<span class="bline-budget">${$f(budg)}</span>`:""}
-      <span class="bline-actual${over?" over":""}">${$f(act)}</span>
-      <button class="bline-edit"><i class="ti ti-pencil"></i></button>
-    </div>`;
-  }).join("")||'<div class="empty-msg">None configured</div>';
-  if(totalId)t(totalId,$f(total));
-}
 
 function openEditBillActual(itemId){
   const key=budgetView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
@@ -6724,10 +6839,10 @@ function renderMbSection(){
     renderVarLines("mb-var-lines",null,rec.variable,varActuals,_mbView==="monthly"?"monthly":"weekly");
   } else if(_mbSection==="bills"){
     el.innerHTML='<div class="bcompact-title">BILLS & DEBT</div><div id="mb-bills-lines"></div>';
-    renderBlineGroup("mb-bills-lines",null,rec.bills,period,_mbView==="monthly"?"monthly":"weekly");
+    renderBlineGroup("mb-bills-lines",null,rec.bills,period,_mbView==="monthly"?"monthly":"weekly",window._mbCtx?.startDate);
   } else if(_mbSection==="subs"){
     el.innerHTML='<div class="bcompact-title">SUBSCRIPTIONS</div><div id="mb-subs-lines"></div>';
-    renderBlineGroup("mb-subs-lines",null,rec.subscriptions,period,_mbView==="monthly"?"monthly":"weekly");
+    renderBlineGroup("mb-subs-lines",null,rec.subscriptions,period,_mbView==="monthly"?"monthly":"weekly",window._mbCtx?.startDate);
   } else {
     const hh=savExps.filter(e=>e.savingsBucket==="household");
     const pp=savExps.filter(e=>e.savingsBucket==="personal");
@@ -6759,13 +6874,27 @@ function deleteBillItem(id){ if(!confirm("Remove this bill?"))return; budgetData
 function deleteSubItem(id){ if(!confirm("Remove this subscription?"))return; budgetData.recurring.subscriptions=(budgetData.recurring.subscriptions||[]).filter(x=>x.id!==id);saveBudgetData();renderBudgetSettings(); }
 function deleteRecurringItem(id,type){ if(!confirm("Remove this item?"))return; budgetData.recurring[type]=(budgetData.recurring[type]||[]).filter(x=>x.id!==id);saveBudgetData();renderBudgetSettings(); }
 
+function updateReScheduleFields(){
+  const freq=document.getElementById("re-frequency")?.value||"monthly";
+  const wf=document.getElementById("re-weekday-field");
+  const mf=document.getElementById("re-monthday-field");
+  if(wf)wf.style.display=(freq==="weekly"||freq==="biweekly")?"block":"none";
+  if(mf)mf.style.display=(freq==="monthly"||freq==="annual")?"block":"none";
+}
+
 function _openRecExpenseModal(title, isEdit, item){
   document.getElementById("re-heading").textContent=title;
   document.getElementById("re-name").value=item?.name||"";
   document.getElementById("re-amount").value=item?.amount||"";
   document.getElementById("re-frequency").value=item?.frequency||"monthly";
+  // Populate day fields
+  const dueDay=item?.dueDay||(item?.startDate?new Date(item.startDate+"T12:00:00").getDate():1);
+  const dueWeekday=item?.dueWeekday??(item?.startDate?new Date(item.startDate+"T12:00:00").getDay():4);
+  const mdEl=document.getElementById("re-monthday");if(mdEl)mdEl.value=dueDay;
+  document.querySelectorAll("#b-re-weekday .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===dueWeekday));
   document.getElementById("re-startdate").value=item?.startDate||"";
   const endEl=document.getElementById("re-enddate");if(endEl)endEl.value=item?.endDate||"";
+  updateReScheduleFields();
   const delBtn=document.getElementById("re-delete");
   if(delBtn)delBtn.style.display=isEdit?"flex":"none";
   document.getElementById("modal-rec-expense").style.display="block";
@@ -6778,13 +6907,23 @@ function saveRecExpense(){
   const frequency=document.getElementById("re-frequency").value;
   const startDate=document.getElementById("re-startdate").value;
   const endDate=document.getElementById("re-enddate")?.value||null;
-  const dueDay=startDate?new Date(startDate+"T12:00:00").getDate():1;
+  const freq2=document.getElementById("re-frequency")?.value||"monthly";
+  // Get due day based on frequency type
+  let dueDay=1, dueWeekday=4;
+  if(freq2==="weekly"||freq2==="biweekly"){
+    dueWeekday=parseInt(document.querySelector("#b-re-weekday .badge.active")?.dataset.v??"4");
+    dueDay=dueWeekday; // store weekday as dueDay for biweekly/weekly
+  } else {
+    dueDay=parseInt(document.getElementById("re-monthday")?.value||"1");
+    // Also derive from startDate if monthday not set
+    if(!dueDay&&startDate) dueDay=new Date(startDate+"T12:00:00").getDate();
+  }
   const arr=budgetData.recurring[_reType]||(budgetData.recurring[_reType]=[]);
   if(_reEditId){
     const item=arr.find(x=>x.id===_reEditId);
-    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay});}
+    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday});}
   } else {
-    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay});
+    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday});
   }
   saveBudgetData();
   closeModal("modal-rec-expense");
