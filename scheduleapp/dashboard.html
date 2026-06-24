@@ -414,11 +414,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .iw-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .iw-status.pending{background:#e0a040}
 .iw-status.received{background:#3db87a}
+.iw-status.scheduled{background:#5b8def}
 .iw-week{flex:1;font-size:15px;color:var(--text)}
 .iw-hours{font-size:13px;color:var(--muted);padding:2px 7px;background:var(--tag-bg);border-radius:4px}
 .iw-amount{font-family:"DM Mono",monospace;font-size:16px;font-weight:600}
 .iw-amount.pending{color:#e0a040}
 .iw-amount.received{color:#3db87a}
+.iw-amount.scheduled{color:#5b8def;opacity:0.75}
 .exp-tracker-row{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border)}
 .exp-tracker-row:last-child{border-bottom:none}
 .exp-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -1175,7 +1177,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="budget-summary-card" style="margin-bottom:14px">
         <div class="bsum-row"><span class="bsum-lbl">Hourly rate</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">$49.80/hr</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Pending paychecks</span><div class="bsum-vals"><span class="bsum-a" id="ti-pending-count">0</span></div></div>
+        <div class="bsum-row"><span class="bsum-lbl">Scheduled (upcoming)</span><div class="bsum-vals"><span class="bsum-a" id="ti-scheduled-count">0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (YTD)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
+      </div>
+      <!-- Scheduled (not yet worked) -->
+      <div class="budget-card" style="margin-bottom:14px">
+        <div class="budget-section-hdr"><div class="bsect-title" style="color:#5b8def"><i class="ti ti-calendar-clock"></i> Scheduled</div></div>
+        <div id="ti-scheduled-list"></div>
       </div>
       <!-- Pending -->
       <div class="budget-card" style="margin-bottom:14px">
@@ -5566,16 +5574,19 @@ function generateIncomeWeeks(){
   const existing=new Set((budgetData.incomeWeeks||[]).map(w=>w.weekStartDate+":"+w.sourceId));
   const today=new Date();
   const todayStr=fd(today);
+  // Project paychecks ~6 months into the future so weeks you haven't worked yet
+  // appear as "scheduled" and feed the budgeted (not actual) numbers.
+  const horizonStr=fd(new Date(today.getTime()+26*7*86400000));
 
   sources.forEach(src=>{
     if(!src.startDate)return;
-    const endStr=src.endDate||todayStr;
+    const endStr=src.endDate||horizonStr;
     // Use payWeekday from income source settings (default Thursday=4)
     const payWd = src.payWeekday??4;
     let cur=new Date(src.startDate+"T12:00:00");
     // Snap to first payWeekday on or after startDate
     while(cur.getDay()!==payWd)cur.setDate(cur.getDate()+1);
-    while(fd(cur)<=todayStr){
+    while(fd(cur)<=horizonStr){
       const ws=fd(cur);
       const key=ws+":"+src.id;
       if(!existing.has(key)&&ws>=src.startDate&&ws<=endStr){
@@ -5583,8 +5594,11 @@ function generateIncomeWeeks(){
         // Pay date = ws + processingWeeks * 7 days (same weekday)
         const payD=new Date(cur.getTime()+(src.processingWeeks||2)*7*86400000);
         const payDateStr=fd(payD);
-        // Auto-mark received if payDate has passed
-        const status=payDateStr<=todayStr?"received":"pending";
+        // received = already paid · pending = worked, awaiting pay · scheduled = not yet worked
+        let status;
+        if(payDateStr<=todayStr)status="received";
+        else if(ws<=todayStr)status="pending";
+        else status="scheduled";
         budgetData.incomeWeeks.push({
           id:budgetNid++,
           weekStartDate:ws,
@@ -5606,7 +5620,8 @@ function generateIncomeWeeks(){
 function autoUpdateIncomeStatuses(){
   const today=fd(new Date());
   (budgetData.incomeWeeks||[]).forEach(w=>{
-    if(w.status==="pending"&&w.payDate&&w.payDate<=today)w.status="received";
+    if(w.payDate&&w.payDate<=today)w.status="received";           // paid out
+    else if(w.status==="scheduled"&&w.weekStartDate<=today)w.status="pending"; // week now worked
   });
 }
 
@@ -6283,12 +6298,14 @@ function renderSavExpList(listId,totalId,exps){
 function renderTrackerIncome(){
   generateIncomeWeeks();autoUpdateIncomeStatuses();
   const weeks=budgetData.incomeWeeks||[];
+  const scheduled=weeks.filter(w=>w.status==="scheduled");
   const pending=weeks.filter(w=>w.status==="pending");
   const received=weeks.filter(w=>w.status==="received");
   const ytd=received.reduce((s,w)=>s+(w.hours*w.rate),0);
   const rate=budgetData.recurring.incomeSources[0]?.hourlyRate||HOURLY_RATE_DEFAULT;
   t("ti-rate","$"+rate.toFixed(2)+"/hr");
   t("ti-pending-count",pending.length);
+  t("ti-scheduled-count",scheduled.length);
   t("ti-ytd",$f(ytd));
 
   const renderWeekList=(elId,list)=>{
@@ -6298,12 +6315,13 @@ function renderTrackerIncome(){
       <div class="iw-status ${w.status}"></div>
       <div style="flex:1">
         <div class="iw-week">Week of ${w.weekStartDate}</div>
-        <div style="font-size:12px;color:var(--muted)">${w.status==="pending"?"Pay date: "+w.payDate:"Received: "+w.payDate} · ${w.sourceName||"Income"}</div>
+        <div style="font-size:12px;color:var(--muted)">${w.status==="received"?"Received: "+w.payDate:"Pay date: "+w.payDate} · ${w.sourceName||"Income"}</div>
       </div>
       <span class="iw-hours">${w.hours}h</span>
       <div class="iw-amount ${w.status}">${$f(w.hours*w.rate)}</div>
     </div>`).join("");
   };
+  renderWeekList("ti-scheduled-list",scheduled);
   renderWeekList("ti-pending-list",pending);
   renderWeekList("ti-received-list",received);
 }
