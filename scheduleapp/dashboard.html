@@ -421,6 +421,45 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .iw-amount.pending{color:#e0a040}
 .iw-amount.received{color:#3db87a}
 .iw-amount.scheduled{color:#5b8def;opacity:0.75}
+/* ── Health / Habit tracker ─────────────────────────────────── */
+.health-top{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+#health-view-select{background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-family:"DM Sans",sans-serif;font-size:16px}
+.health-nav{display:flex;align-items:center;gap:8px;flex:1;justify-content:center}
+.hnav-btn{background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:15px;display:flex;align-items:center}
+.hnav-btn:hover{border-color:var(--today-color)}
+.htoday-btn{font-size:14px}
+.health-period-label{font-family:"DM Mono",monospace;font-size:16px;color:var(--text);min-width:150px;text-align:center}
+.health-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.health-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.health-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hleg{display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:20px;background:var(--tag-bg);border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--text);transition:opacity 0.15s}
+.hleg.dim{opacity:0.3}
+.hleg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.hchart{position:relative;width:100%;overflow-x:auto}
+.hchart svg{display:block;width:100%;height:auto}
+.hm-series{transition:opacity 0.15s}
+.hm-pt{cursor:pointer}
+.hchart-tip{position:fixed;pointer-events:none;background:var(--text);color:var(--surface);font-family:"DM Mono",monospace;font-size:12px;padding:5px 8px;border-radius:6px;white-space:nowrap;z-index:500;opacity:0;transition:opacity 0.1s;transform:translate(-50%,-130%)}
+.hchart-tip.show{opacity:1}
+.hchart-empty{padding:30px;text-align:center;color:var(--muted);font-size:14px}
+/* daily entry */
+.hm-row{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--border)}
+.hm-row:last-child{border-bottom:none}
+.hm-row label{flex:0 0 90px;font-size:14px;color:var(--text)}
+.hm-row input[type=range]{flex:1;min-width:0;cursor:pointer}
+.hm-row input[type=number]{width:80px;flex-shrink:0;font-family:"DM Mono",monospace;font-size:14px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none}
+.hm-row .hm-unit{font-size:12px;color:var(--muted);flex:0 0 34px}
+/* habit grid */
+.hhabit-scroll{overflow-x:auto}
+.hhabit-grid{display:grid;border-top:1px solid var(--border);min-width:max-content}
+.hhabit-cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;height:34px;font-size:13px;cursor:pointer;user-select:none;color:var(--muted)}
+.hhabit-name{justify-content:flex-start;padding:0 10px;font-size:13px;color:var(--text);cursor:default;position:sticky;left:0;background:var(--surface);border-left:1px solid var(--border);white-space:nowrap}
+.hhabit-colhdr{height:26px;font-family:"DM Mono",monospace;font-size:11px;color:var(--muted);cursor:default;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.hhabit-colhdr.today{color:var(--today-color);font-weight:700}
+.hhabit-corner{position:sticky;left:0;background:var(--surface);border-left:1px solid var(--border);border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+.hhabit-cell.done{background:var(--today-color);color:#fff}
+.hhabit-cell.done::after{content:"✓"}
+.hhabit-cell.today-col{box-shadow:inset 0 0 0 1px var(--today-color)}
 .exp-tracker-row{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border)}
 .exp-tracker-row:last-child{border-bottom:none}
 .exp-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -651,6 +690,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <button class="nav-tab" onclick="goTab('calendar',this)"><i class="ti ti-calendar"></i> Calendar</button>
   <button class="nav-tab" onclick="goTab('shopping',this)"><i class="ti ti-shopping-cart"></i> Shopping</button>
   <button class="nav-tab" onclick="goTab('budget',this)"><i class="ti ti-coin"></i> Budget</button>
+  <button class="nav-tab" onclick="goTab('health',this)"><i class="ti ti-heartbeat"></i> Health</button>
   <button class="nav-tab" onclick="goTab('lights',this)"><i class="ti ti-bulb"></i> Lights</button>
   <button class="nav-tab" onclick="goTab('rules',this)"><i class="ti ti-bolt"></i> Rules</button>
   <button class="nav-tab" onclick="goTab('settings',this)"><i class="ti ti-settings"></i> Settings</button>
@@ -1305,6 +1345,45 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 
+
+<!-- ══ HEALTH / HABIT TRACKER ════════════════════════════════ -->
+<div class="page" id="page-health">
+  <div class="health-top">
+    <select id="health-view-select" onchange="setHealthView(this.value)">
+      <option value="daily">Daily</option>
+      <option value="weekly" selected>Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
+    <div class="health-nav">
+      <button class="hnav-btn" onclick="healthNav(-1)"><i class="ti ti-chevron-left"></i></button>
+      <div class="health-period-label" id="health-period-label">—</div>
+      <button class="hnav-btn" onclick="healthNav(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <button class="hnav-btn htoday-btn" onclick="healthToday()">Today</button>
+  </div>
+
+  <!-- Measurables line graph (weekly/monthly) -->
+  <div id="health-graph-wrap" class="health-card">
+    <div class="health-card-hdr">
+      <div class="bsect-title"><i class="ti ti-chart-line"></i> Measurables</div>
+    </div>
+    <div id="health-legend" class="health-legend"></div>
+    <div id="health-chart" class="hchart"></div>
+    <div id="health-tip" class="hchart-tip"></div>
+  </div>
+
+  <!-- Daily detail / entry (daily view only) -->
+  <div id="health-daily-wrap" class="health-card" style="display:none">
+    <div class="health-card-hdr"><div class="bsect-title"><i class="ti ti-pencil"></i> Log for <span id="health-daily-date"></span></div></div>
+    <div id="health-daily-metrics"></div>
+  </div>
+
+  <!-- Habit grid -->
+  <div class="health-card">
+    <div class="health-card-hdr"><div class="bsect-title"><i class="ti ti-checkbox"></i> Habits</div></div>
+    <div id="health-habits" class="hhabit-scroll"></div>
+  </div>
+</div>
 
 <div class="page" id="page-lights">
   <div class="lights-page-top">
@@ -2381,6 +2460,7 @@ async function pushToServer(){
       customHolidays,
       workSchedules,
       members,
+      healthData,
       budgetData,
       budgetNid,
       budgetPins,
@@ -2411,6 +2491,7 @@ async function pullFromServer(){
     if(d.customHolidays)customHolidays=d.customHolidays;
     if(d.workSchedules)workSchedules=d.workSchedules;
     if(d.members)members=d.members;
+    if(d.healthData){healthData=d.healthData;if(!healthData.metrics)healthData.metrics={};if(!healthData.habits)healthData.habits={};}
     // Load profile-specific budget data if a profile is active
     if(activeBudgetProfile){
       const profileKey="budgetData_"+activeBudgetProfile;
@@ -2431,6 +2512,7 @@ async function pullFromServer(){
     localStorage.setItem("members",JSON.stringify(members));
     localStorage.setItem("workSchedules",JSON.stringify(workSchedules));
     localStorage.setItem("customHolidays",JSON.stringify(customHolidays));
+    localStorage.setItem("healthData",JSON.stringify(healthData));
     if(budgetData)localStorage.setItem("budgetData",JSON.stringify(budgetData));
     if(budgetNid)localStorage.setItem("budgetNid",String(budgetNid));
     // Regenerate work tasks from loaded schedules
@@ -2603,6 +2685,10 @@ let selTrigger="nfc",lnid=20,rnid=10;
 let dragTaskId=null,wsdDragId=null,lightPressTimer=null,lightDidLong=false;
 let shoppingList=JSON.parse(localStorage.getItem("shoppingList")||"[]");
 let shopNid=JSON.parse(localStorage.getItem("shopNid")||"1");
+// Health & habit tracker (independent of budget; not PIN-gated)
+let healthData=(()=>{try{return JSON.parse(localStorage.getItem("healthData"))||{metrics:{},habits:{}};}catch(e){return{metrics:{},habits:{}};}})();
+if(!healthData.metrics)healthData.metrics={};
+if(!healthData.habits)healthData.habits={};
 let wsdWeekOffset=0; // 0=this week, -1=last week, +1=next week
 let homeDayOffset=0; // 0=today, 1=tomorrow, -1=yesterday etc
 let activeFilters=new Set(ALL_TYPES);
@@ -3331,7 +3417,7 @@ function goTab(id,btn){
   const pageEl=document.getElementById("page-"+id);
   if(pageEl)pageEl.classList.add("active");
   if(btn)btn.classList.add("active");
-  const TITLES={home:"Home","personal-home":"Home",calendar:"Calendar",shopping:"Shopping",budget:"Budget",lights:"Lights",rules:"Rules & Automations",devices:"Devices",settings:"Settings"};
+  const TITLES={home:"Home","personal-home":"Home",calendar:"Calendar",shopping:"Shopping",budget:"Budget",health:"Health",lights:"Lights",rules:"Rules & Automations",devices:"Devices",settings:"Settings"};
   const ttEl=document.getElementById("topbar-title");if(ttEl)ttEl.textContent=TITLES[id]||id;
   closeSidebar();
   if(id==="home")renderHome();
@@ -3339,6 +3425,7 @@ function goTab(id,btn){
   if(id==="calendar"){buildFilterRow();buildPersonFilterRow();render();}
   if(id==="shopping")renderShopPage();
   if(id==="budget")renderBudgetPage();
+  if(id==="health")renderHealth();
   if(id==="lights")renderLights();
   if(id==="rules")renderRules();
   if(id==="settings"){renderMemberCards();renderThemeList();renderRecurGroups();renderCustomHolidays();}
@@ -7598,6 +7685,227 @@ const _origRender=render;
 render=function(){_origRender();_debouncedPush();};
 const _origRenderHome=renderHome;
 renderHome=function(){_origRenderHome();_debouncedPush();};
+
+/* ── HEALTH / HABIT TRACKER ──────────────────────────────────── */
+const HEALTH_METRICS=[
+  {key:"sleep",   label:"Sleep",   unit:"h",   max:10,   color:"#5b9bff"},
+  {key:"calories",label:"Calories",unit:"cal", max:2000, color:"#ff8c42"},
+  {key:"protein", label:"Protein", unit:"g",   max:200,  color:"#b06bff"},
+  {key:"water",   label:"Water",   unit:"oz",  max:100,  color:"#23c4c4"},
+  {key:"mood",    label:"Mood",    unit:"/10", max:10,   color:"#ffcf33"},
+  {key:"energy",  label:"Energy",  unit:"/10", max:10,   color:"#4cd964"},
+  {key:"weight",  label:"Weight",  unit:"lb",  max:200,  color:"#ff5d8f"},
+];
+const HEALTH_HABITS=["Period","Vitamins","Meditation","No Spend","Journal","Walk","Hike","Gym","Tennis","Skin Care","Retwist","Shampoo"];
+
+let healthView="weekly";
+let healthDate=fd(new Date()); // anchor date (the selected day / week / month)
+
+function saveHealth(){
+  localStorage.setItem("healthData",JSON.stringify(healthData));
+  if(typeof _debouncedPush==="function")_debouncedPush();
+}
+
+/* date helpers */
+function hParse(ds){return new Date(ds+"T12:00:00");}
+function hWeekStart(ds){const d=hParse(ds);d.setDate(d.getDate()-d.getDay());return fd(d);} // Sunday start
+function hAddDays(ds,n){const d=hParse(ds);d.setDate(d.getDate()+n);return fd(d);}
+function hMonthDays(ds){const d=hParse(ds);const y=d.getFullYear(),m=d.getMonth();const n=new Date(y,m+1,0).getDate();const out=[];for(let i=1;i<=n;i++)out.push(fd(new Date(y,m,i)));return out;}
+const H_MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const H_DOW=["S","M","T","W","T","F","S"];
+
+// Returns the list of date strings for the current view
+function healthDates(){
+  if(healthView==="daily")return[healthDate];
+  if(healthView==="weekly"){const ws=hWeekStart(healthDate);return Array.from({length:7},(_,i)=>hAddDays(ws,i));}
+  return hMonthDays(healthDate); // monthly
+}
+
+function healthPeriodLabel(){
+  const d=hParse(healthDate);
+  if(healthView==="daily")return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]+", "+H_MONTHS[d.getMonth()]+" "+d.getDate();
+  if(healthView==="weekly"){const ws=hParse(hWeekStart(healthDate));const we=new Date(ws.getTime()+6*86400000);
+    return H_MONTHS[ws.getMonth()]+" "+ws.getDate()+" – "+H_MONTHS[we.getMonth()]+" "+we.getDate();}
+  return H_MONTHS[d.getMonth()]+" "+d.getFullYear();
+}
+
+function setHealthView(v){
+  healthView=v;
+  const sel=document.getElementById("health-view-select");if(sel)sel.value=v;
+  renderHealth();
+}
+function healthNav(dir){
+  if(healthView==="daily")healthDate=hAddDays(healthDate,dir);
+  else if(healthView==="weekly")healthDate=hAddDays(healthDate,dir*7);
+  else{const d=hParse(healthDate);d.setMonth(d.getMonth()+dir);healthDate=fd(d);}
+  renderHealth();
+}
+function healthToday(){healthDate=fd(new Date());renderHealth();}
+
+function renderHealth(){
+  const sel=document.getElementById("health-view-select");if(sel)sel.value=healthView;
+  const lbl=document.getElementById("health-period-label");if(lbl)lbl.textContent=healthPeriodLabel();
+  const graphWrap=document.getElementById("health-graph-wrap");
+  const dailyWrap=document.getElementById("health-daily-wrap");
+  if(healthView==="daily"){
+    if(graphWrap)graphWrap.style.display="none";
+    if(dailyWrap)dailyWrap.style.display="block";
+    renderHealthDaily();
+  }else{
+    if(graphWrap)graphWrap.style.display="block";
+    if(dailyWrap)dailyWrap.style.display="none";
+    renderHealthChart();
+  }
+  renderHabitGrid();
+}
+
+/* ── Measurables line chart (custom SVG) ─────────────────────── */
+function renderHealthChart(){
+  const dates=healthDates();
+  const legendEl=document.getElementById("health-legend");
+  const chartEl=document.getElementById("health-chart");
+  if(!chartEl)return;
+  // Legend
+  legendEl.innerHTML=HEALTH_METRICS.map(m=>
+    `<div class="hleg" data-metric="${m.key}" onmouseenter="hChartHover('${m.key}')" onmouseleave="hChartHover(null)">
+       <span class="hleg-dot" style="background:${m.color}"></span>${m.label} <span style="color:var(--muted)">(${m.unit==="/10"?"1–10":"0–"+m.max+m.unit})</span>
+     </div>`).join("");
+
+  const anyData=dates.some(ds=>healthData.metrics[ds]&&HEALTH_METRICS.some(m=>healthData.metrics[ds][m.key]!=null));
+  if(!anyData){chartEl.innerHTML='<div class="hchart-empty">No data logged for this period yet. Switch to Daily view to log values.</div>';return;}
+
+  // Geometry
+  const W=Math.max(560,dates.length*(healthView==="monthly"?26:80));
+  const H=300, padL=28, padR=14, padT=14, padB=28;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const n=dates.length;
+  const xAt=i=>padL+(n===1?plotW/2:(plotW*i/(n-1)));
+  const yAt=frac=>padT+plotH*(1-frac); // frac 0..1 (value/max)
+  // Gridlines (10 notches) + x labels
+  let grid="";
+  for(let g=0;g<=10;g++){const y=yAt(g/10);grid+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;}
+  let xlabels="";
+  dates.forEach((ds,i)=>{
+    const d=hParse(ds);
+    const lab=healthView==="monthly"?d.getDate():H_DOW[d.getDay()]+(d.getDate());
+    const show=healthView==="monthly"?(d.getDate()%2===1):true; // skip even days on month to reduce clutter
+    if(show)xlabels+=`<text x="${xAt(i)}" y="${H-8}" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="var(--muted)">${healthView==="monthly"?d.getDate():H_DOW[d.getDay()]}</text>`;
+  });
+
+  // Series
+  let series="";
+  HEALTH_METRICS.forEach(m=>{
+    const pts=[];
+    dates.forEach((ds,i)=>{
+      const v=healthData.metrics[ds]?healthData.metrics[ds][m.key]:null;
+      if(v==null||v==="")return;
+      const frac=Math.max(0,Math.min(1,(parseFloat(v)||0)/m.max));
+      pts.push({i,x:xAt(i),y:yAt(frac),v:parseFloat(v),ds});
+    });
+    if(!pts.length)return;
+    const line=pts.map(p=>p.x+","+p.y).join(" ");
+    const dots=pts.map(p=>{
+      const d=hParse(p.ds);const dlab=H_MONTHS[d.getMonth()]+" "+d.getDate();
+      return `<circle class="hm-pt" cx="${p.x}" cy="${p.y}" r="4" fill="${m.color}" stroke="var(--surface)" stroke-width="1.5"
+        onmouseenter="hPointTip(event,'${m.label}','${dlab}','${p.v} ${m.unit}')" onmousemove="hPointTip(event,'${m.label}','${dlab}','${p.v} ${m.unit}')" onmouseleave="hHideTip()"></circle>`;
+    }).join("");
+    series+=`<g class="hm-series" data-metric="${m.key}" onmouseenter="hChartHover('${m.key}')" onmouseleave="hChartHover(null)">
+      <polyline points="${line}" fill="none" stroke="${m.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+    </g>`;
+  });
+
+  chartEl.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="min-width:${W}px">
+    ${grid}${xlabels}${series}
+  </svg>`;
+}
+
+function hChartHover(key){
+  document.querySelectorAll("#health-chart .hm-series").forEach(s=>{s.style.opacity=(!key||s.dataset.metric===key)?"1":"0.12";});
+  document.querySelectorAll("#health-legend .hleg").forEach(l=>l.classList.toggle("dim",!!key&&l.dataset.metric!==key));
+}
+function hPointTip(evt,label,date,val){
+  const tip=document.getElementById("health-tip");if(!tip)return;
+  tip.textContent=label+" · "+date+": "+val;
+  tip.style.left=evt.clientX+"px";tip.style.top=evt.clientY+"px";
+  tip.classList.add("show");
+}
+function hHideTip(){const tip=document.getElementById("health-tip");if(tip)tip.classList.remove("show");}
+
+/* ── Daily entry form ────────────────────────────────────────── */
+function renderHealthDaily(){
+  const ds=healthDate;
+  const d=hParse(ds);
+  const dEl=document.getElementById("health-daily-date");
+  if(dEl)dEl.textContent=H_MONTHS[d.getMonth()]+" "+d.getDate();
+  const wrap=document.getElementById("health-daily-metrics");if(!wrap)return;
+  const day=healthData.metrics[ds]||{};
+  wrap.innerHTML=HEALTH_METRICS.map(m=>{
+    const v=day[m.key]!=null?day[m.key]:"";
+    const step=m.max>=1000?50:(m.max<=10?0.5:5);
+    return `<div class="hm-row">
+      <label>${m.label}</label>
+      <input type="range" min="0" max="${m.max}" step="${step}" value="${v||0}" oninput="setMetricFromSlider('${m.key}',this.value)"/>
+      <input type="number" min="0" max="${m.max}" step="${step}" value="${v}" placeholder="—" oninput="setMetric('${m.key}',this.value)"/>
+      <span class="hm-unit">${m.unit==="/10"?"":m.unit}</span>
+    </div>`;
+  }).join("");
+}
+function setMetric(key,val){
+  const ds=healthDate;
+  if(!healthData.metrics[ds])healthData.metrics[ds]={};
+  if(val===""||val==null){delete healthData.metrics[ds][key];}
+  else healthData.metrics[ds][key]=parseFloat(val);
+  // keep the matching slider in sync
+  const row=[...document.querySelectorAll("#health-daily-metrics .hm-row")].find(r=>r.querySelector("label")?.textContent===HEALTH_METRICS.find(m=>m.key===key)?.label);
+  if(row){const sl=row.querySelector('input[type=range]');if(sl&&val!=="")sl.value=val;}
+  saveHealth();
+}
+function setMetricFromSlider(key,val){
+  const ds=healthDate;
+  if(!healthData.metrics[ds])healthData.metrics[ds]={};
+  healthData.metrics[ds][key]=parseFloat(val);
+  const row=[...document.querySelectorAll("#health-daily-metrics .hm-row")].find(r=>r.querySelector("label")?.textContent===HEALTH_METRICS.find(m=>m.key===key)?.label);
+  if(row){const num=row.querySelector('input[type=number]');if(num)num.value=val;}
+  saveHealth();
+}
+
+/* ── Habit grid ──────────────────────────────────────────────── */
+function renderHabitGrid(){
+  const el=document.getElementById("health-habits");if(!el)return;
+  const dates=healthView==="daily"?[healthDate]:healthDates();
+  const todayStr=fd(new Date());
+  const nameW=120;
+  const colW=healthView==="monthly"?30:(healthView==="daily"?60:42);
+  const cols=`${nameW}px repeat(${dates.length}, ${colW}px)`;
+  let html=`<div class="hhabit-grid" style="grid-template-columns:${cols}">`;
+  // header row
+  html+=`<div class="hhabit-corner hhabit-colhdr"></div>`;
+  dates.forEach(ds=>{
+    const d=hParse(ds);
+    const lab=healthView==="daily"?(H_MONTHS[d.getMonth()]+" "+d.getDate()):d.getDate();
+    html+=`<div class="hhabit-colhdr ${ds===todayStr?"today":""}">${lab}</div>`;
+  });
+  // habit rows
+  HEALTH_HABITS.forEach(h=>{
+    const key=h;
+    html+=`<div class="hhabit-cell hhabit-name">${h}</div>`;
+    dates.forEach(ds=>{
+      const done=!!(healthData.habits[ds]&&healthData.habits[ds][key]);
+      html+=`<div class="hhabit-cell ${done?"done":""} ${ds===todayStr?"today-col":""}" onclick="toggleHabit('${ds}','${key.replace(/'/g,"\\'")}')"></div>`;
+    });
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+function toggleHabit(ds,key){
+  if(!healthData.habits[ds])healthData.habits[ds]={};
+  if(healthData.habits[ds][key]){delete healthData.habits[ds][key];if(!Object.keys(healthData.habits[ds]).length)delete healthData.habits[ds];}
+  else healthData.habits[ds][key]=true;
+  saveHealth();
+  renderHabitGrid();
+}
+
 
 /* ── BOOT SEQUENCE (ORDER MATTERS) ───────────────────────────
    Previously renderHome() ran synchronously right after calling
