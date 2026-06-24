@@ -856,7 +856,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 
-  <!-- ══ BUDGET CONTENT (shown after unlock) ══════════════════ -->
+  <!-- Edit Start Balance Modal -->
+<div id="modal-edit-start-bal" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-edit-start-bal')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
+      <div class="modal-hdr"><h3>Adjust Start Balance</h3><button class="close-x" onclick="closeModal('modal-edit-start-bal')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px" id="esb-desc">Override the calculated start balance for this period.</div>
+        <div class="two-col">
+          <div class="field">
+            <label>Budget start ($)</label>
+            <input type="number" step="0.01" id="esb-budget" placeholder="0.00"/>
+          </div>
+          <div class="field">
+            <label>Actual start ($)</label>
+            <input type="number" step="0.01" id="esb-actual" placeholder="0.00"/>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Leave blank to use auto-calculated value from previous period.</div>
+      </div>
+      <div class="mfooter">
+        <button class="btn-danger" onclick="clearStartBalance()" style="font-size:13px"><i class="ti ti-refresh"></i> Reset to auto</button>
+        <button class="btn-cancel" onclick="closeModal('modal-edit-start-bal')">Cancel</button>
+        <button class="btn-save" onclick="saveStartBalance()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BUDGET CONTENT (shown after unlock) ══════════════════ -->
   <div id="budget-unlocked-content" style="display:none">
     <!-- Profile bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:8px 12px;background:var(--tag-bg);border-radius:10px">
@@ -901,7 +929,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">WEEKLY SUMMARY</div>
           <div class="bcompact-header-row"><span></span><span class="bcompact-col-hdr">BUDGET</span><span class="bcompact-col-hdr">ACTUAL</span></div>
-          <div class="bcompact-row"><span class="bcompact-lbl">+ Start Balance</span><span class="bcompact-b" id="ws-start">$0</span><span class="bcompact-a" id="wa-start">$0</span></div>
+          <div class="bcompact-row" onclick="openEditStartBalance('weekly')" style="cursor:pointer;border-radius:6px" title="Click to adjust start balance">
+            <span class="bcompact-lbl" style="display:flex;align-items:center;gap:4px">+ Start Balance <i class="ti ti-pencil" style="font-size:10px;color:var(--muted);opacity:0.6"></i></span>
+            <span class="bcompact-b" id="ws-start">$0</span>
+            <span class="bcompact-a" id="wa-start">$0</span>
+          </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ws-sav">$0</span><span class="bcompact-a" id="wa-sav">$0</span></div>
@@ -993,7 +1025,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">MONTHLY SUMMARY</div>
           <div class="bcompact-header-row"><span></span><span class="bcompact-col-hdr">BUDGET</span><span class="bcompact-col-hdr">ACTUAL</span></div>
-          <div class="bcompact-row"><span class="bcompact-lbl">+ Start Balance</span><span class="bcompact-b" id="ms-start">$0</span><span class="bcompact-a" id="ma-start">$0</span></div>
+          <div class="bcompact-row" onclick="openEditStartBalance('monthly')" style="cursor:pointer;border-radius:6px" title="Click to adjust start balance">
+            <span class="bcompact-lbl" style="display:flex;align-items:center;gap:4px">+ Start Balance <i class="ti ti-pencil" style="font-size:10px;color:var(--muted);opacity:0.6"></i></span>
+            <span class="bcompact-b" id="ms-start">$0</span>
+            <span class="bcompact-a" id="ma-start">$0</span>
+          </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ms-sav">$0</span><span class="bcompact-a" id="ma-sav">$0</span></div>
@@ -5825,9 +5861,15 @@ function renderWeeklyView(){
     const pVarTotal=(prevPeriod.varBudgetTotal!=null&&prevPeriod.varBudgetTotal>0)?prevPeriod.varBudgetTotal:pAutoVar;
     return pVarTotal;
   })();
+  // Check for manual override on THIS period first
+  const thisPeriodRaw = budgetData.periods?.[getWeekPeriodKey(ws)];
+  const overrideBudgetSb = thisPeriodRaw?.overrideBudgetSb;
+  const overrideActualSb = thisPeriodRaw?.overrideActualSb;
   // If prev period stored its computed end, use that directly
-  const budgetSb=prevPeriod?(prevPeriod.computedBudgetEnd??prevSb+prevIncome-prevBills-prevSubs-prevBudgVar-prevSav):parseFloat(budgetData.periods?.[getWeekPeriodKey(ws)]?.startBalance)||0;
-  const actualSb=prevPeriod?(prevActualSbStored??prevSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav):budgetSb;
+  const calcBudgetSb=prevPeriod?(prevPeriod.computedBudgetEnd!=null?prevPeriod.computedBudgetEnd:prevSb+prevIncome-prevBills-prevSubs-prevBudgVar-prevSav):0;
+  const calcActualSb=prevPeriod?(prevActualSbStored!=null?prevActualSbStored:prevSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav):calcBudgetSb;
+  const budgetSb=overrideBudgetSb!=null?overrideBudgetSb:calcBudgetSb;
+  const actualSb=overrideActualSb!=null?overrideActualSb:calcActualSb;
   const sb=budgetSb;
 
   // ── This week period ──
@@ -5978,8 +6020,10 @@ function renderMonthlyView(){
   const prevPeriodSb=parseFloat(prevPeriod?.startBalance)||0;
   const prevAutoVar=Math.max(0,prevBudgIncome-prevBudgBills-prevBudgSubs-prevBudgSav);
   const prevBudgVar=(prevPeriod?.varBudgetTotal!=null&&prevPeriod?.varBudgetTotal>0)?prevPeriod.varBudgetTotal:prevAutoVar;
-  const budgetSb=prevPeriod?prevPeriodSb+prevBudgIncome-prevBudgBills-prevBudgSubs-prevBudgVar-prevBudgSav:parseFloat(period.startBalance)||0;
-  const actualSb=prevPeriod?prevPeriodSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav:budgetSb;
+  const calcMBudgetSb=prevPeriod?prevPeriodSb+prevBudgIncome-prevBudgBills-prevBudgSubs-prevBudgVar-prevBudgSav:parseFloat(period.startBalance)||0;
+  const calcMActualSb=prevPeriod?prevPeriodSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav:calcMBudgetSb;
+  const budgetSb=period.overrideBudgetSb!=null?period.overrideBudgetSb:calcMBudgetSb;
+  const actualSb=period.overrideActualSb!=null?period.overrideActualSb:calcMActualSb;
   const sb=budgetSb;
 
   // ── Income ──
@@ -6949,6 +6993,47 @@ function avbUpdateRemaining(){
 function avbResetTotal(){
   document.getElementById("avb-total").value=_avbAutoTotal.toFixed(2);
   avbUpdateCats();
+}
+
+/* ── EDIT START BALANCE ────────────────────────────────── */
+let _esbView = "weekly";
+
+function openEditStartBalance(view){
+  _esbView = view;
+  const key = view==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
+  const period = getPeriod(key);
+  const desc = view==="monthly"
+    ? "Override the start balance for "+new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
+    : "Override the start balance for week of "+budgetCurrentWeekStart;
+  document.getElementById("esb-desc").textContent=desc;
+  document.getElementById("esb-budget").value = period.overrideBudgetSb!=null ? period.overrideBudgetSb : "";
+  document.getElementById("esb-actual").value = period.overrideActualSb!=null ? period.overrideActualSb : "";
+  document.getElementById("modal-edit-start-bal").style.display="block";
+}
+
+function saveStartBalance(){
+  const key = _esbView==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
+  if(!budgetData.periods)budgetData.periods={};
+  if(!budgetData.periods[key])budgetData.periods[key]={startBalance:0,actualMap:{},dailyLog:{}};
+  const period = budgetData.periods[key];
+  const bVal = document.getElementById("esb-budget").value;
+  const aVal = document.getElementById("esb-actual").value;
+  period.overrideBudgetSb = bVal!=="" ? parseFloat(bVal) : null;
+  period.overrideActualSb = aVal!=="" ? parseFloat(aVal) : null;
+  saveBudgetData();
+  closeModal("modal-edit-start-bal");
+  renderBudgetOverview();
+}
+
+function clearStartBalance(){
+  const key = _esbView==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
+  if(budgetData.periods?.[key]){
+    budgetData.periods[key].overrideBudgetSb = null;
+    budgetData.periods[key].overrideActualSb = null;
+    saveBudgetData();
+  }
+  closeModal("modal-edit-start-bal");
+  renderBudgetOverview();
 }
 
 function saveAdjustVarBudget(){
