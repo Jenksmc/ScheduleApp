@@ -6959,7 +6959,7 @@ function openAdjustVarBudget(){
   document.getElementById("avb-source-info").textContent=
     `Income ${$f(budgIncome)} − Bills ${$f(budgBills)} − Subs ${$f(budgSubs)} − Savings ${$f(budgSav)} = ${$f(_avbAutoTotal)}`;
   document.getElementById("avb-total").value=currentTotal.toFixed(2);
-  document.getElementById("avb-total").oninput=avbUpdateCats;
+  document.getElementById("avb-total").oninput=avbTotalChanged;
 
   // Build per-category inputs
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
@@ -6990,6 +6990,21 @@ function avbUpdateCats(){
   // Total changed → reset slider ranges + equal split across categories
   document.querySelectorAll(".avb-cat-slider").forEach(sl=>{sl.max=newTotal;sl.value=newDefault;});
   document.querySelectorAll(".avb-cat-input").forEach(inp=>{inp.value=newDefault.toFixed(2);});
+  avbUpdateRemaining();
+}
+
+// Fires when the total field is typed into. Keeps every slider's max pegged to
+// the total, preserves the user's per-category allocations, and only scales them
+// down proportionally if the new total is smaller than what's already allocated.
+function avbTotalChanged(){
+  const total=parseFloat(document.getElementById("avb-total").value)||0;
+  const inputs=Array.from(document.querySelectorAll(".avb-cat-input"));
+  document.querySelectorAll(".avb-cat-slider").forEach(sl=>{sl.max=total;});
+  const sum=inputs.reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+  if(sum>total+0.001&&sum>0){      // allocations exceed new total → shrink to fit
+    const scale=total/sum;
+    inputs.forEach(inp=>avbSetCat(inp.dataset.id,(parseFloat(inp.value)||0)*scale));
+  }
   avbUpdateRemaining();
 }
 
