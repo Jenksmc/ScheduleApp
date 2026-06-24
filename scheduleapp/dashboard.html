@@ -856,29 +856,39 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 
-  <!-- Edit Start Balance Modal -->
-<div id="modal-edit-start-bal" style="display:none">
-  <div class="modal-bg" onclick="bgClose(event,'modal-edit-start-bal')">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
-      <div class="modal-hdr"><h3>Adjust Start Balance</h3><button class="close-x" onclick="closeModal('modal-edit-start-bal')"><i class="ti ti-x"></i></button></div>
+  <!-- Edit Budget Start Balance Modal -->
+<div id="modal-edit-budget-sb" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-edit-budget-sb')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
+      <div class="modal-hdr"><h3>Budget Start Balance</h3><button class="close-x" onclick="closeModal('modal-edit-budget-sb')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:12px" id="esb-desc">Override the calculated start balance for this period.</div>
-        <div class="two-col">
-          <div class="field">
-            <label>Budget start ($)</label>
-            <input type="number" step="0.01" id="esb-budget" placeholder="0.00"/>
-          </div>
-          <div class="field">
-            <label>Actual start ($)</label>
-            <input type="number" step="0.01" id="esb-actual" placeholder="0.00"/>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Leave blank to use auto-calculated value from previous period.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="esb-budget-desc"></div>
+        <div class="field"><label>Budget start ($)</label><input type="number" step="0.01" id="esb-budget" placeholder="0.00"/></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Leave blank to reset to auto-calculated.</div>
       </div>
       <div class="mfooter">
-        <button class="btn-danger" onclick="clearStartBalance()" style="font-size:13px"><i class="ti ti-refresh"></i> Reset to auto</button>
-        <button class="btn-cancel" onclick="closeModal('modal-edit-start-bal')">Cancel</button>
-        <button class="btn-save" onclick="saveStartBalance()">Save</button>
+        <button class="btn-danger" onclick="clearOneSb('budget')" style="font-size:13px"><i class="ti ti-refresh"></i> Reset</button>
+        <button class="btn-cancel" onclick="closeModal('modal-edit-budget-sb')">Cancel</button>
+        <button class="btn-save" onclick="saveOneSb('budget')">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Actual Start Balance Modal -->
+<div id="modal-edit-actual-sb" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-edit-actual-sb')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
+      <div class="modal-hdr"><h3>Actual Start Balance</h3><button class="close-x" onclick="closeModal('modal-edit-actual-sb')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="esb-actual-desc"></div>
+        <div class="field"><label>Actual start ($)</label><input type="number" step="0.01" id="esb-actual" placeholder="0.00"/></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Leave blank to reset to auto-calculated.</div>
+      </div>
+      <div class="mfooter">
+        <button class="btn-danger" onclick="clearOneSb('actual')" style="font-size:13px"><i class="ti ti-refresh"></i> Reset</button>
+        <button class="btn-cancel" onclick="closeModal('modal-edit-actual-sb')">Cancel</button>
+        <button class="btn-save" onclick="saveOneSb('actual')">Save</button>
       </div>
     </div>
   </div>
@@ -929,10 +939,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">WEEKLY SUMMARY</div>
           <div class="bcompact-header-row"><span></span><span class="bcompact-col-hdr">BUDGET</span><span class="bcompact-col-hdr">ACTUAL</span></div>
-          <div class="bcompact-row" onclick="openEditStartBalance('weekly')" style="cursor:pointer;border-radius:6px" title="Click to adjust start balance">
-            <span class="bcompact-lbl" style="display:flex;align-items:center;gap:4px">+ Start Balance <i class="ti ti-pencil" style="font-size:10px;color:var(--muted);opacity:0.6"></i></span>
-            <span class="bcompact-b" id="ws-start">$0</span>
-            <span class="bcompact-a" id="wa-start">$0</span>
+          <div class="bcompact-row">
+            <span class="bcompact-lbl">+ Start Balance</span>
+            <span class="bcompact-b" id="ws-start" onclick="openOneSb('budget','weekly')" style="cursor:pointer" title="Edit budget start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
+            <span class="bcompact-a" id="wa-start" onclick="openOneSb('actual','weekly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
@@ -1025,10 +1035,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">MONTHLY SUMMARY</div>
           <div class="bcompact-header-row"><span></span><span class="bcompact-col-hdr">BUDGET</span><span class="bcompact-col-hdr">ACTUAL</span></div>
-          <div class="bcompact-row" onclick="openEditStartBalance('monthly')" style="cursor:pointer;border-radius:6px" title="Click to adjust start balance">
-            <span class="bcompact-lbl" style="display:flex;align-items:center;gap:4px">+ Start Balance <i class="ti ti-pencil" style="font-size:10px;color:var(--muted);opacity:0.6"></i></span>
-            <span class="bcompact-b" id="ms-start">$0</span>
-            <span class="bcompact-a" id="ma-start">$0</span>
+          <div class="bcompact-row">
+            <span class="bcompact-lbl">+ Start Balance</span>
+            <span class="bcompact-b" id="ms-start" onclick="openOneSb('budget','monthly')" style="cursor:pointer" title="Edit budget start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
+            <span class="bcompact-a" id="ma-start" onclick="openOneSb('actual','monthly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
@@ -6996,43 +7006,52 @@ function avbResetTotal(){
 }
 
 /* ── EDIT START BALANCE ────────────────────────────────── */
-let _esbView = "weekly";
+let _esbView="weekly", _esbType="budget";
 
-function openEditStartBalance(view){
-  _esbView = view;
-  const key = view==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
-  const period = getPeriod(key);
-  const desc = view==="monthly"
-    ? "Override the start balance for "+new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
-    : "Override the start balance for week of "+budgetCurrentWeekStart;
-  document.getElementById("esb-desc").textContent=desc;
-  document.getElementById("esb-budget").value = period.overrideBudgetSb!=null ? period.overrideBudgetSb : "";
-  document.getElementById("esb-actual").value = period.overrideActualSb!=null ? period.overrideActualSb : "";
-  document.getElementById("modal-edit-start-bal").style.display="block";
+function openOneSb(type, view){
+  _esbType=type; _esbView=view;
+  const key=view==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
+  const period=getPeriod(key);
+  const periodName=view==="monthly"
+    ?new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
+    :"week of "+budgetCurrentWeekStart;
+  if(type==="budget"){
+    document.getElementById("esb-budget-desc").textContent="Override the budget start balance for "+periodName+".";
+    document.getElementById("esb-budget").value=period.overrideBudgetSb!=null?period.overrideBudgetSb:"";
+    document.getElementById("modal-edit-budget-sb").style.display="block";
+  } else {
+    document.getElementById("esb-actual-desc").textContent="Override the actual start balance for "+periodName+".";
+    document.getElementById("esb-actual").value=period.overrideActualSb!=null?period.overrideActualSb:"";
+    document.getElementById("modal-edit-actual-sb").style.display="block";
+  }
 }
 
-function saveStartBalance(){
-  const key = _esbView==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
+function saveOneSb(type){
+  const key=_esbView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   if(!budgetData.periods)budgetData.periods={};
   if(!budgetData.periods[key])budgetData.periods[key]={startBalance:0,actualMap:{},dailyLog:{}};
-  const period = budgetData.periods[key];
-  const bVal = document.getElementById("esb-budget").value;
-  const aVal = document.getElementById("esb-actual").value;
-  period.overrideBudgetSb = bVal!=="" ? parseFloat(bVal) : null;
-  period.overrideActualSb = aVal!=="" ? parseFloat(aVal) : null;
+  const period=budgetData.periods[key];
+  if(type==="budget"){
+    const v=document.getElementById("esb-budget").value;
+    period.overrideBudgetSb=v!==""?parseFloat(v):null;
+    closeModal("modal-edit-budget-sb");
+  } else {
+    const v=document.getElementById("esb-actual").value;
+    period.overrideActualSb=v!==""?parseFloat(v):null;
+    closeModal("modal-edit-actual-sb");
+  }
   saveBudgetData();
-  closeModal("modal-edit-start-bal");
   renderBudgetOverview();
 }
 
-function clearStartBalance(){
-  const key = _esbView==="monthly" ? getMonthPeriodKey(budgetCurrentMonth) : getWeekPeriodKey(budgetCurrentWeekStart);
+function clearOneSb(type){
+  const key=_esbView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   if(budgetData.periods?.[key]){
-    budgetData.periods[key].overrideBudgetSb = null;
-    budgetData.periods[key].overrideActualSb = null;
+    if(type==="budget") budgetData.periods[key].overrideBudgetSb=null;
+    else budgetData.periods[key].overrideActualSb=null;
     saveBudgetData();
   }
-  closeModal("modal-edit-start-bal");
+  closeModal(type==="budget"?"modal-edit-budget-sb":"modal-edit-actual-sb");
   renderBudgetOverview();
 }
 
