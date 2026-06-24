@@ -6968,11 +6968,14 @@ function openAdjustVarBudget(){
 
   document.getElementById("avb-cat-list").innerHTML=rec.variable.map(v=>{
     const val=period.varBudgetOverrides[v.id]??defaultBudget;
-    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <label style="flex:1;font-size:14px;color:var(--text)">${v.name}</label>
+    return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <label style="flex:0 0 92px;font-size:13px;color:var(--text);line-height:1.2">${v.name}</label>
+      <input type="range" class="avb-cat-slider" data-id="${v.id}" min="0" max="${currentTotal}" step="0.01" value="${val}"
+        oninput="avbCatChanged('${v.id}',this.value)"
+        style="flex:1;min-width:0;accent-color:var(--today-color);cursor:pointer"/>
       <input type="number" step="0.01" class="avb-cat-input" data-id="${v.id}" value="${val.toFixed(2)}"
-        style="width:100px;font-family:'DM Mono',monospace;font-size:14px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;outline:none"
-        oninput="avbUpdateRemaining()"/>
+        style="width:78px;flex-shrink:0;font-family:'DM Mono',monospace;font-size:13px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none"
+        oninput="avbCatChanged('${v.id}',this.value)"/>
     </div>`;
   }).join("");
   avbUpdateRemaining();
@@ -6982,13 +6985,40 @@ function openAdjustVarBudget(){
 function avbUpdateCats(){
   const newTotal=parseFloat(document.getElementById("avb-total").value)||0;
   const rec=budgetData.recurring;
-  const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
   const catCount=rec.variable.length||1;
   const newDefault=newTotal/catCount;
-  // Reset all cats to equal split when total changes
-  document.querySelectorAll(".avb-cat-input").forEach(inp=>{
-    inp.value=newDefault.toFixed(2);
-  });
+  // Total changed → reset slider ranges + equal split across categories
+  document.querySelectorAll(".avb-cat-slider").forEach(sl=>{sl.max=newTotal;sl.value=newDefault;});
+  document.querySelectorAll(".avb-cat-input").forEach(inp=>{inp.value=newDefault.toFixed(2);});
+  avbUpdateRemaining();
+}
+
+// Sets both the number box and the slider for one category id (no redistribution)
+function avbSetCat(id,val){
+  if(val<0)val=0;
+  document.querySelectorAll('.avb-cat-input[data-id="'+id+'"]').forEach(inp=>{inp.value=val.toFixed(2);});
+  document.querySelectorAll('.avb-cat-slider[data-id="'+id+'"]').forEach(sl=>{sl.value=val;});
+}
+
+// Zero-sum allocation: raising one category past the unallocated room pulls
+// the others down proportionally so the categories never exceed the total.
+// Lowering one just frees up unallocated (others stay put).
+function avbCatChanged(id,requested){
+  const total=parseFloat(document.getElementById("avb-total").value)||0;
+  let r=parseFloat(requested);
+  if(isNaN(r)||r<0)r=0;
+  if(r>total)r=total;
+  const inputs=Array.from(document.querySelectorAll(".avb-cat-input"));
+  let sOthers=0;
+  inputs.forEach(inp=>{if(inp.dataset.id!==id)sOthers+=parseFloat(inp.value)||0;});
+  const room=total-r;            // how much the other categories may collectively hold
+  if(sOthers>room+0.001){        // would exceed total → shrink others proportionally
+    const scale=sOthers>0?room/sOthers:0;
+    inputs.forEach(inp=>{
+      if(inp.dataset.id!==id)avbSetCat(inp.dataset.id,(parseFloat(inp.value)||0)*scale);
+    });
+  }
+  avbSetCat(id,r);
   avbUpdateRemaining();
 }
 
