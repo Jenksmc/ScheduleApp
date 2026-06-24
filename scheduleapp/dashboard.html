@@ -5816,17 +5816,18 @@ function renderWeeklyView(){
   const prevActualVar=Object.values(prevVarActuals).reduce((s,v)=>s+v,0);
   const prevSavExps=getExpensesFor(prevWs,prevWeEnd,"savings");
   const prevActualSav=prevSavExps.reduce((s,e)=>s+e.amount,0);
-  // Budget start = prev budget end
-  const prevSb=parseFloat(prevPeriod?.startBalance)||0;
+  // Budget start = use stored computed end from prev period if available
+  const prevSb=(prevPeriod?.computedBudgetEnd!=null)?prevPeriod.computedBudgetEnd:(parseFloat(prevPeriod?.startBalance)||0);
+  const prevActualSbStored=(prevPeriod?.computedActualEnd!=null)?prevPeriod.computedActualEnd:null;
   const prevBudgVar=(()=>{
     if(!prevPeriod)return 0;
     const pAutoVar=Math.max(0,prevIncome-prevBills-prevSubs-prevSav);
     const pVarTotal=(prevPeriod.varBudgetTotal!=null&&prevPeriod.varBudgetTotal>0)?prevPeriod.varBudgetTotal:pAutoVar;
     return pVarTotal;
   })();
-  const budgetSb=prevPeriod?prevSb+prevIncome-prevBills-prevSubs-prevBudgVar-prevSav:parseFloat(budgetData.periods?.[getWeekPeriodKey(ws)]?.startBalance)||0;
-  // Actual start = prev actual end
-  const actualSb=prevPeriod?prevSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav:budgetSb;
+  // If prev period stored its computed end, use that directly
+  const budgetSb=prevPeriod?(prevPeriod.computedBudgetEnd??prevSb+prevIncome-prevBills-prevSubs-prevBudgVar-prevSav):parseFloat(budgetData.periods?.[getWeekPeriodKey(ws)]?.startBalance)||0;
+  const actualSb=prevPeriod?(prevActualSbStored??prevSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav):budgetSb;
   const sb=budgetSb;
 
   // ── This week period ──
@@ -5889,6 +5890,9 @@ function renderWeeklyView(){
   const actualEnd=actualSb+actualIncome-actualExpenses-totalSav;
 
   // ── Update summary elements ──
+  // Store computed end balances so next week can use them as start
+  period.computedBudgetEnd=budgEnd;
+  period.computedActualEnd=actualEnd;
   t("ws-start",$f(budgetSb));  t("wa-start",$f(actualSb));
   t("ws-income",$f(budgIncome)); ta("wa-income",actualIncome,budgIncome,false);
   t("ws-fixed",$f(budgExpenses)); ta("wa-fixed",actualExpenses,budgExpenses,true);
