@@ -899,6 +899,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   </div>
 
   <!-- Edit Budget Start Balance Modal -->
+<div id="modal-edit-budg-sav" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-edit-budg-sav')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
+      <div class="modal-hdr"><h3>Budgeted Savings</h3><button class="close-x" onclick="closeModal('modal-edit-budg-sav')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="ebs-desc"></div>
+        <div class="field"><label>Budgeted savings ($)</label><input type="number" step="0.01" id="ebs-amount" placeholder="0.00"/></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px" id="ebs-auto-note"></div>
+      </div>
+      <div class="mfooter">
+        <button class="btn-danger" onclick="clearBudgSav()" style="font-size:13px"><i class="ti ti-refresh"></i> Reset</button>
+        <button class="btn-cancel" onclick="closeModal('modal-edit-budg-sav')">Cancel</button>
+        <button class="btn-save" onclick="saveBudgSav()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-edit-budget-sb" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-budget-sb')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
@@ -988,7 +1006,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ws-sav">$0</span><span class="bcompact-a" id="wa-sav">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ws-sav" onclick="openEditBudgSav('weekly')" style="cursor:pointer" title="Edit budgeted savings for this week">$0</span><span class="bcompact-a" id="wa-sav">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ws-end">$0</span><span class="bcompact-a" id="wa-end">$0</span></div>
           <!-- hidden fields still needed for JS -->
           <span id="ws-subs" style="display:none"></span><span id="wa-subs" style="display:none"></span>
@@ -1084,7 +1102,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ms-sav">$0</span><span class="bcompact-a" id="ma-sav">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ms-sav" onclick="openEditBudgSav('monthly')" style="cursor:pointer" title="Edit budgeted savings for this month">$0</span><span class="bcompact-a" id="ma-sav">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ms-end">$0</span><span class="bcompact-a" id="ma-end">$0</span></div>
         </div>
         <div class="budget-card bcompact-card">
@@ -1220,20 +1238,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="bsum-row"><span class="bsum-lbl">Scheduled (upcoming)</span><div class="bsum-vals"><span class="bsum-a" id="ti-scheduled-count">0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (YTD)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
       </div>
-      <!-- Scheduled (not yet worked) -->
+      <!-- Recent paychecks (last 3 received) -->
       <div class="budget-card" style="margin-bottom:14px">
-        <div class="budget-section-hdr"><div class="bsect-title" style="color:#5b8def"><i class="ti ti-calendar-clock"></i> Scheduled</div></div>
-        <div id="ti-scheduled-list"></div>
+        <div class="budget-section-hdr"><div class="bsect-title" style="color:#3db87a"><i class="ti ti-check"></i> Recent Paychecks</div></div>
+        <div id="ti-received-list"></div>
       </div>
-      <!-- Pending -->
+      <!-- Pending (worked, awaiting pay) -->
       <div class="budget-card" style="margin-bottom:14px">
         <div class="budget-section-hdr"><div class="bsect-title" style="color:#e0a040"><i class="ti ti-clock"></i> Pending</div></div>
         <div id="ti-pending-list"></div>
       </div>
-      <!-- Received -->
+      <!-- Upcoming (next 3 future paychecks) -->
+      <div class="budget-card" style="margin-bottom:14px">
+        <div class="budget-section-hdr"><div class="bsect-title" style="color:#5b8def"><i class="ti ti-calendar-clock"></i> Upcoming</div></div>
+        <div id="ti-scheduled-list"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Further-out paychecks are hidden here but still count toward budgeted income.</div>
+      </div>
+      <!-- History (older received) -->
       <div class="budget-card">
-        <div class="budget-section-hdr"><div class="bsect-title" style="color:#3db87a"><i class="ti ti-check"></i> Received</div></div>
-        <div id="ti-received-list"></div>
+        <div class="budget-section-hdr" style="cursor:pointer" onclick="toggleIncomeHistory()">
+          <div class="bsect-title" style="color:var(--muted)"><i class="ti ti-history"></i> History <span id="ti-history-count" style="font-weight:400;font-size:12px"></span></div>
+          <i class="ti ti-chevron-down" id="ti-history-chev" style="color:var(--muted)"></i>
+        </div>
+        <div id="ti-history-list" style="display:none"></div>
       </div>
     </div>
   </div>
@@ -1665,6 +1692,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 <!-- ADJUST VARIABLE BUDGET MODAL -->
+<div id="modal-auto-split" style="display:none">
+  <div class="modal-bg" onclick="bgClose(event,'modal-auto-split')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+      <div class="modal-hdr"><h3>Auto-Split Settings</h3><button class="close-x" onclick="closeModal('modal-auto-split')"><i class="ti ti-x"></i></button></div>
+<div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">How the variable pool (income − bills − subs − savings) splits across categories each period. Sliders are zero-sum against 100%.</div>
+      <div id="asp-cat-list"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);margin-top:4px">
+        <span style="font-size:13px;color:var(--muted)">Unassigned</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="asp-remaining">0%</span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:4px 0 0">
+        <button class="btn" style="font-size:12px" onclick="aspEvenSplit()">Even split</button>
+      </div>
+      </div>
+<div class="mfooter">
+        <button class="btn-cancel" onclick="closeModal('modal-auto-split')">Cancel</button>
+        <button class="btn-save" onclick="saveAutoSplit()">Save auto-split</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-adjust-var" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-adjust-var')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
@@ -1673,11 +1723,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div style="font-size:14px;color:var(--muted);margin-bottom:12px" id="avb-source-info"></div>
       <div class="field">
         <label>Total variable budget this week</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="number" step="0.01" id="avb-total" style="flex:1" placeholder="0.00"/>
-          <button class="btn" onclick="avbResetTotal()" style="white-space:nowrap;font-size:13px">Auto-calc</button>
+        <input type="number" step="0.01" id="avb-total" placeholder="0.00"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+          <button class="btn" id="avb-opt-default" onclick="avbApplyOption('default')" style="font-size:11px;padding:6px 4px;line-height:1.3"></button>
+          <button class="btn" id="avb-opt-leftover" onclick="avbApplyOption('leftover')" style="font-size:11px;padding:6px 4px;line-height:1.3"></button>
+          <button class="btn" id="avb-opt-boost" onclick="avbApplyOption('boost')" style="font-size:11px;padding:6px 4px;line-height:1.3"></button>
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Auto-calculated: income − bills − subs − savings</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px" id="avb-opt-note"></div>
       </div>
       <div style="border-top:1px solid var(--border);margin:12px 0 10px"></div>
       <div style="font-size:13px;font-weight:500;margin-bottom:8px">Per-category split <span style="font-size:12px;color:var(--muted);font-weight:400">(adjusts to match total)</span></div>
@@ -5223,6 +5275,7 @@ async function loadProfileBudgetData(){
         localStorage.setItem(nidKey,String(budgetNid));
         if(d.budgetPins)budgetPins=d.budgetPins;
         if(!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
+        ensureBudgetSettings();
         return;
       }
     }
@@ -5234,6 +5287,7 @@ async function loadProfileBudgetData(){
     budgetNid=parseInt(localStorage.getItem(nidKey)||"200");
   }catch(e){budgetData=null;}
   if(!budgetData||!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
+  ensureBudgetSettings();
 }
 
 function saveProfileBudgetData(){
@@ -5544,6 +5598,7 @@ const DEFAULT_HOURS=40;
 
 /* ── LOAD / SAVE ─────────────────────────────────────────────── */
 function saveBudgetData(){
+  bvCacheClear();
   localStorage.setItem("budgetData",JSON.stringify(budgetData));
   localStorage.setItem("budgetNid",String(budgetNid));
   if(typeof _bootComplete!=="undefined"&&_bootComplete&&typeof pushToServer==="function")pushToServer();
@@ -5552,6 +5607,7 @@ function saveBudgetData(){
 function loadBudgetFromStore(){
   try{budgetData=JSON.parse(localStorage.getItem("budgetData"));budgetNid=parseInt(localStorage.getItem("budgetNid")||"200");}catch(e){budgetData=null;}
   if(!budgetData||!budgetData.recurring)initBudgetDataV3();
+  ensureBudgetSettings();
   // Seed demo expenses if none exist yet (first time seeing real budget UI)
   if(budgetData&&(!budgetData.expenses||budgetData.expenses.length===0)){
     budgetData.expenses=[
@@ -5718,6 +5774,249 @@ function getPeriod(key){if(!budgetData.periods[key])budgetData.periods[key]={sta
 function getWeekPeriodKey(ws){return"week:"+ws;}
 function getMonthPeriodKey(ym){return"month:"+ym;}
 
+/* ══════════════════════════════════════════════════════════════
+   BUDGET v4 ENGINE — single source of truth for all budget math.
+   Weekly view, monthly view, and mobile all consume computePeriodCore().
+   No math lives in the render functions anymore.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Settings migration (runs on every load, idempotent) ─────── */
+function ensureBudgetSettings(){
+  if(!budgetData)return;
+  if(!budgetData.settings)budgetData.settings={};
+  const s=budgetData.settings;
+  if(s.savingsPerPaycheck==null){
+    // Migrate from old savingsTransfers list if present, else default 557
+    const legacy=(budgetData.recurring?.savingsTransfers||[]).reduce((t,x)=>t+(x.amount||0),0);
+    s.savingsPerPaycheck=legacy>0?legacy:557;
+  }
+  if(!s.varSplitPct)s.varSplitPct={};
+  // Any variable category without a percentage gets an even share of what's unclaimed
+  const cats=budgetData.recurring?.variable||[];
+  const missing=cats.filter(v=>s.varSplitPct[v.id]==null);
+  if(missing.length){
+    const claimed=cats.reduce((t,v)=>t+(s.varSplitPct[v.id]||0),0);
+    const share=Math.max(0,(100-claimed))/missing.length;
+    missing.forEach(v=>{s.varSplitPct[v.id]=Math.round(share*10)/10;});
+  }
+  if(s.varWeeklyDefault==null)s.varWeeklyDefault=350; // flat default weekly variable budget
+  if(!s.materializeSince)s.materializeSince=fd(new Date()); // only auto-create expenses from go-live forward
+  if(!s.dismissedRecKeys)s.dismissedRecKeys=[];
+}
+
+function savingsPerPaycheck(){ensureBudgetSettings();return parseFloat(budgetData.settings.savingsPerPaycheck)||0;}
+
+/* ── Recurring due dates ─────────────────────────────────────── */
+// All due-date strings for a bill/sub within [start,end] inclusive.
+// Monthly on dueDay (clamped to month length). Zero-amount items never due.
+function recurringDueDatesIn(item,start,end){
+  if(!item||!item.amount)return[];
+  const dueDay=getDueDay(item);
+  const out=[];
+  let d=new Date(start+"T12:00:00");
+  d=new Date(d.getFullYear(),d.getMonth(),1,12);
+  const endD=new Date(end+"T12:00:00");
+  while(d<=endD){
+    const daysInMonth=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    const due=new Date(d.getFullYear(),d.getMonth(),Math.min(dueDay,daysInMonth),12);
+    const ds=fd(due);
+    if(ds>=start&&ds<=end)out.push(ds);
+    d.setMonth(d.getMonth()+1);
+  }
+  return out;
+}
+
+/* ── Materialize recurring → real expenses ───────────────────── */
+// On/after its due date, every bill & subscription becomes a real, editable
+// expense record (type "bill"/"subscription"). Dedup via recKey. Deleting one
+// tombstones it so it never comes back.
+function materializeRecurring(){
+  if(!budgetData||!budgetData.recurring)return;
+  ensureBudgetSettings();
+  const s=budgetData.settings;
+  const today=fd(new Date());
+  const existing=new Set((budgetData.expenses||[]).filter(e=>e.recKey).map(e=>e.recKey));
+  const dismissed=new Set(s.dismissedRecKeys);
+  let changed=false;
+  [["bill",budgetData.recurring.bills||[]],["subscription",budgetData.recurring.subscriptions||[]]].forEach(([type,items])=>{
+    items.forEach(item=>{
+      recurringDueDatesIn(item,s.materializeSince,today).forEach(ds=>{
+        const recKey=item.id+":"+ds;
+        if(existing.has(recKey)||dismissed.has(recKey))return;
+        budgetData.expenses.push({id:budgetNid++,date:ds,type,category:item.name,amount:item.amount,recKey,recurringId:item.id,note:""});
+        existing.add(recKey);changed=true;
+      });
+    });
+  });
+  if(changed)saveBudgetData();
+}
+
+/* ── Per-render computation cache ────────────────────────────── */
+// Monthly numbers now aggregate weekly engine runs, and balance chains walk
+// many periods. Cache within a render pass; cleared on every save + render.
+let _bvCache={sb:{},cp:{}};
+function bvCacheClear(){_bvCache={sb:{},cp:{}};}
+
+/* ── Monthly variable budget = day-weighted weekly budgets ───── */
+// Each Friday-start week overlapping the month contributes its weekly
+// variable budget x (days inside the month / 7). A week with 2 days in July
+// gives July 2/7 of that week's budget; the other 5/7 lands in August.
+function computeMonthlyVarFromWeeks(monthStart,monthEnd){
+  const out={total:0,byCat:{}};
+  const cats=budgetData.recurring?.variable||[];
+  let ws=getFridayWeekStart(new Date(monthStart+"T12:00:00"));
+  while(ws<=monthEnd){
+    const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+    const sb=chainedStartBalances("weekly",ws).budgetSb;
+    const wcp=computePeriodCore(ws,we,getWeekPeriodKey(ws),sb);
+    const oStart=ws>monthStart?ws:monthStart;
+    const oEnd=we<monthEnd?we:monthEnd;
+    const days=Math.round((new Date(oEnd+"T12:00:00")-new Date(oStart+"T12:00:00"))/86400000)+1;
+    const w=days/7;
+    out.total+=wcp.varTotal*w;
+    cats.forEach(v=>{out.byCat[v.id]=(out.byCat[v.id]||0)+(wcp.varBudgets[v.id]||0)*w;});
+    ws=fd(new Date(new Date(ws+"T12:00:00").getTime()+7*86400000));
+  }
+  return out;
+}
+
+/* ── THE engine ──────────────────────────────────────────────── */
+// Computes every number a budget view needs for [start,end].
+// Does NOT compute start balances (see chainedStartBalances).
+function computePeriodCore(start,end,periodKey,budgetSb){
+  const rec=budgetData.recurring;
+  const _ck=periodKey+"|"+(parseFloat(budgetSb)||0);
+  if(_bvCache.cp[_ck]){
+    const c=_bvCache.cp[_ck];
+    (rec.variable||[]).forEach(v=>{v._weeklyBudget=c.varBudgets[v.id];});
+    return c;
+  }
+  // Read-only: never create period entries here (the chain walk visits many periods)
+  const period=budgetData.periods?.[periodKey]||{};
+  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+  ensureBudgetSettings();
+
+  // Income: every paycheck landing in range counts toward budget; received ones toward actual
+  const paychecks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
+  const budgIncome=paychecks.reduce((s,w)=>s+(w.hours*w.rate),0);
+  const actualIncome=paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+
+  // Bills & subs: budgeted from due dates in range, actuals from materialized expense records
+  const dueOf=items=>items.flatMap(item=>recurringDueDatesIn(item,start,end).map(ds=>({item,dueDate:ds})));
+  const billsDue=dueOf(rec.bills||[]);
+  const subsDue=dueOf(rec.subscriptions||[]);
+  const budgBills=billsDue.reduce((s,d)=>s+d.item.amount,0);
+  const budgSubs=subsDue.reduce((s,d)=>s+d.item.amount,0);
+  const billExps=getExpensesFor(start,end,"bill");
+  const subExps=getExpensesFor(start,end,"subscription");
+  const actualBills=billExps.reduce((s,e)=>s+e.amount,0);
+  const actualSubs=subExps.reduce((s,e)=>s+e.amount,0);
+
+  // Savings: flat $ per paycheck landing in range; actuals are manual entries only.
+  // A per-period override (click the number in the summary) beats the auto amount.
+  const budgSav=period.overrideBudgSav!=null?period.overrideBudgSav:savingsPerPaycheck()*paychecks.length;
+  const savExps=getExpensesFor(start,end,"savings");
+  const actualSav=savExps.reduce((s,e)=>s+e.amount,0);
+
+  // Variable budget default: a flat weekly amount from settings ($350 unless
+  // changed). The pool formulas below are opt-in calculators surfaced as
+  // buttons in the adjust modal — they no longer drive the budget by
+  // themselves (rolling leftover in made the budget balloon over time).
+  const sbForPool=parseFloat(budgetSb)||0;
+  const _wd=parseFloat(budgetData.settings.varWeeklyDefault);
+  const weeklyDefault=isNaN(_wd)?350:_wd;
+  const leftoverNoSb=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);           // this paycheck's leftover
+  const leftover20Sb=Math.max(0,0.2*sbForPool+budgIncome-budgBills-budgSubs-budgSav); // leftover + 20% of start balance
+  const autoVarTotal=weeklyDefault;
+  const isMonthly=typeof periodKey==="string"&&periodKey.startsWith("month:");
+  const pct=budgetData.settings.varSplitPct||{};
+  const varBudgets={};
+  let varTotal;
+  if(isMonthly&&!(period.varBudgetTotal!=null&&period.varBudgetTotal>0)){
+    // Monthly = day-weighted sum of the weekly budgets (incl. weekly slider
+    // overrides). Weeks split across two months only count the days in this one.
+    const mw=computeMonthlyVarFromWeeks(start,end);
+    varTotal=mw.total;
+    (rec.variable||[]).forEach(v=>{
+      varBudgets[v.id]=period.varBudgetOverrides[v.id]!=null
+        ?period.varBudgetOverrides[v.id]
+        :(mw.byCat[v.id]||0);
+      v._weeklyBudget=varBudgets[v.id];
+    });
+  }else{
+    // Weekly (or monthly with manual total override): pool formula + pct split
+    varTotal=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
+    (rec.variable||[]).forEach(v=>{
+      varBudgets[v.id]=period.varBudgetOverrides[v.id]!=null
+        ?period.varBudgetOverrides[v.id]
+        :varTotal*((pct[v.id]||0)/100);
+      v._weeklyBudget=varBudgets[v.id]; // legacy field some renderers read
+    });
+  }
+  const budgVar=Object.values(varBudgets).reduce((s,v)=>s+v,0);
+  const varExps=getExpensesFor(start,end,"variable");
+  const varActuals={};
+  (rec.variable||[]).forEach(v=>{varActuals[v.id]=expenseTotalByCat(varExps,v.name);});
+  const actualVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
+
+  // Totals: Expenses = bills + subs + variable
+  const budgExpenses=budgBills+budgSubs+budgVar;
+  const actualExpenses=actualBills+actualSubs+actualVar;
+
+  const _res={start,end,periodKey,period,paychecks,budgIncome,actualIncome,sbForPool,weeklyDefault,leftoverNoSb,leftover20Sb,
+    billsDue,subsDue,budgBills,budgSubs,actualBills,actualSubs,billExps,subExps,
+    budgSav,actualSav,savExps,autoVarTotal,varTotal,varBudgets,varActuals,budgVar,actualVar,varExps,
+    budgExpenses,actualExpenses};
+  _bvCache.cp[_ck]=_res;
+  return _res;
+}
+
+/* ── Deterministic start-balance chaining ────────────────────── */
+// Walks back up to 26 periods to the most recent manual override (or zero),
+// then rolls forward through the engine. Same answer every time, regardless
+// of which periods have been viewed. This replaces computedBudgetEnd.
+function _periodRange(view,anchor){
+  if(view==="monthly"){
+    const[y,m]=anchor.split("-").map(Number);
+    return{start:fd(new Date(y,m-1,1)),end:fd(new Date(y,m,0)),key:getMonthPeriodKey(anchor)};
+  }
+  return{start:anchor,end:fd(new Date(new Date(anchor+"T12:00:00").getTime()+6*86400000)),key:getWeekPeriodKey(anchor)};
+}
+function _prevAnchor(view,anchor){
+  if(view==="monthly"){
+    const[y,m]=anchor.split("-").map(Number);
+    return m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,"0")}`;
+  }
+  return fd(new Date(new Date(anchor+"T12:00:00").getTime()-7*86400000));
+}
+function chainedStartBalances(view,anchor){
+  const _ck=view+"|"+anchor;
+  if(_bvCache.sb[_ck])return _bvCache.sb[_ck];
+  // Collect anchors current → older until we hit an override or the cap
+  const chain=[anchor];
+  for(let i=0;i<26;i++){
+    const cur=chain[chain.length-1];
+    const p=budgetData.periods?.[_periodRange(view,cur).key];
+    if(p&&(p.overrideBudgetSb!=null||p.overrideActualSb!=null))break;
+    chain.push(_prevAnchor(view,cur));
+  }
+  // Oldest first, roll forward
+  chain.reverse();
+  let sbB=0,sbA=0;
+  for(let i=0;i<chain.length;i++){
+    const r=_periodRange(view,chain[i]);
+    const p=budgetData.periods?.[r.key];
+    if(p?.overrideBudgetSb!=null)sbB=p.overrideBudgetSb;
+    if(p?.overrideActualSb!=null)sbA=p.overrideActualSb;
+    if(i===chain.length-1){const _r={budgetSb:sbB,actualSb:sbA};_bvCache.sb[_ck]=_r;return _r;}
+    // Pass the running budget SB so each period's var pool includes carried-over money
+    const cp=computePeriodCore(r.start,r.end,r.key,sbB);
+    sbB=sbB+cp.budgIncome-cp.budgExpenses-cp.budgSav;
+    sbA=sbA+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  }
+  const _r2={budgetSb:sbB,actualSb:sbA};_bvCache.sb[_ck]=_r2;return _r2;
+}
+
 function getExpensesFor(start,end,type){
   return(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&(!type||e.type===type));
 }
@@ -5860,42 +6159,25 @@ function openBudgetStartBalance(){
 }
 
 /* ── WEEKLY ──────────────────────────────────────────────────── */
-function renderBlineGroup(listId,totalId,items,period,view,weekStart){
+/* Recurring items DUE in this period only: name · due date · budget · actual.
+   Actuals come from materialized expense records. Click pencil to edit the actual. */
+function renderDueLines(listId,totalId,dueEntries,recExps){
   const el=document.getElementById(listId);if(!el)return;
   let total=0;
-  el.innerHTML=items.map(item=>{
-    const act=parseFloat(period.actualMap?.[item.id])||0;total+=act;
-    let budg=0;
-    if(view==="monthly") budg=item.amount;
-    else if(weekStart) budg=billDueInWeek(item,weekStart);
-    else budg=proRateToWeek(item);
-    const over=budg>0&&act>budg;
-    // Find due date string for display
-    const dueDay2=getDueDay(item);
-    let dueDateLabel="";
-    if(budg>0&&weekStart){
-      if(view==="monthly"){
-        const ms=new Date(weekStart+"T12:00:00");
-        const dd=new Date(ms.getFullYear(),ms.getMonth(),dueDay2);
-        if(fd(dd)>=fd(ms)){dueDateLabel=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});}
-      } else {
-        const ws2=new Date(weekStart+"T12:00:00");
-        const we2=new Date(ws2.getTime()+6*86400000);
-        const months2=new Set([ws2.getMonth()+"-"+ws2.getFullYear(), we2.getMonth()+"-"+we2.getFullYear()]);
-        for(const mo of months2){
-          const [m2,y2]=mo.split("-").map(Number);
-          const dd=new Date(y2,m2,dueDay2);
-          if(fd(dd)>=fd(ws2)&&fd(dd)<=fd(we2)){dueDateLabel=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});break;}
-        }
-      }
-    }
+  el.innerHTML=(dueEntries||[]).map(({item,dueDate})=>{
+    const recKey=item.id+":"+dueDate;
+    const exp=(recExps||[]).find(e=>e.recKey===recKey);
+    const act=exp?exp.amount:0;total+=act;
+    const over=act>item.amount;
+    const dd=new Date(dueDate+"T12:00:00");
+    const dueLbl=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});
     return`<div class="bline">
       <span class="bline-name">${item.name}</span>
-      ${budg>0?`<span class="bline-budget">${$f(budg)}${dueDateLabel?'<span style="font-size:10px;color:var(--muted);margin-left:4px">due '+dueDateLabel+'</span>':''}</span>`:'<span class="bline-budget" style="color:var(--muted);font-size:12px">not due</span>'}
-      <span class="bline-actual${over?" over":""}">${$f(act)}</span>
-      <button class="bline-edit" onclick="openEditBillActual('${item.id}')" title="Edit actual"><i class="ti ti-pencil"></i></button>
+      <span class="bline-budget">${$f(item.amount)}<span style="font-size:10px;color:var(--muted);margin-left:4px">due ${dueLbl}</span></span>
+      <span class="bline-actual${over?" over":""}">${exp?$f(act):'<span style="color:var(--muted);font-size:12px">—</span>'}</span>
+      <button class="bline-edit" onclick="openEditRecActual('${recKey}')" title="Edit actual"><i class="ti ti-pencil"></i></button>
     </div>`;
-  }).join("")||'<div class="empty-msg">None configured</div>';
+  }).join("")||'<div class="empty-msg">Nothing due this period</div>';
   if(totalId)t(totalId,$f(total));
 }
 
@@ -5942,117 +6224,31 @@ function renderWeeklyView(){
   try{
   if(!budgetData||!budgetData.recurring)return;
   if(!budgetCurrentWeekStart) budgetCurrentWeekStart=getFridayWeekStart(new Date());
+  bvCacheClear();
+  materializeRecurring();
   const ws=budgetCurrentWeekStart;
   const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
   const rec=budgetData.recurring;
+  const key=getWeekPeriodKey(ws);
+  const period=getPeriod(key); // current period may be created — that's fine
 
-  // ── Previous week end balance as start balance ──
-  const prevWs=fd(new Date(new Date(ws+"T12:00:00").getTime()-7*86400000));
-  const prevPeriod=budgetData.periods?.[getWeekPeriodKey(prevWs)];
-  const prevIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevWs&&w.payDate<=fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000))&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const prevBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
-  const prevSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
-  const prevSav=(rec.savingsTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
-  const prevVarActuals={};
-  rec.variable.forEach(v=>{prevVarActuals[v.id]=expenseTotalByCat(getExpensesFor(prevWs,fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000)),"variable"),v.name);});
-  const prevVar=Object.values(prevVarActuals).reduce((s,v)=>s+v,0);
-  // Previous week actuals for carry-over
-  const prevWeEnd=fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000));
-  const prevActualIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevWs&&w.payDate<=prevWeEnd&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const prevActualBills=rec.bills.reduce((s,b)=>s+(parseFloat(prevPeriod?.actualMap?.[b.id])||0),0);
-  const prevActualSubs=rec.subscriptions.reduce((s,b)=>s+(parseFloat(prevPeriod?.actualMap?.[b.id])||0),0);
-  const prevActualVar=Object.values(prevVarActuals).reduce((s,v)=>s+v,0);
-  const prevSavExps=getExpensesFor(prevWs,prevWeEnd,"savings");
-  const prevActualSav=prevSavExps.reduce((s,e)=>s+e.amount,0);
-  // Budget start = use stored computed end from prev period if available
-  const prevSb=(prevPeriod?.computedBudgetEnd!=null)?prevPeriod.computedBudgetEnd:(parseFloat(prevPeriod?.startBalance)||0);
-  const prevActualSbStored=(prevPeriod?.computedActualEnd!=null)?prevPeriod.computedActualEnd:null;
-  const prevBudgVar=(()=>{
-    if(!prevPeriod)return 0;
-    const pAutoVar=Math.max(0,prevIncome-prevBills-prevSubs-prevSav);
-    const pVarTotal=(prevPeriod.varBudgetTotal!=null&&prevPeriod.varBudgetTotal>0)?prevPeriod.varBudgetTotal:pAutoVar;
-    return pVarTotal;
-  })();
-  // Check for manual override on THIS period first
-  const thisPeriodRaw = budgetData.periods?.[getWeekPeriodKey(ws)];
-  const overrideBudgetSb = thisPeriodRaw?.overrideBudgetSb;
-  const overrideActualSb = thisPeriodRaw?.overrideActualSb;
-  // If prev period stored its computed end, use that directly
-  const calcBudgetSb=prevPeriod?(prevPeriod.computedBudgetEnd!=null?prevPeriod.computedBudgetEnd:prevSb+prevIncome-prevBills-prevSubs-prevBudgVar-prevSav):0;
-  const calcActualSb=prevPeriod?(prevActualSbStored!=null?prevActualSbStored:prevSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav):calcBudgetSb;
-  const budgetSb=overrideBudgetSb!=null?overrideBudgetSb:calcBudgetSb;
-  const actualSb=overrideActualSb!=null?overrideActualSb:calcActualSb;
-  const sb=budgetSb;
+  // ── Start balances: deterministic chain (override-aware) ──
+  const sb=chainedStartBalances("weekly",ws);
+  const budgetSb=sb.budgetSb, actualSb=sb.actualSb;
 
-  // ── This week period ──
-  const period=getPeriod(getWeekPeriodKey(ws));
-  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+  // ── All flows from the one engine (pool includes start balance) ──
+  const cp=computePeriodCore(ws,we,key,budgetSb);
 
-  // ── Income: pending + received ──
-  const allWeekIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=ws&&w.payDate<=we);
-  const budgIncome=allWeekIncome.reduce((s,w)=>s+(w.hours*w.rate),0);
-  const actualIncome=allWeekIncome.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
+  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
 
-  // ── Bills & Subs ──
-  const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,ws),0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,ws),0);
-  // Auto-populate bill/sub actuals: use actualMap override if set,
-  // otherwise auto-populate with bill amount once due date has passed
-  const today=fd(new Date());
-  function getAutoActual(item){
-    if(period.actualMap?.[item.id]!=null) return parseFloat(period.actualMap[item.id])||0;
-    const dueAmt=billDueInWeek(item,ws);
-    if(dueAmt<=0) return 0;
-    const dueDay2=getDueDay(item);
-    const wsD=new Date(ws+"T12:00:00"), weD=new Date(we+"T12:00:00");
-    const months2=[wsD.getMonth()+"-"+wsD.getFullYear(), weD.getMonth()+"-"+weD.getFullYear()];
-    for(const mo of [...new Set(months2)]){
-      const [m2,y2]=mo.split("-").map(Number);
-      const dd=new Date(y2,m2,dueDay2);
-      const dds=fd(dd);
-      if(dds>=ws&&dds<=we&&dds<=today) return item.amount;
-    }
-    return 0;
-  }
-  const totalBills=rec.bills.reduce((s,b)=>s+getAutoActual(b),0);
-  const totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActual(b),0);
-
-  // ── Savings ──
-  const budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
-  const savExps=getExpensesFor(ws,we,"savings");
-  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
-
-  // ── Variable: auto-pool or manual override ──
-  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
-  const catCount=rec.variable.length||1;
-  const defaultCatBudget=varTotalBudget/catCount;
-  rec.variable.forEach(v=>{
-    v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:defaultCatBudget;
-  });
-  // budgVar = sum of per-category budgets (what the table actually shows)
-  const budgVar=rec.variable.reduce((s,v)=>s+(v._weeklyBudget||0),0);
-  const expenses=getExpensesFor(ws,we,"variable");
-  const varActuals={};
-  rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
-  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
-
-  // ── Summary totals ──
-  const budgExpenses=budgBills+budgSubs+budgVar;
-  const actualExpenses=totalBills+totalSubs+totalVar;
-  const budgEnd=budgetSb+budgIncome-budgExpenses-budgSav;
-  const actualEnd=actualSb+actualIncome-actualExpenses-totalSav;
-
-  // ── Update summary elements ──
-  // Store computed end balances so next week can use them as start
-  period.computedBudgetEnd=budgEnd;
-  period.computedActualEnd=actualEnd;
+  // ── Weekly Summary ──
   t("ws-start",$f(budgetSb));  t("wa-start",$f(actualSb));
-  t("ws-income",$f(budgIncome)); ta("wa-income",actualIncome,budgIncome,false);
-  t("ws-fixed",$f(budgExpenses)); ta("wa-fixed",actualExpenses,budgExpenses,true);
-  t("ws-subs",$f(budgSubs));  ta("wa-subs",totalSubs,budgSubs,true);
-  t("ws-var",$f(budgVar));   ta("wa-var",totalVar,budgVar,true);
-  t("ws-sav",$f(budgSav));   t("wa-sav",$f(totalSav));
+  t("ws-income",$f(cp.budgIncome)); ta("wa-income",cp.actualIncome,cp.budgIncome,false);
+  t("ws-fixed",$f(cp.budgExpenses)); ta("wa-fixed",cp.actualExpenses,cp.budgExpenses,true);
+  t("ws-subs",$f(cp.budgSubs));  ta("wa-subs",cp.actualSubs,cp.budgSubs,true);
+  t("ws-var",$f(cp.budgVar));   ta("wa-var",cp.actualVar,cp.budgVar,true);
+  t("ws-sav",$f(cp.budgSav));   t("wa-sav",$f(cp.actualSav));
   t("ws-end",$f(budgEnd));   ta("wa-end",actualEnd,budgEnd,false);
 
   // ── Variable budget source label ──
@@ -6060,34 +6256,36 @@ function renderWeeklyView(){
   if(srcLbl){
     const isOverride=period.varBudgetTotal!=null&&period.varBudgetTotal>0;
     srcLbl.textContent=isOverride
-      ?`Total: ${$f(varTotalBudget)} (manually set) · ${catCount} categories`
-      :`Auto: ${$f(budgIncome)} income − ${$f(budgBills)} bills − ${$f(budgSubs)} subs − ${$f(budgSav)} savings = ${$f(varTotalBudget)}`;
+      ?`Total: ${$f(cp.varTotal)} (manually set)`
+      :`Default: ${$f(cp.weeklyDefault)}/wk — adjust with the sliders or change the default in settings`;
   }
 
   // ── Charts ──
-  drawDonutChart("chart-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
-  drawBudgetVsActualChart("chart-w-bva",[budgVar],[totalVar],["Variable"]);
-  const varLeft=budgVar-totalVar;
+  drawBudgetVsActualChart("chart-w-bva",[cp.budgVar],[cp.actualVar],["Variable"]);
+  const varLeft=cp.budgVar-cp.actualVar;
   const varLeftEl=document.getElementById("w-var-left");
   if(varLeftEl){varLeftEl.textContent=$f(Math.max(0,varLeft));varLeftEl.style.color=varLeft<0?"#e05555":"var(--today-color)";}
 
-  // ── Detail panels ──
-  // Build donut: each bill individually, subs grouped, each variable cat individually
+  // Donut: each bill actual, subs grouped, each variable cat, savings
   const donutLabels=[];const donutValues=[];const donutColors=[];
   const BILL_COLORS=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
   const VAR_COLORS=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
-  rec.bills.forEach((b,i)=>{const a=getAutoActual(b);if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BILL_COLORS[i%BILL_COLORS.length]);}});
-  if(totalSubs>0){donutLabels.push("Subscriptions");donutValues.push(totalSubs);donutColors.push("#7b68ee");}
-  rec.variable.forEach((v,i)=>{const a=varActuals[v.id]||0;if(a>0){donutLabels.push(v.name);donutValues.push(a);donutColors.push(VAR_COLORS[i%VAR_COLORS.length]);}});
-  if(totalSav>0){donutLabels.push("Savings");donutValues.push(totalSav);donutColors.push("#e0a040");}
+  rec.bills.forEach((b,i)=>{
+    const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);
+    if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BILL_COLORS[i%BILL_COLORS.length]);}
+  });
+  if(cp.actualSubs>0){donutLabels.push("Subscriptions");donutValues.push(cp.actualSubs);donutColors.push("#7b68ee");}
+  rec.variable.forEach((v,i)=>{const a=cp.varActuals[v.id]||0;if(a>0){donutLabels.push(v.name);donutValues.push(a);donutColors.push(VAR_COLORS[i%VAR_COLORS.length]);}});
+  if(cp.actualSav>0){donutLabels.push("Savings");donutValues.push(cp.actualSav);donutColors.push("#e0a040");}
   drawDonutChart("chart-breakdown",donutLabels,donutValues,donutColors);
 
-  renderBudgetDailyStrip(ws,expenses,"w-daily-strip","w-daily-total");
-  renderBlineGroup("w-bills-lines","w-bills-total",rec.bills,period,"weekly",ws);
-  renderBlineGroup("w-subs-lines","w-subs-total",rec.subscriptions,period,"weekly",ws);
-  renderVarLines("w-var-lines","w-var-total",rec.variable,varActuals,"weekly");
-  const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  // ── Detail panels ──
+  renderBudgetDailyStrip(ws,cp.varExps,"w-daily-strip","w-daily-total");
+  renderDueLines("w-bills-lines","w-bills-total",cp.billsDue,cp.billExps);
+  renderDueLines("w-subs-lines","w-subs-total",cp.subsDue,cp.subExps);
+  renderVarLines("w-var-lines","w-var-total",rec.variable,cp.varActuals,"weekly");
+  const hhAmt=cp.savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persAmt=cp.savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
   const hhTotal=allSavExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
   const persTotal=allSavExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
@@ -6102,118 +6300,53 @@ function renderMonthlyView(){
   try{
   if(!budgetData||!budgetData.recurring)return;
   if(!budgetCurrentMonth){const n=new Date();budgetCurrentMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
+  bvCacheClear();
+  materializeRecurring();
   const ym=budgetCurrentMonth;
   const [y,m]=ym.split("-").map(Number);
   const monthStart=fd(new Date(y,m-1,1));
   const monthEnd=fd(new Date(y,m,0));
   const rec=budgetData.recurring;
-  const period=getPeriod(getMonthPeriodKey(ym));
-  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+  const key=getMonthPeriodKey(ym);
+  const period=getPeriod(key);
 
-  // ── Start balance: carry from previous month actual end ──
-  const prevM=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,"0")}`;
-  const prevPeriod=budgetData.periods?.[getMonthPeriodKey(prevM)];
-  const [py,pm]=prevM.split("-").map(Number);
-  const prevMonthStart=fd(new Date(py,pm-1,1));
-  const prevMonthEnd=fd(new Date(py,pm,0));
-  // If we have a previous period, calculate its end balance
-  const prevAllIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevMonthStart&&w.payDate<=prevMonthEnd);
-  const prevBudgIncome=prevAllIncome.reduce((s,w)=>s+(w.hours*w.rate),0);
-  const prevActualIncome=prevAllIncome.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-  const prevBudgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,prevM),0);
-  const prevBudgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,prevM),0);
-  const prevBudgSav=(rec.savingsTransfers||[]).reduce((s,at)=>{const f=at.frequency||"biweekly";return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:at.amount*2.17);},0);
-  const prevActualBills=rec.bills.reduce((s,b)=>s+(parseFloat(prevPeriod?.actualMap?.[b.id])||0),0);
-  const prevActualSubs=rec.subscriptions.reduce((s,b)=>s+(parseFloat(prevPeriod?.actualMap?.[b.id])||0),0);
-  const prevVarExps=getExpensesFor(prevMonthStart,prevMonthEnd,"variable");
-  const prevActualVar=prevVarExps.reduce((s,e)=>s+e.amount,0);
-  const prevSavExpsM=getExpensesFor(prevMonthStart,prevMonthEnd,"savings");
-  const prevActualSav=prevSavExpsM.reduce((s,e)=>s+e.amount,0);
-  const prevPeriodSb=parseFloat(prevPeriod?.startBalance)||0;
-  const prevAutoVar=Math.max(0,prevBudgIncome-prevBudgBills-prevBudgSubs-prevBudgSav);
-  const prevBudgVar=(prevPeriod?.varBudgetTotal!=null&&prevPeriod?.varBudgetTotal>0)?prevPeriod.varBudgetTotal:prevAutoVar;
-  const calcMBudgetSb=prevPeriod?prevPeriodSb+prevBudgIncome-prevBudgBills-prevBudgSubs-prevBudgVar-prevBudgSav:parseFloat(period.startBalance)||0;
-  const calcMActualSb=prevPeriod?prevPeriodSb+prevActualIncome-prevActualBills-prevActualSubs-prevActualVar-prevActualSav:calcMBudgetSb;
-  const budgetSb=period.overrideBudgetSb!=null?period.overrideBudgetSb:calcMBudgetSb;
-  const actualSb=period.overrideActualSb!=null?period.overrideActualSb:calcMActualSb;
-  const sb=budgetSb;
+  // ── Start balances: deterministic chain ──
+  const sb=chainedStartBalances("monthly",ym);
+  const budgetSb=sb.budgetSb, actualSb=sb.actualSb;
 
-  // ── Income ──
-  const allMonthIncome=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=monthStart&&w.payDate<=monthEnd);
-  const budgIncome=allMonthIncome.reduce((s,w)=>s+(w.hours*w.rate),0);
-  const actualIncome=allMonthIncome.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  // ── All flows from the one engine (pool includes start balance) ──
+  const cp=computePeriodCore(monthStart,monthEnd,key,budgetSb);
 
-  // ── Bills & Subs ──
-  const budgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,ym),0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,ym),0);
-  const todayM=fd(new Date());
-  function getAutoActualM(item){
-    if(period.actualMap?.[item.id]!=null) return parseFloat(period.actualMap[item.id])||0;
-    const dueAmt=billDueInMonth(item,ym);
-    if(dueAmt<=0) return 0;
-    const dueDay2=getDueDay(item);
-    const dd=new Date(y,m-1,dueDay2);
-    const dds=fd(dd);
-    return dds>=monthStart&&dds<=monthEnd&&dds<=todayM?item.amount:0;
-  }
-  const totalBills=rec.bills.reduce((s,b)=>s+getAutoActualM(b),0);
-  const totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActualM(b),0);
+  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
+  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
 
-  // ── Savings ──
-  const budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>{
-    const f=at.frequency||"biweekly";
-    return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:at.amount*2.17);
-  },0);
-  const savExps=getExpensesFor(monthStart,monthEnd,"savings");
-  const totalSav=savExps.reduce((s,e)=>s+e.amount,0);
-
-  // ── Variable ──
-  const autoVarTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-  const varTotalBudget=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarTotal;
-  const catCount=rec.variable.length||1;
-  const defaultCatBudget=varTotalBudget/catCount;
-  rec.variable.forEach(v=>{
-    v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:defaultCatBudget;
-  });
-  const budgVar=varTotalBudget;
-  const expenses=getExpensesFor(monthStart,monthEnd,"variable");
-  const varActuals={};
-  rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
-  const totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
-
-  // ── Totals ──
-  const budgExpenses=budgBills+budgSubs+budgVar;
-  const actualExpenses=totalBills+totalSubs+totalVar;
-  const budgEnd=budgetSb+budgIncome-budgExpenses-budgSav;
-  const actualEnd=actualSb+actualIncome-actualExpenses-totalSav;
-
-  // ── Update summary ──
+  // ── Monthly Summary ──
   t("ms-start",$f(budgetSb));  t("ma-start",$f(actualSb));
-  t("ms-income",$f(budgIncome)); ta("ma-income",actualIncome,budgIncome,false);
-  t("ms-exp",$f(budgExpenses)); ta("ma-exp",actualExpenses,budgExpenses,true);
-  t("ms-sav",$f(budgSav));   t("ma-sav",$f(totalSav));
+  t("ms-income",$f(cp.budgIncome)); ta("ma-income",cp.actualIncome,cp.budgIncome,false);
+  t("ms-exp",$f(cp.budgExpenses)); ta("ma-exp",cp.actualExpenses,cp.budgExpenses,true);
+  t("ms-sav",$f(cp.budgSav));   t("ma-sav",$f(cp.actualSav));
   t("ms-end",$f(budgEnd));   ta("ma-end",actualEnd,budgEnd,false);
 
   // ── Charts ──
-  drawDonutChart("chart-m-breakdown",["Bills","Subs","Variable","Savings"],[totalBills,totalSubs,totalVar,totalSav],["#e05555","#7b68ee","#e0a040","#378add"]);
-  drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Var","Savings"],[actualIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#e0a040","#378add"]);
-
-  // ── Detail panels ──
   const donutLabelsM=[];const donutValuesM=[];const donutColorsM=[];
   const BILL_COLORS_M=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
   const VAR_COLORS_M=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
-  rec.bills.forEach((b,i)=>{const a=getAutoActualM(b);if(a>0){donutLabelsM.push(b.name);donutValuesM.push(a);donutColorsM.push(BILL_COLORS_M[i%BILL_COLORS_M.length]);}});
-  if(totalSubs>0){donutLabelsM.push("Subscriptions");donutValuesM.push(totalSubs);donutColorsM.push("#7b68ee");}
-  rec.variable.forEach((v,i)=>{const a=varActuals[v.id]||0;if(a>0){donutLabelsM.push(v.name);donutValuesM.push(a);donutColorsM.push(VAR_COLORS_M[i%VAR_COLORS_M.length]);}});
-  if(totalSav>0){donutLabelsM.push("Savings");donutValuesM.push(totalSav);donutColorsM.push("#e0a040");}
+  rec.bills.forEach((b,i)=>{
+    const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);
+    if(a>0){donutLabelsM.push(b.name);donutValuesM.push(a);donutColorsM.push(BILL_COLORS_M[i%BILL_COLORS_M.length]);}
+  });
+  if(cp.actualSubs>0){donutLabelsM.push("Subscriptions");donutValuesM.push(cp.actualSubs);donutColorsM.push("#7b68ee");}
+  rec.variable.forEach((v,i)=>{const a=cp.varActuals[v.id]||0;if(a>0){donutLabelsM.push(v.name);donutValuesM.push(a);donutColorsM.push(VAR_COLORS_M[i%VAR_COLORS_M.length]);}});
+  if(cp.actualSav>0){donutLabelsM.push("Savings");donutValuesM.push(cp.actualSav);donutColorsM.push("#e0a040");}
   drawDonutChart("chart-m-breakdown",donutLabelsM,donutValuesM,donutColorsM);
-  drawBudgetVsActualChart("chart-m-bva",[budgBills,budgSubs,budgVar],[totalBills,totalSubs,totalVar],["Bills","Subscriptions","Variable Exp."]);
-  drawBarChart("chart-m-inc-exp",["Income","Bills","Subs","Var","Savings"],[actualIncome,totalBills,totalSubs,totalVar,totalSav],["#3db87a","#e05555","#7b68ee","#378add","#e0a040"]);
-  renderBlineGroup("m-bills-lines","m-bills-total",rec.bills,period,"monthly",monthStart);
-  renderBlineGroup("m-subs-lines","m-subs-total",rec.subscriptions,period,"monthly",monthStart);
-  renderVarLines("m-var-lines","m-var-total",rec.variable,varActuals,"monthly");
-  const hhAmt=savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const persAmt=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  drawBudgetVsActualChart("chart-m-bva",[cp.budgBills,cp.budgSubs,cp.budgVar],[cp.actualBills,cp.actualSubs,cp.actualVar],["Bills","Subscriptions","Variable Exp."]);
+
+  // ── Detail panels ──
+  renderDueLines("m-bills-lines","m-bills-total",cp.billsDue,cp.billExps);
+  renderDueLines("m-subs-lines","m-subs-total",cp.subsDue,cp.subExps);
+  renderVarLines("m-var-lines","m-var-total",rec.variable,cp.varActuals,"monthly");
+  const hhAmt=cp.savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const persAmt=cp.savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const allSavExpsM=budgetData.expenses?.filter(e=>e.type==="savings")||[];
   const hhTotalM=allSavExpsM.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
   const persTotalM=allSavExpsM.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
@@ -6382,18 +6515,36 @@ function renderSavExpList(listId,totalId,exps){
   </div>`).join("");
 }
 
+let _incomeHistoryOpen=false;
+function toggleIncomeHistory(){
+  _incomeHistoryOpen=!_incomeHistoryOpen;
+  const el=document.getElementById("ti-history-list");
+  const chev=document.getElementById("ti-history-chev");
+  if(el)el.style.display=_incomeHistoryOpen?"block":"none";
+  if(chev)chev.className=_incomeHistoryOpen?"ti ti-chevron-up":"ti ti-chevron-down";
+}
+
 function renderTrackerIncome(){
   generateIncomeWeeks();autoUpdateIncomeStatuses();
   const weeks=budgetData.incomeWeeks||[];
-  const scheduled=weeks.filter(w=>w.status==="scheduled");
-  const pending=weeks.filter(w=>w.status==="pending");
-  const received=weeks.filter(w=>w.status==="received");
-  const ytd=received.reduce((s,w)=>s+(w.hours*w.rate),0);
+  // Recent: last 3 received (newest first). Older received → History.
+  const received=weeks.filter(w=>w.status==="received").sort((a,b)=>b.payDate.localeCompare(a.payDate));
+  const recent=received.slice(0,3);
+  const history=received.slice(3);
+  // Pending: worked, awaiting pay (soonest pay date first)
+  const pending=weeks.filter(w=>w.status==="pending").sort((a,b)=>a.payDate.localeCompare(b.payDate));
+  // Upcoming: next 3 scheduled only. The rest exist in data (they still feed
+  // budgeted income in every view) but stay hidden here until they get close.
+  const scheduled=weeks.filter(w=>w.status==="scheduled").sort((a,b)=>a.weekStartDate.localeCompare(b.weekStartDate));
+  const upcoming=scheduled.slice(0,3);
+
+  const ytd=received.filter(w=>w.payDate.slice(0,4)===String(new Date().getFullYear())).reduce((s,w)=>s+(w.hours*w.rate),0);
   const rate=budgetData.recurring.incomeSources[0]?.hourlyRate||HOURLY_RATE_DEFAULT;
   t("ti-rate","$"+rate.toFixed(2)+"/hr");
   t("ti-pending-count",pending.length);
   t("ti-scheduled-count",scheduled.length);
   t("ti-ytd",$f(ytd));
+  t("ti-history-count",history.length?"("+history.length+" older)":"");
 
   const renderWeekList=(elId,list)=>{
     const el=document.getElementById(elId);if(!el)return;
@@ -6408,9 +6559,10 @@ function renderTrackerIncome(){
       <div class="iw-amount ${w.status}">${$f(w.hours*w.rate)}</div>
     </div>`).join("");
   };
-  renderWeekList("ti-scheduled-list",scheduled);
+  renderWeekList("ti-received-list",recent);
   renderWeekList("ti-pending-list",pending);
-  renderWeekList("ti-received-list",received);
+  renderWeekList("ti-scheduled-list",upcoming);
+  renderWeekList("ti-history-list",history);
 }
 
 /* ── EDIT INCOME WEEK ────────────────────────────────────────── */
@@ -6527,8 +6679,16 @@ function openEditExpense(id){
   document.getElementById("modal-add-expense").style.display="block";
 }
 
+function _tombstoneRecExpense(id){
+  // If this expense was auto-created from a recurring bill/sub, remember the
+  // dismissal so materializeRecurring never resurrects it.
+  const ex=(budgetData.expenses||[]).find(e=>e.id===id);
+  if(ex?.recKey){ensureBudgetSettings();if(!budgetData.settings.dismissedRecKeys.includes(ex.recKey))budgetData.settings.dismissedRecKeys.push(ex.recKey);}
+}
+
 function deleteExpenseFromModal(){
   if(!_editExpenseId||!confirm("Delete this expense?"))return;
+  _tombstoneRecExpense(_editExpenseId);
   budgetData.expenses=(budgetData.expenses||[]).filter(x=>x.id!==_editExpenseId);
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
@@ -6560,6 +6720,7 @@ let _editExpenseId=null;
 
 
 function deleteExpenseB(id){
+  _tombstoneRecExpense(id);
   budgetData.expenses=budgetData.expenses.filter(e=>e.id!==id);
   saveBudgetData();renderBudgetOverview();renderTrackerView();
 }
@@ -6606,11 +6767,49 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
 function renderBsVarCards(containerId, items){
   const el=document.getElementById(containerId);if(!el)return;
   if(!items||!items.length){el.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">No categories yet.</div>';return;}
-  el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">'+items.map(item=>`
+  ensureBudgetSettings();
+  const pct=budgetData.settings.varSplitPct||{};
+  const totalPct=items.reduce((t,v)=>t+(parseFloat(pct[v.id])||0),0);
+  const totalColor=Math.abs(totalPct-100)<0.01?"#3db87a":totalPct>100?"#e05555":"#e0a040";
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 8px;flex-wrap:wrap">'
+    +'<div style="font-size:12px;color:var(--muted)">Auto-split of the variable pool (income − bills − subs − savings). '
+    +'<span style="color:'+totalColor+';font-weight:600">Total: '+totalPct.toFixed(1)+'%'+(totalPct<100?' · '+(100-totalPct).toFixed(1)+'% unassigned':totalPct>100?' · over 100%!':'')+'</span></div>'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+    +'<span style="font-size:12px;color:var(--muted);white-space:nowrap">Default $</span>'
+    +'<input type="number" min="0" step="5" value="'+(parseFloat(budgetData.settings.varWeeklyDefault)||0)+'" onchange="setVarWeeklyDefault(this.value)"'
+    +' style="width:64px;font-family:\'DM Mono\',monospace;font-size:13px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;outline:none;text-align:right"/>'
+    +'<span style="font-size:12px;color:var(--muted);white-space:nowrap">/wk</span>'
+    +'<button class="btn" style="font-size:12px;padding:5px 10px;white-space:nowrap" onclick="openEditAutoSplit()"><i class="ti ti-adjustments"></i> Edit auto-split</button>'
+    +'</div>'
+    +'</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">'+items.map(item=>`
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
       <span style="font-size:14px;font-weight:500;color:var(--text)">${item.name}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--today-color)">${(parseFloat(pct[item.id])||0)}%</span>
       <button class="bs-item-btn del" onclick="deleteRecurringItem(${item.id},'variable')" title="Remove"><i class="ti ti-x"></i></button>
     </div>`).join("")+'</div>';
+}
+
+function setVarSplitPct(id,val){
+  ensureBudgetSettings();
+  budgetData.settings.varSplitPct[id]=Math.max(0,parseFloat(val)||0);
+  saveBudgetData();
+  renderBudgetSettings();
+}
+
+function setVarWeeklyDefault(val){
+  ensureBudgetSettings();
+  budgetData.settings.varWeeklyDefault=Math.max(0,parseFloat(val)||0);
+  saveBudgetData();
+  renderBudgetSettings();
+  renderBudgetOverview();
+}
+
+function setSavingsPerPaycheck(val){
+  ensureBudgetSettings();
+  budgetData.settings.savingsPerPaycheck=Math.max(0,parseFloat(val)||0);
+  saveBudgetData();
+  renderBudgetSettings();
 }
 
 function bsToggle(id){
@@ -6649,7 +6848,7 @@ function renderBudgetSettings(){
   const subsSub=document.getElementById("bs-subs-sub");
   if(subsSub){const s=rec.subscriptions||[];const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
   const savSub=document.getElementById("bs-savings-sub");
-  if(savSub){const sv=rec.savingsTransfers||[];const tot=sv.reduce((t,x)=>t+x.amount,0);savSub.textContent=sv.length?sv.length+" transfer"+(sv.length!==1?"s":"")+" · "+$f(tot)+" per period":"No savings transfers";}
+  if(savSub){ensureBudgetSettings();savSub.textContent=$f(budgetData.settings.savingsPerPaycheck)+" budgeted per paycheck";}
   const varSub=document.getElementById("bs-var-sub");
   if(varSub){const v=rec.variable||[];varSub.textContent=v.length?v.length+" categor"+(v.length!==1?"ies":"y"):"No categories";}
 
@@ -6657,14 +6856,21 @@ function renderBudgetSettings(){
   renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
   renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
   renderBsVarCards("bs-var-list",rec.variable);
-  // Savings transfers list
+  // Savings: budgeted-per-paycheck setting + legacy transfers list
   const svEl=document.getElementById("bs-savings-list");
   if(svEl){
+    ensureBudgetSettings();
+    const savField='<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">'
+      +'<div style="flex:1"><div style="font-size:14px;font-weight:500;color:var(--text)">Budgeted savings per paycheck</div>'
+      +'<div style="font-size:12px;color:var(--muted)">Every view budgets this amount per paycheck landing in the period. Log actual savings yourself in the tracker.</div></div>'
+      +'<span style="font-size:14px;color:var(--muted)">$</span>'
+      +'<input type="number" min="0" step="1" value="'+budgetData.settings.savingsPerPaycheck+'" onchange="setSavingsPerPaycheck(this.value)"'
+      +' style="width:80px;font-family:\'DM Mono\',monospace;font-size:14px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none;text-align:right"/></div>';
     const transfers=rec.savingsTransfers||[];
     if(!transfers.length){
-      svEl.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
+      svEl.innerHTML=savField+'<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
     } else {
-      svEl.innerHTML='<div class="bs-item-grid">'+transfers.map(sv=>{
+      svEl.innerHTML=savField+'<div class="bs-item-grid">'+transfers.map(sv=>{
         const FREQ={weekly:"Weekly",biweekly:"Biweekly",monthly:"Monthly","per-paycheck":"Per paycheck"};
         return `<div class="bs-item-card">
           <div class="bs-item-name">${sv.name}</div>
@@ -6812,17 +7018,36 @@ function deleteRecurringItem(type,id){
 
 /* ── SHARED RENDER HELPERS ───────────────────────────────────── */
 
+/* Edit (or pre-create) the real expense record behind a recurring due entry.
+   recKey = recurringId+":"+dueDate. Setting an amount before the due date
+   creates the expense early (e.g. you paid rent on the 28th) and the
+   materializer won't duplicate it. */
+function openEditRecActual(recKey){
+  const exp=(budgetData.expenses||[]).find(e=>e.recKey===recKey);
+  const [ridStr,dueDate]=recKey.split(":");
+  const rid=parseInt(ridStr);
+  const item=[...(budgetData.recurring.bills||[]),...(budgetData.recurring.subscriptions||[])].find(x=>x.id===rid);
+  const v=prompt("Actual amount paid ($):",exp?exp.amount:(item?item.amount:0));
+  if(v===null)return;
+  const amt=parseFloat(v)||0;
+  if(exp){exp.amount=amt;}
+  else if(item){
+    const type=(budgetData.recurring.bills||[]).some(b=>b.id===rid)?"bill":"subscription";
+    budgetData.expenses.push({id:budgetNid++,date:dueDate,type,category:item.name,amount:amt,recKey,recurringId:rid,note:"paid early"});
+  }
+  saveBudgetData();renderBudgetOverview();
+}
+// Legacy alias (savings goal cards still call this with a transfer id — harmless no-op path)
 function openEditBillActual(itemId){
   const key=budgetView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   const period=getPeriod(key);
-  const v=prompt("Actual amount paid ($):",period.actualMap?.[itemId]||0);if(v===null)return;
+  const v=prompt("Actual amount ($):",period.actualMap?.[itemId]||0);if(v===null)return;
   if(!period.actualMap)period.actualMap={};period.actualMap[itemId]=parseFloat(v)||0;
   saveBudgetData();renderBudgetOverview();
 }
 
 function renderVarLines(listId,totalId,items,actuals,view){
   const el=document.getElementById(listId);if(!el)return;
-  const mult=view==="monthly"?4.3:1;
   let totalAct=0,totalBudg=0;
   el.innerHTML=`<div class="bvar-header-row">
     <span class="bvar-name"></span>
@@ -6831,7 +7056,7 @@ function renderVarLines(listId,totalId,items,actuals,view){
     <span class="bvar-col">LEFT</span>
   </div>`+items.map(v=>{
     const act=actuals[v.id]||0;totalAct+=act;
-    const budg=((mult===1&&v._weeklyBudget!==undefined)?v._weeklyBudget:(v.weeklyBudget||0)*mult);totalBudg+=budg;
+    const budg=v._weeklyBudget!==undefined?v._weeklyBudget:0;totalBudg+=budg; // set by computePeriodCore for the current period
     const left=budg-act;const over=budg>0&&act>budg;
     return`<div class="bvar-row">
       <span class="bvar-name">${v.name}</span>
@@ -7045,36 +7270,125 @@ function drawBudgetVsActualChart(canvasId,budgVals,actlVals,rowLabels){
 /* ── VARIABLE BUDGET ADJUSTMENT ─────────────────────────────── */
 let _avbAutoTotal=0;
 
-function openAdjustVarBudget(){
-  const period=getPeriod(getWeekPeriodKey(budgetCurrentWeekStart));
+/* ── AUTO-SPLIT SETTINGS MODAL ───────────────────────────────── */
+// Zero-sum percentage sliders (mirrors the weekly budget adjuster, but the
+// "total" is always 100%). Live $ preview uses the current week's pool so
+// the percentages feel concrete.
+let _aspPoolPreview=0;
+
+function openEditAutoSplit(){
+  ensureBudgetSettings();
   const rec=budgetData.recurring;
+  const pct=budgetData.settings.varSplitPct||{};
+  // Preview pool: this week's auto variable total
+  const ws=budgetCurrentWeekStart||getFridayWeekStart(new Date());
+  const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+  const sbP=chainedStartBalances("weekly",ws);
+  _aspPoolPreview=computePeriodCore(ws,we,getWeekPeriodKey(ws),sbP.budgetSb).varTotal;
+
+  document.getElementById("asp-cat-list").innerHTML=(rec.variable||[]).map(v=>{
+    const val=parseFloat(pct[v.id])||0;
+    return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <label style="flex:0 0 92px;font-size:13px;color:var(--text);line-height:1.2">${v.name}<span class="asp-dollar" data-id="${v.id}" style="display:block;font-size:10px;color:var(--muted)">${$f(_aspPoolPreview*val/100)}/wk</span></label>
+      <input type="range" class="asp-cat-slider" data-id="${v.id}" min="0" max="100" step="0.5" value="${val}"
+        oninput="aspCatChanged('${v.id}',this.value)"
+        style="flex:1;min-width:0;accent-color:var(--today-color);cursor:pointer"/>
+      <input type="number" step="0.5" min="0" max="100" class="asp-cat-input" data-id="${v.id}" value="${val}"
+        style="width:64px;flex-shrink:0;font-family:'DM Mono',monospace;font-size:13px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none;text-align:right"
+        oninput="aspCatChanged('${v.id}',this.value)"/>
+      <span style="font-size:12px;color:var(--muted);flex-shrink:0">%</span>
+    </div>`;
+  }).join("")||'<div class="empty-msg">No variable categories yet</div>';
+  aspUpdateRemaining();
+  document.getElementById("modal-auto-split").style.display="block";
+}
+
+function aspSetCat(id,val){
+  if(val<0)val=0;
+  const rounded=Math.round(val*2)/2; // keep to 0.5 steps
+  document.querySelectorAll('.asp-cat-input[data-id="'+id+'"]').forEach(inp=>{inp.value=rounded;});
+  document.querySelectorAll('.asp-cat-slider[data-id="'+id+'"]').forEach(sl=>{sl.value=rounded;});
+  const d=document.querySelector('.asp-dollar[data-id="'+id+'"]');
+  if(d)d.textContent=$f(_aspPoolPreview*rounded/100)+"/wk";
+}
+
+// Zero-sum against 100: raising one category past the unassigned room pulls
+// the others down proportionally. Lowering one frees up unassigned.
+function aspCatChanged(id,requested){
+  let r=parseFloat(requested);
+  if(isNaN(r)||r<0)r=0;
+  if(r>100)r=100;
+  const inputs=Array.from(document.querySelectorAll(".asp-cat-input"));
+  let sOthers=0;
+  inputs.forEach(inp=>{if(inp.dataset.id!==id)sOthers+=parseFloat(inp.value)||0;});
+  const room=100-r;
+  if(sOthers>room+0.001){
+    const scale=sOthers>0?room/sOthers:0;
+    inputs.forEach(inp=>{
+      if(inp.dataset.id!==id)aspSetCat(inp.dataset.id,(parseFloat(inp.value)||0)*scale);
+    });
+  }
+  aspSetCat(id,r);
+  aspUpdateRemaining();
+}
+
+function aspUpdateRemaining(){
+  const sum=Array.from(document.querySelectorAll(".asp-cat-input")).reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+  const rem=100-sum;
+  const el=document.getElementById("asp-remaining");
+  if(el){el.textContent=rem.toFixed(1)+"%"+(Math.abs(rem)>0.01?" ("+$f(_aspPoolPreview*rem/100)+"/wk)":"");el.style.color=Math.abs(rem)<0.01?"#3db87a":rem<0?"#e05555":"var(--muted)";}
+}
+
+function aspEvenSplit(){
+  const inputs=Array.from(document.querySelectorAll(".asp-cat-input"));
+  if(!inputs.length)return;
+  const share=Math.floor((100/inputs.length)*2)/2; // 0.5 steps
+  inputs.forEach(inp=>aspSetCat(inp.dataset.id,share));
+  aspUpdateRemaining();
+}
+
+function saveAutoSplit(){
+  ensureBudgetSettings();
+  document.querySelectorAll(".asp-cat-input").forEach(inp=>{
+    budgetData.settings.varSplitPct[inp.dataset.id]=Math.max(0,parseFloat(inp.value)||0);
+  });
+  saveBudgetData();
+  closeModal("modal-auto-split");
+  renderBudgetSettings();
+  renderBudgetOverview();
+}
+
+function openAdjustVarBudget(){
   const ws2=budgetCurrentWeekStart;
   const we2=fd(new Date(new Date(ws2+"T12:00:00").getTime()+6*86400000));
-  const budgIncome=rec.incomeSources.reduce((s,src2)=>{
-    const weekEntry=(budgetData.incomeWeeks||[]).find(w=>w.sourceId===src2.id&&w.payDate>=ws2&&w.payDate<=we2);
-    const hrs=weekEntry?weekEntry.hours:(src2.defaultHours||40);
-    return s+(src2.hourlyRate||0)*hrs;
-  },0);
-  const budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
-  const budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,budgetCurrentWeekStart),0);
-  const budgSav=(rec.savingsTransfers||rec.autoTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
-  _avbAutoTotal=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-  const currentTotal=period.varBudgetTotal??_avbAutoTotal;
+  const key=getWeekPeriodKey(ws2);
+  const period=getPeriod(key);
+  const rec=budgetData.recurring;
+  const sbW=chainedStartBalances("weekly",ws2);
+  const cp=computePeriodCore(ws2,we2,key,sbW.budgetSb); // same engine as the views — no drift
+  _avbAutoTotal=cp.weeklyDefault;
+  _avbCalc={default:cp.weeklyDefault,leftover:cp.leftoverNoSb,boost:cp.leftover20Sb,sb:cp.sbForPool,income:cp.budgIncome,bills:cp.budgBills,subs:cp.budgSubs,sav:cp.budgSav};
+  _avbIsDefault=period.varBudgetTotal==null;
+  const currentTotal=period.varBudgetTotal??cp.weeklyDefault;
 
   document.getElementById("avb-source-info").textContent=
-    `Income ${$f(budgIncome)} − Bills ${$f(budgBills)} − Subs ${$f(budgSubs)} − Savings ${$f(budgSav)} = ${$f(_avbAutoTotal)}`;
+    `This week: Income ${$f(cp.budgIncome)} · Bills ${$f(cp.budgBills)} · Subs ${$f(cp.budgSubs)} · Savings ${$f(cp.budgSav)} · Start balance ${$f(cp.sbForPool)}`;
+  document.getElementById("avb-opt-default").innerHTML="Default<br>"+$f(cp.weeklyDefault)+"/wk";
+  document.getElementById("avb-opt-leftover").innerHTML="Paycheck leftover<br>"+$f(cp.leftoverNoSb);
+  document.getElementById("avb-opt-boost").innerHTML="Leftover + 20% start<br>"+$f(cp.leftover20Sb);
+  document.getElementById("avb-opt-note").textContent="";
   document.getElementById("avb-total").value=currentTotal.toFixed(2);
-  document.getElementById("avb-total").oninput=avbTotalChanged;
+  document.getElementById("avb-total").oninput=()=>{_avbIsDefault=false;avbTotalChanged();};
 
-  // Build per-category inputs
+  // Per-category defaults come from your settings percentages, not an even split
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
-  const catCount=rec.variable.length||1;
-  const defaultBudget=currentTotal/catCount;
+  const pct=budgetData.settings.varSplitPct||{};
 
   document.getElementById("avb-cat-list").innerHTML=rec.variable.map(v=>{
-    const val=period.varBudgetOverrides[v.id]??defaultBudget;
+    const def=currentTotal*((pct[v.id]||0)/100);
+    const val=period.varBudgetOverrides[v.id]??def;
     return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <label style="flex:0 0 92px;font-size:13px;color:var(--text);line-height:1.2">${v.name}</label>
+      <label style="flex:0 0 92px;font-size:13px;color:var(--text);line-height:1.2">${v.name}<span style="display:block;font-size:10px;color:var(--muted)">${pct[v.id]||0}% auto</span></label>
       <input type="range" class="avb-cat-slider" data-id="${v.id}" min="0" max="${currentTotal}" step="0.01" value="${val}"
         oninput="avbCatChanged('${v.id}',this.value)"
         style="flex:1;min-width:0;accent-color:var(--today-color);cursor:pointer"/>
@@ -7089,12 +7403,10 @@ function openAdjustVarBudget(){
 
 function avbUpdateCats(){
   const newTotal=parseFloat(document.getElementById("avb-total").value)||0;
-  const rec=budgetData.recurring;
-  const catCount=rec.variable.length||1;
-  const newDefault=newTotal/catCount;
-  // Total changed → reset slider ranges + equal split across categories
-  document.querySelectorAll(".avb-cat-slider").forEach(sl=>{sl.max=newTotal;sl.value=newDefault;});
-  document.querySelectorAll(".avb-cat-input").forEach(inp=>{inp.value=newDefault.toFixed(2);});
+  const pct=budgetData.settings.varSplitPct||{};
+  // Total changed → reset slider ranges + re-split by your settings percentages
+  document.querySelectorAll(".avb-cat-slider").forEach(sl=>{sl.max=newTotal;sl.value=newTotal*((pct[sl.dataset.id]||0)/100);});
+  document.querySelectorAll(".avb-cat-input").forEach(inp=>{inp.value=(newTotal*((pct[inp.dataset.id]||0)/100)).toFixed(2);});
   avbUpdateRemaining();
 }
 
@@ -7150,9 +7462,58 @@ function avbUpdateRemaining(){
   if(el){el.textContent=$f(Math.abs(rem));el.style.color=Math.abs(rem)<0.01?"#3db87a":rem<0?"#e05555":"var(--muted)";}
 }
 
-function avbResetTotal(){
-  document.getElementById("avb-total").value=_avbAutoTotal.toFixed(2);
+let _avbCalc={default:350,leftover:0,boost:0,sb:0,income:0,bills:0,subs:0,sav:0};
+let _avbIsDefault=true;
+// The three budget options for the week. "default" saves as no-override so the
+// week keeps following the settings default even if that number changes later.
+function avbApplyOption(mode){
+  const val=_avbCalc[mode]??_avbCalc.default;
+  _avbIsDefault=(mode==="default");
+  document.getElementById("avb-total").value=val.toFixed(2);
+  const note=document.getElementById("avb-opt-note");
+  if(note){
+    note.textContent=mode==="default"
+      ?"Back to the standard weekly amount (tracks the setting)."
+      :mode==="leftover"
+      ?`Income ${$f(_avbCalc.income)} − bills ${$f(_avbCalc.bills)} − subs ${$f(_avbCalc.subs)} − savings ${$f(_avbCalc.sav)} = ${$f(val)}`
+      :`(20% × ${$f(_avbCalc.sb)} start + income ${$f(_avbCalc.income)}) − bills ${$f(_avbCalc.bills)} − subs ${$f(_avbCalc.subs)} − savings ${$f(_avbCalc.sav)} = ${$f(val)}`;
+  }
   avbUpdateCats();
+}
+
+/* ── EDIT BUDGETED SAVINGS (per period) ─────────────────── */
+// Click the budget savings number in the summary — same UX as start balance.
+let _ebsView="weekly";
+function openEditBudgSav(view){
+  _ebsView=view;
+  const key=view==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
+  const period=getPeriod(key);
+  const periodName=view==="monthly"
+    ?new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
+    :"week of "+budgetCurrentWeekStart;
+  document.getElementById("ebs-desc").textContent="Override the budgeted savings for "+periodName+".";
+  document.getElementById("ebs-amount").value=period.overrideBudgSav!=null?period.overrideBudgSav:"";
+  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to auto ("+$f(savingsPerPaycheck())+" per paycheck).";
+  document.getElementById("modal-edit-budg-sav").style.display="block";
+  setTimeout(()=>document.getElementById("ebs-amount").focus(),50);
+}
+
+function saveBudgSav(){
+  const key=_ebsView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
+  const period=getPeriod(key);
+  const v=document.getElementById("ebs-amount").value;
+  period.overrideBudgSav=v.trim()===""?null:Math.max(0,parseFloat(v)||0);
+  saveBudgetData();
+  closeModal("modal-edit-budg-sav");
+  renderBudgetOverview();
+}
+
+function clearBudgSav(){
+  const key=_ebsView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
+  if(budgetData.periods?.[key])budgetData.periods[key].overrideBudgSav=null;
+  saveBudgetData();
+  closeModal("modal-edit-budg-sav");
+  renderBudgetOverview();
 }
 
 /* ── EDIT START BALANCE ────────────────────────────────── */
@@ -7212,11 +7573,17 @@ function saveAdjustVarBudget(){
   if(!budgetData.periods[key])budgetData.periods[key]={startBalance:0,actualMap:{},dailyLog:{}};
   const period=budgetData.periods[key];
   const rawTotal=parseFloat(document.getElementById("avb-total").value);
-  period.varBudgetTotal=isNaN(rawTotal)||rawTotal<=0?null:rawTotal;
-  if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+  period.varBudgetTotal=_avbIsDefault||isNaN(rawTotal)||rawTotal<=0?null:rawTotal;
+  // Only store per-cat overrides that differ from the pct auto-split — weeks
+  // left at defaults keep tracking settings changes instead of freezing.
+  const resolvedTotal=period.varBudgetTotal??(_avbCalc.default||0);
+  const pctSave=budgetData.settings.varSplitPct||{};
+  period.varBudgetOverrides={};
   document.querySelectorAll(".avb-cat-input").forEach(inp=>{
     const v=parseFloat(inp.value);
-    period.varBudgetOverrides[inp.dataset.id]=isNaN(v)?0:v;
+    if(isNaN(v))return;
+    const autoV=resolvedTotal*((pctSave[inp.dataset.id]||0)/100);
+    if(Math.abs(v-autoV)>0.01)period.varBudgetOverrides[inp.dataset.id]=v;
   });
   saveBudgetData();
   closeModal("modal-adjust-var");
@@ -7237,80 +7604,32 @@ function renderMobileBudget(){
     }
     return;
   }
+  bvCacheClear();
   const now=new Date();
   if(!budgetCurrentWeekStart) budgetCurrentWeekStart=getFridayWeekStart(now);
   if(!budgetCurrentMonth) budgetCurrentMonth=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
   if(!budgetCurrentDate) budgetCurrentDate=fd(now);
+  materializeRecurring();
   const rec=budgetData.recurring;
   let periodLabel="",startDate="",endDate="",period;
   let budgetSb=0,actualSb=0,budgIncome=0,actualIncome=0;
   let budgBills=0,budgSubs=0,budgSav=0,budgVar=0;
   let totalBills=0,totalSubs=0,totalVar=0,totalSav=0;
   let expenses=[],savExps=[],varActuals={};
-
-  // ── Shared calc helper ──
-  function calcSb(wsKey,wsStart,wsEnd,isMo){
-    // prev period
-    let prevKey,prevWs,prevWe;
-    if(isMo){
-      const [y2,m2]=wsStart.split("-").map(Number);
-      // actually wsStart is "YYYY-MM" for monthly
-      const ym=wsKey.replace("month:","");
-      const [yy,mm]=ym.split("-").map(Number);
-      const pm=mm===1?12:mm-1; const py=mm===1?yy-1:yy;
-      prevKey=getMonthPeriodKey(`${py}-${String(pm).padStart(2,"0")}`);
-      prevWs=fd(new Date(py,pm-1,1)); prevWe=fd(new Date(py,pm,0));
-    } else {
-      prevWs=fd(new Date(new Date(wsStart+"T12:00:00").getTime()-7*86400000));
-      prevWe=fd(new Date(new Date(prevWs+"T12:00:00").getTime()+6*86400000));
-      prevKey=getWeekPeriodKey(prevWs);
-    }
-    const pp=budgetData.periods?.[prevKey];
-    if(!pp) return {budgetSb:0,actualSb:0};
-    const pIncomeBudg=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevWs&&w.payDate<=prevWe).reduce((s,w)=>s+(w.hours*w.rate),0);
-    const pIncomeActl=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=prevWs&&w.payDate<=prevWe&&w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-    const pBills=isMo?rec.bills.reduce((s,b)=>s+billDueInMonth(b,prevKey.replace("month:","")),0):rec.bills.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
-    const pSubs=isMo?rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,prevKey.replace("month:","")),0):rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,prevWs),0);
-    const pSav=(rec.savingsTransfers||[]).reduce((s,at)=>isMo?(s+(at.frequency==="monthly"?at.amount:at.frequency==="weekly"?at.amount*4.3:at.amount*2.17)):(s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"})),0);
-    const pVarExps=getExpensesFor(prevWs,prevWe,"variable");
-    const pActualVar=pVarExps.reduce((s,e)=>s+e.amount,0);
-    const pActualBills=rec.bills.reduce((s,b)=>s+(parseFloat(pp.actualMap?.[b.id])||0),0);
-    const pActualSubs=rec.subscriptions.reduce((s,b)=>s+(parseFloat(pp.actualMap?.[b.id])||0),0);
-    const pActualSav=getExpensesFor(prevWs,prevWe,"savings").reduce((s,e)=>s+e.amount,0);
-    const pAutoVar=Math.max(0,pIncomeBudg-pBills-pSubs-pSav);
-    const pVarTotal=(pp.varBudgetTotal!=null&&pp.varBudgetTotal>0)?pp.varBudgetTotal:pAutoVar;
-    const ppSb=parseFloat(pp.startBalance)||0;
-    return {
-      budgetSb:ppSb+pIncomeBudg-pBills-pSubs-pVarTotal-pSav,
-      actualSb:ppSb+pIncomeActl-pActualBills-pActualSubs-pActualVar-pActualSav
-    };
-  }
+  let cp=null; // engine output for weekly/monthly
 
   if(_mbView==="weekly"){
     startDate=budgetCurrentWeekStart;
     endDate=fd(new Date(new Date(startDate+"T12:00:00").getTime()+6*86400000));
-    period=getPeriod(getWeekPeriodKey(startDate));
-    if(!period.varBudgetOverrides)period.varBudgetOverrides={};
-    const sbr=calcSb(getWeekPeriodKey(startDate),startDate,endDate,false);
+    const key=getWeekPeriodKey(startDate);
+    period=getPeriod(key);
+    const sbr=chainedStartBalances("weekly",startDate);
     budgetSb=sbr.budgetSb; actualSb=sbr.actualSb;
-    const allWI=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=startDate&&w.payDate<=endDate);
-    budgIncome=allWI.reduce((s,w)=>s+(w.hours*w.rate),0);
-    actualIncome=allWI.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-    budgBills=rec.bills.reduce((s,b)=>s+billDueInWeek(b,startDate),0);
-    budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,startDate),0);
-    budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>s+proRateToWeek({amount:at.amount,frequency:at.frequency||"biweekly"}),0);
-    expenses=getExpensesFor(startDate,endDate,"variable");
-    savExps=getExpensesFor(startDate,endDate,"savings");
-    rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
-    const autoVar=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-    const varTotal=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVar;
-    const catCount=rec.variable.length||1;
-    rec.variable.forEach(v=>{v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:varTotal/catCount;});
-    budgVar=rec.variable.reduce((s,v)=>s+(v._weeklyBudget||0),0);
-    totalBills=rec.bills.reduce((s,b)=>s+getAutoActual(b),0);
-    totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActual(b),0);
-    totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
-    totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+    cp=computePeriodCore(startDate,endDate,key,budgetSb);
+    budgIncome=cp.budgIncome; actualIncome=cp.actualIncome;
+    budgBills=cp.budgBills; budgSubs=cp.budgSubs; budgSav=cp.budgSav; budgVar=cp.budgVar;
+    totalBills=cp.actualBills; totalSubs=cp.actualSubs; totalVar=cp.actualVar; totalSav=cp.actualSav;
+    expenses=cp.varExps; savExps=cp.savExps; varActuals=cp.varActuals;
     const s=new Date(startDate+"T12:00:00"),e=new Date(endDate+"T12:00:00");
     periodLabel=s.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+e.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 
@@ -7318,47 +7637,34 @@ function renderMobileBudget(){
     const ym=budgetCurrentMonth;
     const [y,m]=ym.split("-").map(Number);
     startDate=fd(new Date(y,m-1,1)); endDate=fd(new Date(y,m,0));
-    period=getPeriod(getMonthPeriodKey(ym));
-    if(!period.varBudgetOverrides)period.varBudgetOverrides={};
-    const sbr=calcSb(getMonthPeriodKey(ym),ym,endDate,true);
+    const key=getMonthPeriodKey(ym);
+    period=getPeriod(key);
+    const sbr=chainedStartBalances("monthly",ym);
     budgetSb=sbr.budgetSb; actualSb=sbr.actualSb;
-    const allMI=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=startDate&&w.payDate<=endDate);
-    budgIncome=allMI.reduce((s,w)=>s+(w.hours*w.rate),0);
-    actualIncome=allMI.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
-    budgBills=rec.bills.reduce((s,b)=>s+billDueInMonth(b,ym),0);
-    budgSubs=rec.subscriptions.reduce((s,b)=>s+billDueInMonth(b,ym),0);
-    budgSav=(rec.savingsTransfers||[]).reduce((s,at)=>{const f=at.frequency||"biweekly";return s+(f==="monthly"?at.amount:f==="weekly"?at.amount*4.3:at.amount*2.17);},0);
-    expenses=getExpensesFor(startDate,endDate,"variable");
-    savExps=getExpensesFor(startDate,endDate,"savings");
-    rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
-    const autoVarM=Math.max(0,budgIncome-budgBills-budgSubs-budgSav);
-    const varTotalM=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarM;
-    const catCountM=rec.variable.length||1;
-    rec.variable.forEach(v=>{v._weeklyBudget=period.varBudgetOverrides[v.id]!=null?period.varBudgetOverrides[v.id]:varTotalM/catCountM;});
-    budgVar=rec.variable.reduce((s,v)=>s+(v._weeklyBudget||0),0);
-    totalBills=rec.bills.reduce((s,b)=>s+getAutoActualM(b),0);
-    totalSubs=rec.subscriptions.reduce((s,b)=>s+getAutoActualM(b),0);
-    totalVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
-    totalSav=savExps.reduce((s,e)=>s+e.amount,0);
+    cp=computePeriodCore(startDate,endDate,key,budgetSb);
+    budgIncome=cp.budgIncome; actualIncome=cp.actualIncome;
+    budgBills=cp.budgBills; budgSubs=cp.budgSubs; budgSav=cp.budgSav; budgVar=cp.budgVar;
+    totalBills=cp.actualBills; totalSubs=cp.actualSubs; totalVar=cp.actualVar; totalSav=cp.actualSav;
+    expenses=cp.varExps; savExps=cp.savExps; varActuals=cp.varActuals;
     periodLabel=new Date(y,m-1,15).toLocaleDateString("en-US",{month:"long",year:"numeric"});
 
   } else {
-    // daily
+    // daily — allowance math built on the same weekly engine numbers
     const ds=budgetCurrentDate;
     startDate=getFridayWeekStart(new Date(ds+"T12:00:00"));
     endDate=fd(new Date(new Date(startDate+"T12:00:00").getTime()+6*86400000));
-    period=getPeriod(getWeekPeriodKey(startDate));
-    if(!period.varBudgetOverrides)period.varBudgetOverrides={};
+    const key=getWeekPeriodKey(startDate);
+    period=getPeriod(key);
+    const wsb=chainedStartBalances("weekly",startDate);
+    const wcp=computePeriodCore(startDate,endDate,key,wsb.budgetSb);
     expenses=getExpensesFor(ds,ds,"variable");
     savExps=getExpensesFor(ds,ds,"savings");
-    const weekExps=getExpensesFor(startDate,endDate,"variable");
     rec.variable.forEach(v=>{varActuals[v.id]=expenseTotalByCat(expenses,v.name);});
     totalVar=expenses.reduce((s,e)=>s+e.amount,0);
     totalSav=savExps.reduce((s,e)=>s+e.amount,0);
-    const autoVarD=Math.max(0,(rec.incomeSources.reduce((s,s2)=>s+(s2.hourlyRate||0)*(s2.defaultHours||40),0))-rec.bills.reduce((s,b)=>s+billDueInWeek(b,startDate),0)-rec.subscriptions.reduce((s,b)=>s+billDueInWeek(b,startDate),0));
-    const bVar=(period.varBudgetTotal!=null&&period.varBudgetTotal>0)?period.varBudgetTotal:autoVarD;
-    const weekSpent=weekExps.reduce((s,e)=>s+e.amount,0);
-    const spentBefore=weekExps.filter(e=>e.date<ds).reduce((s,e)=>s+e.amount,0);
+    const bVar=wcp.varTotal;
+    const weekSpent=wcp.actualVar;
+    const spentBefore=wcp.varExps.filter(e=>e.date<ds).reduce((s,e)=>s+e.amount,0);
     const allDays=Array.from({length:7},(_,i)=>fd(new Date(new Date(startDate+"T12:00:00").getTime()+i*86400000)));
     const todayIdx=allDays.indexOf(ds);
     const daysLeft=Math.max(1,7-todayIdx);
@@ -7458,7 +7764,7 @@ function renderMobileBudget(){
     </button>
   `;
 
-  window._mbCtx={rec,period,varActuals,expenses,savExps,startDate,budgVar,totalVar,budgBills,budgSubs,totalBills,totalSubs};
+  window._mbCtx={rec,period,varActuals,expenses,savExps,startDate,budgVar,totalVar,budgBills,budgSubs,totalBills,totalSubs,cp};
   renderMbChart();
   renderMbSection();
 }
@@ -7519,10 +7825,12 @@ function renderMbSection(){
     renderVarLines("mb-var-lines",null,rec.variable,varActuals,_mbView==="monthly"?"monthly":"weekly");
   } else if(_mbSection==="bills"){
     el.innerHTML='<div class="bcompact-title">BILLS & DEBT</div><div id="mb-bills-lines"></div>';
-    renderBlineGroup("mb-bills-lines",null,rec.bills,period,_mbView==="monthly"?"monthly":"weekly",window._mbCtx?.startDate);
+    const _cpB=window._mbCtx?.cp;
+    if(_cpB)renderDueLines("mb-bills-lines",null,_cpB.billsDue,_cpB.billExps);
   } else if(_mbSection==="subs"){
     el.innerHTML='<div class="bcompact-title">SUBSCRIPTIONS</div><div id="mb-subs-lines"></div>';
-    renderBlineGroup("mb-subs-lines",null,rec.subscriptions,period,_mbView==="monthly"?"monthly":"weekly",window._mbCtx?.startDate);
+    const _cpS=window._mbCtx?.cp;
+    if(_cpS)renderDueLines("mb-subs-lines",null,_cpS.subsDue,_cpS.subExps);
   } else {
     const hh=savExps.filter(e=>e.savingsBucket==="household");
     const pp=savExps.filter(e=>e.savingsBucket==="personal");
