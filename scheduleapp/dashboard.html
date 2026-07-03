@@ -7594,6 +7594,12 @@ function setMobileBudgetView(v){
   renderMobileBudget();
 }
 
+// Mobile budget UI state. These MUST be declared: the render template reads
+// them, and an undeclared read is a ReferenceError that blanks the whole
+// mobile budget page (this exact bug shipped once — leave these alone).
+let _mbView="weekly";
+let _mbChart="breakdown";
+let _mbSection="variable";
 function setMbChart(v){ _mbChart = v; renderMbChart(); }
 function setMbSection(v){ _mbSection = v; renderMbSection(); }
 
