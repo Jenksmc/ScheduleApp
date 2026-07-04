@@ -1006,7 +1006,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ws-sav" onclick="openEditBudgSav('weekly')" style="cursor:pointer" title="Edit budgeted savings for this week">$0</span><span class="bcompact-a" id="wa-sav">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ws-sav-hh" onclick="openEditBudgSav('weekly','household')" style="cursor:pointer" title="Edit budgeted household savings for this week">$0</span><span class="bcompact-a" id="wa-sav-hh">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ws-sav-pers" onclick="openEditBudgSav('weekly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this week">$0</span><span class="bcompact-a" id="wa-sav-pers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ws-end">$0</span><span class="bcompact-a" id="wa-end">$0</span></div>
           <!-- hidden fields still needed for JS -->
           <span id="ws-subs" style="display:none"></span><span id="wa-subs" style="display:none"></span>
@@ -1072,15 +1073,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
             <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
               <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">HOUSEHOLD</div>
-              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period budgeted</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--muted)" id="w-sav-hh-budg">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">This period actual</div>
               <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-hh-amt">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total budgeted</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--muted)" id="w-sav-hh-tbudg">$0</div>
               <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total saved</div>
               <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#378add" id="w-sav-hh-total">$0</div>
             </div>
             <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
               <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">PERSONAL</div>
-              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period budgeted</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--muted)" id="w-sav-pers-budg">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">This period actual</div>
               <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#378add" id="w-sav-pers-amt">$0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total budgeted</div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--muted)" id="w-sav-pers-tbudg">$0</div>
               <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total saved</div>
               <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#378add" id="w-sav-pers-total">$0</div>
             </div>
@@ -1102,7 +1111,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Savings</span><span class="bcompact-b" id="ms-sav" onclick="openEditBudgSav('monthly')" style="cursor:pointer" title="Edit budgeted savings for this month">$0</span><span class="bcompact-a" id="ma-sav">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ms-sav-hh" onclick="openEditBudgSav('monthly','household')" style="cursor:pointer" title="Edit budgeted household savings for this month">$0</span><span class="bcompact-a" id="ma-sav-hh">$0</span></div>
+          <div class="bcompact-row neg"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ms-sav-pers" onclick="openEditBudgSav('monthly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this month">$0</span><span class="bcompact-a" id="ma-sav-pers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ms-end">$0</span><span class="bcompact-a" id="ma-end">$0</span></div>
         </div>
         <div class="budget-card bcompact-card">
@@ -1133,16 +1143,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">HOUSEHOLD SAVINGS</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month budgeted</div>
+          <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--muted)" id="m-sav-hh-budg">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month actual</div>
           <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add" id="m-sav-household">$0</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:8px">Total saved</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Total budgeted</div>
+          <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--muted)" id="m-sav-hh-tbudg">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Total saved</div>
           <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#378add" id="m-sav-hh-total">$0</div>
         </div>
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">PERSONAL SAVINGS</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month budgeted</div>
+          <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--muted)" id="m-sav-pers-budg">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">This month actual</div>
           <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#378add" id="m-sav-personal">$0</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:8px">Total saved</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Total budgeted</div>
+          <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--muted)" id="m-sav-pers-tbudg">$0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Total saved</div>
           <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#378add" id="m-sav-pers-total">$0</div>
         </div>
       </div>
@@ -1563,8 +1581,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
-            <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
-            <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+            <button class="badge active" data-savbucket="household" onclick="pickSavBucket('household',this)">Household</button>
+            <button class="badge" data-savbucket="personal" onclick="pickSavBucket('personal',this)">Personal</button>
           </div>
         </div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label>
@@ -5790,6 +5808,16 @@ function ensureBudgetSettings(){
     const legacy=(budgetData.recurring?.savingsTransfers||[]).reduce((t,x)=>t+(x.amount||0),0);
     s.savingsPerPaycheck=legacy>0?legacy:557;
   }
+  if(s.savPPHousehold==null||s.savPPPersonal==null){
+    // Split the per-paycheck savings budget by bucket. Prefer the transfer
+    // list's buckets; otherwise the whole existing amount is household.
+    const tr=budgetData.recurring?.savingsTransfers||[];
+    const hh=tr.filter(x=>(x.bucket||"household")==="household").reduce((t,x)=>t+(x.amount||0),0);
+    const pers=tr.filter(x=>x.bucket==="personal").reduce((t,x)=>t+(x.amount||0),0);
+    if(hh>0||pers>0){s.savPPHousehold=hh;s.savPPPersonal=pers;}
+    else{s.savPPHousehold=parseFloat(s.savingsPerPaycheck)||0;s.savPPPersonal=0;}
+  }
+  s.savingsPerPaycheck=(parseFloat(s.savPPHousehold)||0)+(parseFloat(s.savPPPersonal)||0); // keep legacy total in sync
   if(!s.varSplitPct)s.varSplitPct={};
   // Any variable category without a percentage gets an even share of what's unclaimed
   const cats=budgetData.recurring?.variable||[];
@@ -5805,6 +5833,41 @@ function ensureBudgetSettings(){
 }
 
 function savingsPerPaycheck(){ensureBudgetSettings();return parseFloat(budgetData.settings.savingsPerPaycheck)||0;}
+function savingsPerPaycheckBuckets(){ensureBudgetSettings();const s=budgetData.settings;return{hh:parseFloat(s.savPPHousehold)||0,pers:parseFloat(s.savPPPersonal)||0};}
+
+// All-time budgeted savings = sum of each started week's budgeted amount,
+// honoring per-week overrides (set by clicking the summary numbers). A week
+// you zeroed contributes 0. Auto weeks contribute setting x paychecks whose
+// pay date has passed. Monthly-view overrides affect that month's summary
+// row only — weeks are the source of truth for the all-time number.
+function totalBudgetedSavingsBuckets(){
+  const spp=savingsPerPaycheckBuckets();
+  const today=fd(new Date());
+  // Earliest relevant date: first paycheck or first week with a savings override
+  let earliest=null;
+  (budgetData.incomeWeeks||[]).forEach(w=>{if(!earliest||w.payDate<earliest)earliest=w.payDate;});
+  Object.keys(budgetData.periods||{}).forEach(k=>{
+    if(!k.startsWith("week:"))return;
+    const p=budgetData.periods[k];
+    if(p&&(p.overrideBudgSavHH!=null||p.overrideBudgSavPers!=null||p.overrideBudgSav!=null)){
+      const ws=k.slice(5);
+      if(!earliest||ws<earliest)earliest=ws;
+    }
+  });
+  if(!earliest)return{hh:0,pers:0};
+  let ws=getFridayWeekStart(new Date(earliest+"T12:00:00"));
+  let hh=0,pers=0,guard=0;
+  while(ws<=today&&guard++<600){
+    const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+    const p=budgetData.periods?.["week:"+ws]||{};
+    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we&&x.payDate<=today).length;
+    hh+=p.overrideBudgSavHH!=null?p.overrideBudgSavHH
+      :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:spp.hh*pays);
+    pers+=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:spp.pers*pays;
+    ws=fd(new Date(new Date(ws+"T12:00:00").getTime()+7*86400000));
+  }
+  return{hh,pers};
+}
 
 /* ── Recurring due dates ─────────────────────────────────────── */
 // All due-date strings for a bill/sub within [start,end] inclusive.
@@ -5912,11 +5975,18 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const actualBills=billExps.reduce((s,e)=>s+e.amount,0);
   const actualSubs=subExps.reduce((s,e)=>s+e.amount,0);
 
-  // Savings: flat $ per paycheck landing in range; actuals are manual entries only.
-  // A per-period override (click the number in the summary) beats the auto amount.
-  const budgSav=period.overrideBudgSav!=null?period.overrideBudgSav:savingsPerPaycheck()*paychecks.length;
+  // Savings: flat $ per paycheck landing in range, split by bucket. Per-period
+  // overrides (click the number in the summary) beat the auto amounts.
+  // Legacy shim: an old single-total override lands on the household side.
+  const _spp=savingsPerPaycheckBuckets();
+  const budgSavHH=period.overrideBudgSavHH!=null?period.overrideBudgSavHH
+    :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_spp.hh*paychecks.length);
+  const budgSavPers=period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_spp.pers*paychecks.length;
+  const budgSav=budgSavHH+budgSavPers;
   const savExps=getExpensesFor(start,end,"savings");
-  const actualSav=savExps.reduce((s,e)=>s+e.amount,0);
+  const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
+  const actualSavPers=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const actualSav=actualSavHH+actualSavPers;
 
   // Variable budget default: a flat weekly amount from settings ($350 unless
   // changed). The pool formulas below are opt-in calculators surfaced as
@@ -5965,7 +6035,7 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 
   const _res={start,end,periodKey,period,paychecks,budgIncome,actualIncome,sbForPool,weeklyDefault,leftoverNoSb,leftover20Sb,
     billsDue,subsDue,budgBills,budgSubs,actualBills,actualSubs,billExps,subExps,
-    budgSav,actualSav,savExps,autoVarTotal,varTotal,varBudgets,varActuals,budgVar,actualVar,varExps,
+    budgSav,budgSavHH,budgSavPers,actualSav,actualSavHH,actualSavPers,savExps,autoVarTotal,varTotal,varBudgets,varActuals,budgVar,actualVar,varExps,
     budgExpenses,actualExpenses};
   _bvCache.cp[_ck]=_res;
   return _res;
@@ -6248,7 +6318,8 @@ function renderWeeklyView(){
   t("ws-fixed",$f(cp.budgExpenses)); ta("wa-fixed",cp.actualExpenses,cp.budgExpenses,true);
   t("ws-subs",$f(cp.budgSubs));  ta("wa-subs",cp.actualSubs,cp.budgSubs,true);
   t("ws-var",$f(cp.budgVar));   ta("wa-var",cp.actualVar,cp.budgVar,true);
-  t("ws-sav",$f(cp.budgSav));   t("wa-sav",$f(cp.actualSav));
+  t("ws-sav-hh",$f(cp.budgSavHH));   t("wa-sav-hh",$f(cp.actualSavHH));
+  t("ws-sav-pers",$f(cp.budgSavPers)); t("wa-sav-pers",$f(cp.actualSavPers));
   t("ws-end",$f(budgEnd));   ta("wa-end",actualEnd,budgEnd,false);
 
   // ── Variable budget source label ──
@@ -6284,13 +6355,16 @@ function renderWeeklyView(){
   renderDueLines("w-bills-lines","w-bills-total",cp.billsDue,cp.billExps);
   renderDueLines("w-subs-lines","w-subs-total",cp.subsDue,cp.subExps);
   renderVarLines("w-var-lines","w-var-total",rec.variable,cp.varActuals,"weekly");
-  const hhAmt=cp.savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const persAmt=cp.savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
-  const hhTotal=allSavExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const hhTotal=allSavExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const persTotal=allSavExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  t("w-sav-hh-amt",$f(hhAmt));
-  t("w-sav-pers-amt",$f(persAmt));
+  const _tbW=totalBudgetedSavingsBuckets();
+  t("w-sav-hh-budg",$f(cp.budgSavHH));
+  t("w-sav-pers-budg",$f(cp.budgSavPers));
+  t("w-sav-hh-amt",$f(cp.actualSavHH));
+  t("w-sav-pers-amt",$f(cp.actualSavPers));
+  t("w-sav-hh-tbudg",$f(_tbW.hh));
+  t("w-sav-pers-tbudg",$f(_tbW.pers));
   t("w-sav-hh-total",$f(hhTotal));
   t("w-sav-pers-total",$f(persTotal));
   }catch(e){console.error("renderWeeklyView crash:",e);document.getElementById("bview-weekly").innerHTML='<div style="color:red;padding:20px">Weekly view error: '+e.message+'</div>';}
@@ -6324,7 +6398,8 @@ function renderMonthlyView(){
   t("ms-start",$f(budgetSb));  t("ma-start",$f(actualSb));
   t("ms-income",$f(cp.budgIncome)); ta("ma-income",cp.actualIncome,cp.budgIncome,false);
   t("ms-exp",$f(cp.budgExpenses)); ta("ma-exp",cp.actualExpenses,cp.budgExpenses,true);
-  t("ms-sav",$f(cp.budgSav));   t("ma-sav",$f(cp.actualSav));
+  t("ms-sav-hh",$f(cp.budgSavHH));   t("ma-sav-hh",$f(cp.actualSavHH));
+  t("ms-sav-pers",$f(cp.budgSavPers)); t("ma-sav-pers",$f(cp.actualSavPers));
   t("ms-end",$f(budgEnd));   ta("ma-end",actualEnd,budgEnd,false);
 
   // ── Charts ──
@@ -6345,13 +6420,16 @@ function renderMonthlyView(){
   renderDueLines("m-bills-lines","m-bills-total",cp.billsDue,cp.billExps);
   renderDueLines("m-subs-lines","m-subs-total",cp.subsDue,cp.subExps);
   renderVarLines("m-var-lines","m-var-total",rec.variable,cp.varActuals,"monthly");
-  const hhAmt=cp.savExps.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
-  const persAmt=cp.savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const allSavExpsM=budgetData.expenses?.filter(e=>e.type==="savings")||[];
-  const hhTotalM=allSavExpsM.filter(e=>e.savingsBucket==="household").reduce((s,e)=>s+e.amount,0);
+  const hhTotalM=allSavExpsM.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const persTotalM=allSavExpsM.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  t("m-sav-household",$f(hhAmt));
-  t("m-sav-personal",$f(persAmt));
+  const _tbM=totalBudgetedSavingsBuckets();
+  t("m-sav-hh-budg",$f(cp.budgSavHH));
+  t("m-sav-pers-budg",$f(cp.budgSavPers));
+  t("m-sav-household",$f(cp.actualSavHH));
+  t("m-sav-personal",$f(cp.actualSavPers));
+  t("m-sav-hh-tbudg",$f(_tbM.hh));
+  t("m-sav-pers-tbudg",$f(_tbM.pers));
   t("m-sav-hh-total",$f(hhTotalM));
   t("m-sav-pers-total",$f(persTotalM));
   const periodLabel=new Date(y,m-1,15).toLocaleDateString("en-US",{month:"long",year:"numeric"});
@@ -6805,11 +6883,15 @@ function setVarWeeklyDefault(val){
   renderBudgetOverview();
 }
 
-function setSavingsPerPaycheck(val){
+function setSavingsPerPaycheck(bucket,val){
   ensureBudgetSettings();
-  budgetData.settings.savingsPerPaycheck=Math.max(0,parseFloat(val)||0);
+  const v=Math.max(0,parseFloat(val)||0);
+  if(bucket==="personal")budgetData.settings.savPPPersonal=v;
+  else budgetData.settings.savPPHousehold=v;
+  budgetData.settings.savingsPerPaycheck=(parseFloat(budgetData.settings.savPPHousehold)||0)+(parseFloat(budgetData.settings.savPPPersonal)||0);
   saveBudgetData();
   renderBudgetSettings();
+  renderBudgetOverview();
 }
 
 function bsToggle(id){
@@ -6848,7 +6930,7 @@ function renderBudgetSettings(){
   const subsSub=document.getElementById("bs-subs-sub");
   if(subsSub){const s=rec.subscriptions||[];const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
   const savSub=document.getElementById("bs-savings-sub");
-  if(savSub){ensureBudgetSettings();savSub.textContent=$f(budgetData.settings.savingsPerPaycheck)+" budgeted per paycheck";}
+  if(savSub){const b=savingsPerPaycheckBuckets();savSub.textContent=$f(b.hh)+" household + "+$f(b.pers)+" personal per paycheck";}
   const varSub=document.getElementById("bs-var-sub");
   if(varSub){const v=rec.variable||[];varSub.textContent=v.length?v.length+" categor"+(v.length!==1?"ies":"y"):"No categories";}
 
@@ -6860,12 +6942,14 @@ function renderBudgetSettings(){
   const svEl=document.getElementById("bs-savings-list");
   if(svEl){
     ensureBudgetSettings();
-    const savField='<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">'
-      +'<div style="flex:1"><div style="font-size:14px;font-weight:500;color:var(--text)">Budgeted savings per paycheck</div>'
-      +'<div style="font-size:12px;color:var(--muted)">Every view budgets this amount per paycheck landing in the period. Log actual savings yourself in the tracker.</div></div>'
+    const _sppS=savingsPerPaycheckBuckets();
+    const savRow=(label,val,bucket)=>'<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+      +'<div style="flex:1"><div style="font-size:14px;font-weight:500;color:var(--text)">'+label+' savings per paycheck</div></div>'
       +'<span style="font-size:14px;color:var(--muted)">$</span>'
-      +'<input type="number" min="0" step="1" value="'+budgetData.settings.savingsPerPaycheck+'" onchange="setSavingsPerPaycheck(this.value)"'
+      +'<input type="number" min="0" step="1" value="'+val+'" onchange="setSavingsPerPaycheck(\''+bucket+'\',this.value)"'
       +' style="width:80px;font-family:\'DM Mono\',monospace;font-size:14px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none;text-align:right"/></div>';
+    const savField=savRow("Household",_sppS.hh,"household")+savRow("Personal",_sppS.pers,"personal")
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Every view budgets these amounts per paycheck landing in the period. Log actual savings yourself in the tracker.</div>';
     const transfers=rec.savingsTransfers||[];
     if(!transfers.length){
       svEl.innerHTML=savField+'<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
@@ -7484,16 +7568,21 @@ function avbApplyOption(mode){
 /* ── EDIT BUDGETED SAVINGS (per period) ─────────────────── */
 // Click the budget savings number in the summary — same UX as start balance.
 let _ebsView="weekly";
-function openEditBudgSav(view){
-  _ebsView=view;
+let _ebsBucket="household";
+function openEditBudgSav(view,bucket){
+  _ebsView=view;_ebsBucket=bucket||"household";
   const key=view==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   const period=getPeriod(key);
   const periodName=view==="monthly"
     ?new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
     :"week of "+budgetCurrentWeekStart;
-  document.getElementById("ebs-desc").textContent="Override the budgeted savings for "+periodName+".";
-  document.getElementById("ebs-amount").value=period.overrideBudgSav!=null?period.overrideBudgSav:"";
-  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to auto ("+$f(savingsPerPaycheck())+" per paycheck).";
+  const bl=_ebsBucket==="personal"?"personal":"household";
+  const cur=_ebsBucket==="personal"?period.overrideBudgSavPers:(period.overrideBudgSavHH??period.overrideBudgSav);
+  const spp=savingsPerPaycheckBuckets();
+  const auto=_ebsBucket==="personal"?spp.pers:spp.hh;
+  document.getElementById("ebs-desc").textContent="Override the budgeted "+bl+" savings for "+periodName+".";
+  document.getElementById("ebs-amount").value=cur!=null?cur:"";
+  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to auto ("+$f(auto)+" per paycheck).";
   document.getElementById("modal-edit-budg-sav").style.display="block";
   setTimeout(()=>document.getElementById("ebs-amount").focus(),50);
 }
@@ -7502,7 +7591,9 @@ function saveBudgSav(){
   const key=_ebsView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   const period=getPeriod(key);
   const v=document.getElementById("ebs-amount").value;
-  period.overrideBudgSav=v.trim()===""?null:Math.max(0,parseFloat(v)||0);
+  const val=v.trim()===""?null:Math.max(0,parseFloat(v)||0);
+  if(_ebsBucket==="personal")period.overrideBudgSavPers=val;
+  else{period.overrideBudgSavHH=val;period.overrideBudgSav=null;} // clear legacy total override
   saveBudgetData();
   closeModal("modal-edit-budg-sav");
   renderBudgetOverview();
@@ -7510,7 +7601,8 @@ function saveBudgSav(){
 
 function clearBudgSav(){
   const key=_ebsView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
-  if(budgetData.periods?.[key])budgetData.periods[key].overrideBudgSav=null;
+  const p=budgetData.periods?.[key];
+  if(p){if(_ebsBucket==="personal")p.overrideBudgSavPers=null;else{p.overrideBudgSavHH=null;p.overrideBudgSav=null;}}
   saveBudgetData();
   closeModal("modal-edit-budg-sav");
   renderBudgetOverview();
@@ -7726,7 +7818,8 @@ function renderMobileBudget(){
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">+ Start Balance</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgetSb)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(actualSb)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">+ Income</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgIncome)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#3db87a">${$f(actualIncome)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− Expenses</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgExpenses)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#e05555">${$f(actualExpenses)}</td></tr>
-        <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgSav)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(totalSav)}</td></tr>
+        <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− HH Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavHH:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavHH:0)}</td></tr>
+        <tr><td style="padding:5px 0;color:var(--muted)">− Pers. Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavPers:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavPers:0)}</td></tr>
         <tr style="border-top:2px solid var(--border)"><td style="padding:6px 0;font-weight:700">END BALANCE</td><td style="text-align:right;padding:6px 4px;font-family:'DM Mono',monospace;font-weight:700">${$f(budgEnd)}</td><td style="text-align:right;padding:6px 0;font-family:'DM Mono',monospace;font-weight:700;color:${ebClr}">${$f(actualEnd)}</td></tr>
       </table>
     </div>`;
