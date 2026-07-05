@@ -2562,10 +2562,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <script>
 /* ── SERVER SYNC ─────────────────────────────────────────────── */
 const API_BASE = window.location.origin;
+// The server "updated" stamp of the snapshot we last pulled. Sent with every
+// push; the server rejects writes whose base is older than the file (a stale
+// tab trying to clobber newer data). On rejection we pull fresh instead.
+let _serverUpdated=0;
 
 async function pushToServer(){
   try{
     const payload={
+      baseUpdated:_serverUpdated,
       tasks,
       shoppingList,
       customHolidays,
@@ -2584,11 +2589,22 @@ async function pushToServer(){
       payload["budgetData_"+activeBudgetProfile]=budgetData;
       payload["budgetNid_"+activeBudgetProfile]=budgetNid;
     }
-    await fetch(API_BASE+"/api/data",{
+    const r=await fetch(API_BASE+"/api/data",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)
     });
+    if(r.status===409){
+      // Our snapshot is stale — someone else saved since we pulled. Do NOT
+      // overwrite; take the newer data instead. (The edit that triggered
+      // this push may need redoing, which beats wiping the file.)
+      console.warn("Push rejected as stale; pulling fresh data");
+      await pullFromServer();
+      if(typeof renderHome==="function")renderHome();
+      return;
+    }
+    const resp=await r.json().catch(()=>null);
+    if(resp&&resp.updated)_serverUpdated=resp.updated;
   }catch(e){console.warn("Push failed:",e);}
 }
 
@@ -2597,6 +2613,7 @@ async function pullFromServer(){
     const r=await fetch(API_BASE+"/api/data");
     if(!r.ok)return;
     const d=await r.json();
+    if(d.updated)_serverUpdated=d.updated;
     if(d.tasks)tasks=d.tasks;
     if(d.shoppingList)shoppingList=d.shoppingList;
     if(d.customHolidays)customHolidays=d.customHolidays;
@@ -5987,6 +6004,32 @@ function computeMonthlyVarFromWeeks(monthStart,monthEnd){
   return out;
 }
 
+/* ── Monthly savings budget = day-weighted weekly budgets ────── */
+// Same model as variable expenses: each Friday-start week overlapping the
+// month contributes its budgeted savings (weekly override or setting x
+// paychecks landing that week) x (days inside the month / 7). This is what
+// makes a weekly savings plan show up in the month that contains it.
+// Reads only overrides + incomeWeeks — no engine recursion.
+function computeMonthlySavFromWeeks(monthStart,monthEnd){
+  const spp=savingsPerPaycheckBuckets();
+  let ws=getFridayWeekStart(new Date(monthStart+"T12:00:00"));
+  let hh=0,pers=0,guard=0;
+  while(ws<=monthEnd&&guard++<8){
+    const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
+    const p=budgetData.periods?.["week:"+ws]||{};
+    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we).length;
+    const wHH=p.overrideBudgSavHH!=null?p.overrideBudgSavHH
+      :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:spp.hh*pays);
+    const wPers=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:spp.pers*pays;
+    const oStart=ws>monthStart?ws:monthStart;
+    const oEnd=we<monthEnd?we:monthEnd;
+    const w=(Math.round((new Date(oEnd+"T12:00:00")-new Date(oStart+"T12:00:00"))/86400000)+1)/7;
+    hh+=wHH*w;pers+=wPers*w;
+    ws=fd(new Date(new Date(ws+"T12:00:00").getTime()+7*86400000));
+  }
+  return{hh,pers};
+}
+
 /* ── THE engine ──────────────────────────────────────────────── */
 // Computes every number a budget view needs for [start,end].
 // Does NOT compute start balances (see chainedStartBalances).
@@ -6019,13 +6062,17 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const actualBills=billExps.reduce((s,e)=>s+e.amount,0);
   const actualSubs=subExps.reduce((s,e)=>s+e.amount,0);
 
-  // Savings: flat $ per paycheck landing in range, split by bucket. Per-period
-  // overrides (click the number in the summary) beat the auto amounts.
+  // Savings, split by bucket. Weekly: flat $ per paycheck landing in the
+  // week. Monthly: day-weighted rollup of the weekly budgets, so weekly
+  // savings plans surface in their month (same model as variable expenses).
+  // Per-period overrides (click the number in the summary) always win.
   // Legacy shim: an old single-total override lands on the household side.
   const _spp=savingsPerPaycheckBuckets();
+  const _isMonthlySav=typeof periodKey==="string"&&periodKey.startsWith("month:");
+  const _savAuto=_isMonthlySav?computeMonthlySavFromWeeks(start,end):{hh:_spp.hh*paychecks.length,pers:_spp.pers*paychecks.length};
   const budgSavHH=period.overrideBudgSavHH!=null?period.overrideBudgSavHH
-    :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_spp.hh*paychecks.length);
-  const budgSavPers=period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_spp.pers*paychecks.length;
+    :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_savAuto.hh);
+  const budgSavPers=period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_savAuto.pers;
   const budgSav=budgSavHH+budgSavPers;
   const savExps=getExpensesFor(start,end,"savings");
   const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
