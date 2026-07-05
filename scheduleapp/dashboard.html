@@ -539,6 +539,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   box-sizing: border-box;
 }
 .mobile-mode canvas { max-width: 100% !important; }
+.mobile-mode .bdash-toprow, .mobile-mode .bdash-botrow, .mobile-mode .bdash-top-cols { grid-template-columns: 1fr !important; }
 .mobile-mode .week-strip { overflow: hidden; }
 .mobile-mode .wsd { min-width: 0; overflow: hidden; }
 .mobile-mode .cal-toolbar { flex-wrap: wrap; }
@@ -968,9 +969,31 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- TOP NAV: main budget tabs -->
   <div class="budget-tab-row" id="budget-main-tabs">
+    <button class="btab" id="btab-bdash" onclick="setBudgetMainTab('bdash')">Dashboard</button>
     <button class="btab active" id="btab-overview" onclick="setBudgetMainTab('overview')">Overview</button>
     <button class="btab" id="btab-trackers" onclick="setBudgetMainTab('trackers')">Trackers</button>
     <button class="btab" id="btab-bsettings" onclick="setBudgetMainTab('bsettings')">Settings</button>
+  </div>
+
+  <!-- ══ DASHBOARD TAB ═════════════════════════════════════════ -->
+  <div id="btab-bdash-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;letter-spacing:2px;color:var(--text)">D A S H B O A R D</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn" style="padding:4px 10px" onclick="bdashShiftMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+        <span id="bdash-month-label" style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--text);min-width:110px;text-align:center"></span>
+        <button class="btn" style="padding:4px 10px" onclick="bdashShiftMonth(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:280px 300px 1fr;gap:12px;margin-bottom:12px" class="bdash-toprow">
+      <div class="budget-card"><div class="bcompact-title">SUMMARY THIS MONTH</div><div id="bdash-summary"></div></div>
+      <div class="budget-card"><div class="bcompact-title">CATEGORY PROGRESS</div><div id="bdash-progress" style="margin-top:8px"></div></div>
+      <div class="budget-card"><div class="bcompact-title">MONTHLY EXPENSES</div><div id="bdash-stats" style="margin-top:6px"></div><div id="bdash-monthly-chart" style="margin-top:6px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="bdash-botrow">
+      <div class="budget-card"><div class="bcompact-title">TOP EXPENSES THIS MONTH</div><div id="bdash-top" style="margin-top:8px"></div></div>
+      <div class="budget-card"><div class="bcompact-title">EXPENSES DISTRIBUTION</div><div id="bdash-dist" style="margin-top:8px"></div></div>
+    </div>
   </div>
 
   <!-- ══ OVERVIEW TAB ══════════════════════════════════════════ -->
@@ -1285,6 +1308,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
   <!-- ══ SETTINGS TAB ══════════════════════════════════════════ -->
   <div id="btab-bsettings-content" style="display:none">
+    <div class="budget-card" style="margin-bottom:12px">
+      <div class="bcompact-title">MONTHLY SPENDING TARGETS</div>
+      <div style="font-size:12px;color:var(--muted);margin:6px 0 10px">Desired share of each month's income. The dashboard's Category Progress measures actual spend against these.</div>
+      <div id="bs-nw-targets" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+    </div>
     <div class="budget-card" id="bs-rows-container">
       <!-- Profile & PIN -->
       <div class="bs-acc-row" onclick="bsToggle('pin')">
@@ -1579,6 +1607,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field" id="exp-cat-field"><label>Category</label>
           <select id="exp-category" onchange="showAmazonFields()"></select>
         </div>
+        <div class="field" id="exp-nw-field"><label>Need or want?</label>
+          <div class="badges">
+            <button class="badge active" data-nw="need" onclick="pickExpNW('need',this)">Need</button>
+            <button class="badge" data-nw="want" onclick="pickExpNW('want',this)">Want</button>
+          </div>
+        </div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
             <button class="badge active" data-savbucket="household" onclick="pickSavBucket('household',this)">Household</button>
@@ -1776,6 +1810,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="re-name" placeholder="e.g. Rent"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="re-amount" placeholder="0.00"/></div>
+        <div class="field"><label>Classification</label>
+          <div class="badges" id="re-nw-badges">
+            <button class="badge" data-renw="need" onclick="pickReNW('need',this)">Need</button>
+            <button class="badge" data-renw="want" onclick="pickReNW('want',this)">Want</button>
+            <button class="badge active" data-renw="unset" onclick="pickReNW('unset',this)">Unclassified</button>
+          </div>
+        </div>
         <div class="field"><label>Frequency</label>
           <select id="re-frequency" onchange="updateReScheduleFields()">
             <option value="weekly">Weekly</option>
@@ -5828,6 +5869,7 @@ function ensureBudgetSettings(){
     missing.forEach(v=>{s.varSplitPct[v.id]=Math.round(share*10)/10;});
   }
   if(s.varWeeklyDefault==null)s.varWeeklyDefault=350; // flat default weekly variable budget
+  if(!s.nwTargets)s.nwTargets={need:50,want:30,savings:20}; // desired % of monthly income
   if(!s.materializeSince)s.materializeSince=fd(new Date()); // only auto-create expenses from go-live forward
   if(!s.dismissedRecKeys)s.dismissedRecKeys=[];
 }
@@ -5835,14 +5877,16 @@ function ensureBudgetSettings(){
 function savingsPerPaycheck(){ensureBudgetSettings();return parseFloat(budgetData.settings.savingsPerPaycheck)||0;}
 function savingsPerPaycheckBuckets(){ensureBudgetSettings();const s=budgetData.settings;return{hh:parseFloat(s.savPPHousehold)||0,pers:parseFloat(s.savPPPersonal)||0};}
 
-// All-time budgeted savings = sum of each started week's budgeted amount,
-// honoring per-week overrides (set by clicking the summary numbers). A week
-// you zeroed contributes 0. Auto weeks contribute setting x paychecks whose
-// pay date has passed. Monthly-view overrides affect that month's summary
-// row only — weeks are the source of truth for the all-time number.
-function totalBudgetedSavingsBuckets(){
+// Cumulative budgeted savings THROUGH the end of the viewed period: the
+// total you'd have if the budget was followed each week up to that point.
+// Sums every week's budgeted amount from the first paycheck through
+// `through` — per-week overrides win (a zeroed week contributes 0, a
+// planned future week contributes its planned amount), auto weeks
+// contribute setting x paychecks landing that week. Weeks are the source
+// of truth; monthly-view overrides only affect that month's summary row.
+function totalBudgetedSavingsBuckets(through){
   const spp=savingsPerPaycheckBuckets();
-  const today=fd(new Date());
+  if(!through)through=fd(new Date());
   // Earliest relevant date: first paycheck or first week with a savings override
   let earliest=null;
   (budgetData.incomeWeeks||[]).forEach(w=>{if(!earliest||w.payDate<earliest)earliest=w.payDate;});
@@ -5857,10 +5901,10 @@ function totalBudgetedSavingsBuckets(){
   if(!earliest)return{hh:0,pers:0};
   let ws=getFridayWeekStart(new Date(earliest+"T12:00:00"));
   let hh=0,pers=0,guard=0;
-  while(ws<=today&&guard++<600){
+  while(ws<=through&&guard++<600){
     const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
     const p=budgetData.periods?.["week:"+ws]||{};
-    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we&&x.payDate<=today).length;
+    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we&&x.payDate<=through).length;
     hh+=p.overrideBudgSavHH!=null?p.overrideBudgSavHH
       :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:spp.hh*pays);
     pers+=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:spp.pers*pays;
@@ -6102,15 +6146,277 @@ function ta(id,actual,budget,lowerIsBetter){
   if(budget>0)el.classList.add(lowerIsBetter?actual>budget?"over":"good":actual<budget?"over":"good");
 }
 
+/* ══════════════════════════════════════════════════════════════
+   BUDGET DASHBOARD TAB — visual overview built on the same engine
+   as every other view. Inline SVG uses CSS variables so it follows
+   the active theme automatically.
+═══════════════════════════════════════════════════════════════ */
+// Theme-aware series palette: accent first, then hues that read in any theme
+const BDASH_COLORS=["var(--today-color)","#7b68ee","#e0a040","#3db87a","#e05555","#44bbcc","#c77755","#5b8def"];
+
+// Need/Want classification of an expense record.
+// Savings are their own class. Bills/subs resolve LIVE from the recurring
+// item (so reclassifying rent in settings reclassifies all its history).
+// Variable expenses use the choice made when logging (e.nw).
+function classifyNW(e){
+  if(e.type==="savings")return"savings";
+  if(e.type==="bill"||e.type==="subscription"){
+    const item=[...(budgetData.recurring?.bills||[]),...(budgetData.recurring?.subscriptions||[])].find(x=>x.id===e.recurringId);
+    return item?.nw||"unset";
+  }
+  return e.nw||"unset";
+}
+
+function bdashShiftMonth(dir){
+  const[y,m]=budgetCurrentMonth.split("-").map(Number);
+  const d=new Date(y,m-1+dir,15);
+  budgetCurrentMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  renderBudgetDashboard();
+}
+
+// One engine call per month, cached per render pass
+function bdashMonth(ym){
+  const[y,m]=ym.split("-").map(Number);
+  const start=fd(new Date(y,m-1,1)),end=fd(new Date(y,m,0));
+  const sb=chainedStartBalances("monthly",ym);
+  const cp=computePeriodCore(start,end,getMonthPeriodKey(ym),sb.budgetSb);
+  return{cp,sb,start,end};
+}
+
+function renderBudgetDashboard(){
+  try{
+  if(!budgetData||!budgetData.recurring)return;
+  bvCacheClear();
+  if(!budgetCurrentMonth){const n=new Date();budgetCurrentMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
+  const ym=budgetCurrentMonth;
+  const[y,m]=ym.split("-").map(Number);
+  t("bdash-month-label",new Date(y,m-1,15).toLocaleDateString("en-US",{month:"short",year:"numeric"}));
+  const{cp,sb,start,end}=bdashMonth(ym);
+  const rec=budgetData.recurring;
+
+  /* ── Panel 1: Summary donut + big number + spend sparkline ── */
+  const pct=cp.budgExpenses>0?(cp.actualExpenses/cp.budgExpenses)*100:0;
+  const shown=Math.min(pct,100);
+  const R=52,C=2*Math.PI*R;
+  const ringClr=pct>100?"#e05555":"var(--today-color)";
+  // Cumulative daily spend sparkline
+  const daysIn=new Date(y,m,0).getDate();
+  let cum=0;const pts=[];
+  for(let d2=1;d2<=daysIn;d2++){
+    const ds=fd(new Date(y,m-1,d2));
+    if(ds>fd(new Date()))break;
+    cum+=(budgetData.expenses||[]).filter(e=>e.date===ds&&e.type!=="savings").reduce((s,e)=>s+e.amount,0);
+    pts.push([d2,cum]);
+  }
+  let spark="";
+  if(pts.length>1&&cum>0){
+    const W=220,H=42;
+    const px=d2=>((d2-1)/(daysIn-1))*W;
+    const pyv=v=>H-(v/cum)*(H-4);
+    const line=pts.map((p,i)=>(i?"L":"M")+px(p[0]).toFixed(1)+","+pyv(p[1]).toFixed(1)).join(" ");
+    spark=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:42px;margin-top:6px">
+      <path d="${line} L${px(pts[pts.length-1][0]).toFixed(1)},${H} L0,${H} Z" fill="${ringClr}" opacity="0.18"/>
+      <path d="${line}" fill="none" stroke="${ringClr}" stroke-width="2"/></svg>`;
+  }
+  document.getElementById("bdash-summary").innerHTML=`
+    <div style="display:flex;justify-content:center;margin-top:8px">
+      <svg viewBox="0 0 130 130" style="width:150px;height:150px">
+        <circle cx="65" cy="65" r="${R}" fill="none" stroke="var(--tag-bg)" stroke-width="14"/>
+        <circle cx="65" cy="65" r="${R}" fill="none" stroke="${ringClr}" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="${(shown/100*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 65 65)"/>
+        <text x="65" y="61" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:19px;font-weight:700" fill="var(--text)">${pct.toFixed(1)}%</text>
+        <text x="65" y="78" text-anchor="middle" style="font-size:8.5px" fill="var(--muted)">Spent of ${$f(cp.budgExpenses)}</text>
+      </svg>
+    </div>
+    <div style="display:flex;justify-content:center;gap:14px;font-size:10px;color:var(--muted)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${ringClr};margin-right:4px"></span>Actual</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--tag-bg);margin-right:4px"></span>Remaining</span>
+    </div>
+    <div style="text-align:center;font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:${ringClr};margin-top:6px">${$f(cp.actualExpenses)}</div>
+    ${spark}`;
+
+  /* ── Panel 2: Needs / Wants / Savings vs monthly income targets ── */
+  // Target $ = your settings % x this month's income (all paychecks landing
+  // in the month). Actuals come from the need/want classifications.
+  const tg=budgetData.settings.nwTargets||{need:50,want:30,savings:20};
+  const monthAllP=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
+  const nwActP={need:0,want:0,savings:0,unset:0};
+  monthAllP.forEach(e=>{nwActP[classifyNW(e)]+=e.amount;});
+  const inc=cp.budgIncome;
+  const pRows=[
+    {name:"Needs",a:nwActP.need,b:inc*(parseFloat(tg.need)||0)/100,pct:tg.need,icon:"ti-home",clr:"#3db87a"},
+    {name:"Wants",a:nwActP.want,b:inc*(parseFloat(tg.want)||0)/100,pct:tg.want,icon:"ti-shopping-bag",clr:"#e0a040"},
+    {name:"Savings",a:nwActP.savings,b:inc*(parseFloat(tg.savings)||0)/100,pct:tg.savings,icon:"ti-pig-money",clr:"#7b68ee",invert:true},
+  ];
+  const progRow=r=>{
+    const p=r.b>0?(r.a/r.b)*100:(r.a>0?100:0);
+    // Overspending needs/wants is bad (red); hitting savings target is good (green)
+    const barClr=r.invert?(p>=100?"#3db87a":r.clr):(p>100?"#e05555":r.clr);
+    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
+      <i class="ti ${r.icon}" style="font-size:16px;color:${r.clr};width:20px;text-align:center"></i>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">
+          <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.5px">${r.name}${r.pct!=null?' <span style="font-weight:400">('+(parseFloat(r.pct)||0)+'% of income)</span>':''}</span>
+          <span style="font-family:'DM Mono',monospace;font-weight:700;color:${barClr}">${p.toFixed(0)}%</span>
+        </div>
+        <div style="height:9px;background:var(--tag-bg);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(100,p)}%;background:${barClr};border-radius:4px"></div>
+        </div>
+        <div style="font-size:9.5px;color:var(--muted);margin-top:2px">${$f(r.a)} of ${$f(r.b)}${r.b<=0&&inc<=0?" (no income this month)":""}</div>
+      </div>
+    </div>`;
+  };
+  let progHtml=pRows.map(progRow).join("");
+  if(nwActP.unset>0){
+    progHtml+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <i class="ti ti-help-circle" style="font-size:16px;color:var(--muted);width:20px;text-align:center"></i>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">
+          <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Unclassified</span>
+          <span style="font-family:'DM Mono',monospace;font-weight:700">${$f(nwActP.unset)}</span>
+        </div>
+        <div style="height:9px;background:var(--tag-bg);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${inc>0?Math.min(100,nwActP.unset/inc*100):0}%;background:var(--muted);border-radius:4px;opacity:0.6"></div>
+        </div>
+        <div style="font-size:9.5px;color:var(--muted);margin-top:2px">no target — classify these in settings / the tracker</div>
+      </div>
+    </div>`;
+  }
+  document.getElementById("bdash-progress").innerHTML=progHtml;
+
+  /* ── Panel 3: stats + 12-month budget vs actual chart ── */
+  const prevYm=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,"0")}`;
+  const prev=bdashMonth(prevYm);
+  const net=cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const variance=cp.budgExpenses-cp.actualExpenses;
+  const delta=cp.actualExpenses-prev.cp.actualExpenses;
+  const endBal=sb.actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const stat=(v,lbl,clr)=>`<div style="display:flex;gap:6px;align-items:baseline"><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${clr||"var(--text)"}">${v}</span><span style="font-size:10px;color:var(--muted);font-style:italic">${lbl}</span></div>`;
+  document.getElementById("bdash-stats").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px">
+    ${stat($f(cp.actualIncome),"Income this month")}
+    ${stat((variance>=0?"▼ ":"▲ ")+$f(Math.abs(variance)),"Budget vs actual variance",variance>=0?"#3db87a":"#e05555")}
+    ${stat($f(cp.actualExpenses),"Actual expenses")}
+    ${stat((delta>=0?"▲ ":"▼ ")+$f(Math.abs(delta)),"vs previous month",delta>0?"#e05555":"#3db87a")}
+    ${stat($f(net),"Net this period",net>=0?"#3db87a":"#e05555")}
+    ${stat($f(endBal),"End balance")}
+  </div>`;
+  // 12 months of the selected year
+  const months=[];let maxV=1;
+  for(let mm=1;mm<=12;mm++){
+    const k=y+"-"+String(mm).padStart(2,"0");
+    const r=bdashMonth(k);
+    months.push({lbl:new Date(y,mm-1,15).toLocaleDateString("en-US",{month:"short"}),b:r.cp.budgExpenses,a:r.cp.actualExpenses,cur:mm===m});
+    maxV=Math.max(maxV,r.cp.budgExpenses,r.cp.actualExpenses);
+  }
+  const CW=560,CH=150,pad=6,bw=CW/12;
+  const ybar=v=>CH-8-(v/maxV)*(CH-26);
+  let bars="",avgPath="";
+  months.forEach((mo,i)=>{
+    const x=i*bw+pad;
+    const w=(bw-pad*2)/2;
+    const over=mo.a>mo.b&&mo.b>0;
+    bars+=`<rect x="${x}" y="${ybar(mo.b)}" width="${w}" height="${CH-8-ybar(mo.b)}" fill="var(--tag-bg)" rx="2"/>`;
+    if(mo.a>0)bars+=`<rect x="${x+w+1}" y="${ybar(mo.a)}" width="${w}" height="${CH-8-ybar(mo.a)}" fill="${over?"#e05555":"var(--today-color)"}" rx="2"/>
+      <text x="${x+w+1+w/2}" y="${ybar(mo.a)-3}" text-anchor="middle" style="font-size:7px;font-family:'DM Mono',monospace" fill="var(--muted)">${(mo.a/1000).toFixed(1)}k</text>`;
+    if(mo.cur)bars+=`<rect x="${x-pad+1}" y="2" width="${bw-2}" height="${CH-4}" fill="none" stroke="var(--today-color)" stroke-dasharray="3 3" rx="4" opacity="0.5"/>`;
+    bars+=`<text x="${x+(bw-pad*2)/2}" y="${CH+2}" text-anchor="middle" style="font-size:7.5px" fill="var(--muted)">${mo.lbl}</text>`;
+    // 3-month trailing average of actuals
+    const lo=Math.max(0,i-2);
+    const slice=months.slice(lo,i+1).map(q=>q.a);
+    const avg=slice.reduce((s2,v)=>s2+v,0)/slice.length;
+    avgPath+=(i?"L":"M")+(x+(bw-pad*2)/2).toFixed(1)+","+ybar(avg).toFixed(1)+" ";
+  });
+  document.getElementById("bdash-monthly-chart").innerHTML=`
+    <svg viewBox="0 0 ${CW} ${CH+12}" style="width:100%;height:auto">${bars}<path d="${avgPath}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.8"/></svg>
+    <div style="display:flex;gap:12px;font-size:9.5px;color:var(--muted);margin-top:2px;flex-wrap:wrap">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--tag-bg);margin-right:3px"></span>Budget</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--today-color);margin-right:3px"></span>Actual</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#e05555;margin-right:3px"></span>Overspent</span>
+      <span style="border-top:1.5px dashed var(--muted);padding-top:1px;margin-top:4px;line-height:0.5">&nbsp;&nbsp;3-mo avg&nbsp;&nbsp;</span>
+    </div>`;
+
+  /* ── Panel 4: top expenses — category totals + biggest single hits ── */
+  const catTotals=[];
+  (rec.bills||[]).forEach(b=>{const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);catTotals.push({n:b.name,a,b:recurringDueDatesIn(b,start,end).length*b.amount});});
+  catTotals.push({n:"Subscriptions",a:cp.actualSubs,b:cp.budgSubs});
+  (rec.variable||[]).forEach(v=>catTotals.push({n:v.name,a:cp.varActuals[v.id]||0,b:cp.varBudgets[v.id]||0}));
+  catTotals.push({n:"Savings",a:cp.actualSav,b:cp.budgSav});
+  catTotals.sort((x,z)=>z.a-x.a);
+  const maxCat=Math.max(1,...catTotals.map(c=>Math.max(c.a,c.b)));
+  const monthExps=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end).sort((x,z)=>z.amount-x.amount).slice(0,8);
+  const barRow=c=>`<div style="display:grid;grid-template-columns:90px 1fr 52px;gap:6px;align-items:center;margin-bottom:5px">
+    <span style="font-size:10.5px;color:var(--text);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.n}</span>
+    <div style="position:relative;height:10px">
+      <div style="position:absolute;height:100%;width:${(Math.min(c.b,maxCat)/maxCat*100).toFixed(1)}%;background:var(--tag-bg);border-radius:3px"></div>
+      <div style="position:absolute;height:6px;top:2px;width:${(Math.min(c.a,maxCat)/maxCat*100).toFixed(1)}%;background:${c.a>c.b&&c.b>0?"#e05555":"var(--today-color)"};border-radius:3px"></div>
+    </div>
+    <span style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--muted);text-align:right">${c.a>0?$f(c.a):""}</span>
+  </div>`;
+  document.getElementById("bdash-top").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="bdash-top-cols">
+    <div><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">Categories</div>${catTotals.map(barRow).join("")||'<div class="empty-msg">Nothing yet</div>'}</div>
+    <div><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">Biggest expenses</div>
+      ${monthExps.map(e=>`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:10.5px">
+        <span style="color:var(--text);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.category}${e.note?" · "+e.note:""}</span>
+        <span style="font-family:'DM Mono',monospace;color:var(--muted);flex-shrink:0">${$f(e.amount)}</span>
+      </div>`).join("")||'<div class="empty-msg">No expenses logged</div>'}
+    </div>
+  </div>`;
+
+  /* ── Panel 5: distribution stacked bars ── */
+  const groups=["Bills & Debt","Subscriptions","Variable","Savings"];
+  const gClr=[BDASH_COLORS[0],BDASH_COLORS[1],BDASH_COLORS[2],BDASH_COLORS[3]];
+  const allExp=budgetData.expenses||[];
+  const allB=allExp.filter(e=>e.type==="bill").reduce((s,e)=>s+e.amount,0);
+  const allS=allExp.filter(e=>e.type==="subscription").reduce((s,e)=>s+e.amount,0);
+  const allV=allExp.filter(e=>e.type==="variable").reduce((s,e)=>s+e.amount,0);
+  const allSav=allExp.filter(e=>e.type==="savings").reduce((s,e)=>s+e.amount,0);
+  const distRows=[
+    {lbl:"Budget this month",vals:[cp.budgBills,cp.budgSubs,cp.budgVar,cp.budgSav]},
+    {lbl:"Actual this month",vals:[cp.actualBills,cp.actualSubs,cp.actualVar,cp.actualSav]},
+    {lbl:"All-time actual",vals:[allB,allS,allV,allSav]},
+  ];
+  // Needs vs Wants (classification of actual spend)
+  const nwGroups=["Needs","Wants","Savings","Unclassified"];
+  const nwClr=[BDASH_COLORS[3],BDASH_COLORS[2],BDASH_COLORS[1],"var(--muted)"];
+  const nwSum=exps=>{
+    const o={need:0,want:0,savings:0,unset:0};
+    exps.forEach(e=>{o[classifyNW(e)]+=e.amount;});
+    return[o.need,o.want,o.savings,o.unset];
+  };
+  const monthAll=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
+  const nwRows=[
+    {lbl:"Actual this month",vals:nwSum(monthAll)},
+    {lbl:"All-time actual",vals:nwSum(budgetData.expenses||[])},
+  ];
+  const stackBar=(r,clrs)=>{
+    const tot=r.vals.reduce((s,v)=>s+v,0);
+    return`<div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text);margin-bottom:4px">${r.lbl}</div>
+      <div style="display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--tag-bg)">
+        ${tot>0?r.vals.map((v,i)=>{const p=v/tot*100;return p<0.5?"":`<div style="width:${p}%;background:${clrs[i]};display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff">${p>=7?p.toFixed(0)+"%":""}</div>`;}).join(""):""}
+      </div>
+    </div>`;
+  };
+  document.getElementById("bdash-dist").innerHTML=
+    `<div style="display:flex;gap:12px;font-size:9.5px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap">${groups.map((g,i)=>`<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${gClr[i]};margin-right:3px"></span>${g}</span>`).join("")}</div>`
+    +distRows.map(r=>stackBar(r,gClr)).join("")
+    +`<div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
+    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">NEEDS vs WANTS</div>
+    <div style="display:flex;gap:12px;font-size:9.5px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap">${nwGroups.map((g,i)=>`<span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${nwClr[i]};margin-right:3px"></span>${g}</span>`).join("")}</div>`
+    +nwRows.map(r=>stackBar(r,nwClr)).join("");
+  }catch(e){console.error("dashboard crash:",e);const el=document.getElementById("btab-bdash-content");if(el)el.insertAdjacentHTML("beforeend",'<div style="color:red;padding:12px">Dashboard error: '+e.message+'</div>');}
+}
+
 /* ── MAIN TAB SWITCHING ──────────────────────────────────────── */
 function setBudgetMainTab(tab){
   budgetMainTab=tab;
-  ["overview","trackers","bsettings"].forEach(id=>{
+  ["bdash","overview","trackers","bsettings"].forEach(id=>{
     const btn=document.getElementById("btab-"+id);if(btn)btn.classList.toggle("active",id===tab);
     const el=document.getElementById("btab-"+id+"-content");if(el)el.style.display=id===tab?"block":"none";
     const nav=document.getElementById("budget-period-nav");if(nav)nav.style.display=tab==="overview"?"flex":"none";
   });
-  if(tab==="overview")renderBudgetOverview();
+  if(tab==="bdash")renderBudgetDashboard();
+  else if(tab==="overview")renderBudgetOverview();
   else if(tab==="trackers")renderTrackerView();
   else if(tab==="bsettings")renderBudgetSettings();
 }
@@ -6358,7 +6664,7 @@ function renderWeeklyView(){
   const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
   const hhTotal=allSavExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const persTotal=allSavExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  const _tbW=totalBudgetedSavingsBuckets();
+  const _tbW=totalBudgetedSavingsBuckets(we); // through the end of the viewed week
   t("w-sav-hh-budg",$f(cp.budgSavHH));
   t("w-sav-pers-budg",$f(cp.budgSavPers));
   t("w-sav-hh-amt",$f(cp.actualSavHH));
@@ -6423,7 +6729,7 @@ function renderMonthlyView(){
   const allSavExpsM=budgetData.expenses?.filter(e=>e.type==="savings")||[];
   const hhTotalM=allSavExpsM.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const persTotalM=allSavExpsM.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
-  const _tbM=totalBudgetedSavingsBuckets();
+  const _tbM=totalBudgetedSavingsBuckets(monthEnd); // through the end of the viewed month
   t("m-sav-hh-budg",$f(cp.budgSavHH));
   t("m-sav-pers-budg",$f(cp.budgSavPers));
   t("m-sav-household",$f(cp.actualSavHH));
@@ -6678,6 +6984,10 @@ function pickExpType(type,btn){
   document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b===btn));
   document.getElementById("exp-cat-field").style.display=type==="variable"?"block":"none";
   document.getElementById("exp-sav-field").style.display=type==="savings"?"block":"none";
+  const nwF=document.getElementById("exp-nw-field");if(nwF)nwF.style.display=type==="variable"?"block":"none";
+}
+function pickExpNW(nw,btn){
+  document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b===btn));
 }
 function pickSavBucket(bucket,btn){
   _savBucket=bucket;
@@ -6722,6 +7032,7 @@ function addAmazonLinkField(url){
 function openAddExpenseSheet(){
   _editExpenseId=null;
   populateExpCategories();
+  document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b.dataset.nw==="need"));
   document.getElementById("exp-title").value="";
   document.getElementById("exp-amount").value="";
   document.getElementById("exp-date").value=fd(new Date());
@@ -6745,6 +7056,7 @@ function openEditExpense(id){
   document.getElementById("exp-amount").value=e.amount||"";
   document.getElementById("exp-date").value=e.date||fd(new Date());
   document.getElementById("exp-note").value=e.note||"";
+  document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b.dataset.nw===(e.nw||"need")));
   setTimeout(()=>{document.getElementById("exp-category").value=e.category||"";showAmazonFields();},10);
   document.getElementById("exp-delete").style.display="flex";
   document.getElementById("exp-modal-heading").textContent="Edit Expense";
@@ -6778,6 +7090,7 @@ function saveExpenseFromModal(){
   const expType=document.querySelector("#exp-type-badges .badge.active")?.dataset.v||"variable";
   const category=document.getElementById("exp-category")?.value||"";
   const bucket=expType==="savings"?(document.querySelector("#exp-sav-field .badge.active")?.dataset.v||"household"):null;
+  const nw=expType==="variable"?(document.querySelector("#exp-nw-field .badge.active")?.dataset.nw||"need"):null;
   const date=document.getElementById("exp-date").value||fd(new Date());
   const note=document.getElementById("exp-note").value.trim();
   const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
@@ -6787,9 +7100,9 @@ function saveExpenseFromModal(){
   if(!budgetData.expenses)budgetData.expenses=[];
   if(_editExpenseId){
     const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
-    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,amount,date,note,amazonLinks});
+    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks});
   } else {
-    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,amount,date,note,amazonLinks});
+    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks});
   }
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
@@ -6830,10 +7143,19 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
         dateLine=`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> ${sd}${ed?" → "+ed:""}</div>`;
       }
     }
+    // Need/Want chip for bills & subscriptions: one tap toggles the class
+    let nwChip="";
+    if(type==="bills"||type==="subscriptions"){
+      const nw=item.nw;
+      const chipClr=nw==="need"?"var(--today-color)":nw==="want"?"#e0a040":"var(--muted)";
+      const chipBg=nw?"transparent":"var(--tag-bg)";
+      nwChip=`<button onclick="toggleRecNW('${type}',${item.id})" title="Tap to toggle need/want"
+        style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;border:1px solid ${chipClr};color:${chipClr};background:${chipBg};cursor:pointer;margin-top:4px">${nw==="need"?"Need":nw==="want"?"Want":"Need/Want?"}</button>`;
+    }
     return `<div class="bs-item-card">
       <div class="bs-item-name">${item.name}</div>
       <div class="bs-item-detail">${topLine}</div>
-      ${midLine}${dateLine}
+      ${midLine}${dateLine}${nwChip}
       <div class="bs-item-actions">
         <button class="bs-item-btn" onclick="${onEdit}(${item.id})"><i class="ti ti-pencil"></i></button>
         <button class="bs-item-btn del" onclick="${onDelete}(${item.id})"><i class="ti ti-x"></i></button>
@@ -6917,6 +7239,7 @@ function renderBudgetSettings(){
   if(pinSubEl&&profile)pinSubEl.textContent=profile.name+" · PIN set";
   // Income sources
   const isEl=document.getElementById("bs-income-sources");
+  renderNWTargets();
   renderBsItemCards("bs-income-sources",rec.incomeSources,"income","openEditIncomeSource","deleteIncomeSourceById");
   renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
   renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
@@ -7092,6 +7415,34 @@ function openEditRecurring(type,id){
   if(isVar){const v=prompt("Weekly budget ($):",item.weeklyBudget||0);if(v!==null)item.weeklyBudget=parseFloat(v)||0;}
   else if(isSav){const g=prompt("Goal total ($):",item.goalTotal||0);if(g!==null)item.goalTotal=parseFloat(g)||0;}
   else{const v=prompt("Monthly amount ($):",item.amount||0);if(v!==null)item.amount=parseFloat(v)||0;}
+  saveBudgetData();renderBudgetSettings();
+}
+function renderNWTargets(){
+  const el=document.getElementById("bs-nw-targets");if(!el)return;
+  ensureBudgetSettings();
+  const tg=budgetData.settings.nwTargets;
+  const total=(parseFloat(tg.need)||0)+(parseFloat(tg.want)||0)+(parseFloat(tg.savings)||0);
+  const totClr=Math.abs(total-100)<0.01?"#3db87a":total>100?"#e05555":"#e0a040";
+  const field=(key,label,clr)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+    <span style="width:9px;height:9px;border-radius:2px;background:${clr};flex-shrink:0"></span>
+    <span style="font-size:13px;font-weight:500;color:var(--text)">${label}</span>
+    <input type="number" min="0" max="100" step="1" value="${parseFloat(tg[key])||0}" onchange="setNWTarget('${key}',this.value)"
+      style="width:52px;font-family:'DM Mono',monospace;font-size:13px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px;outline:none;text-align:right"/>
+    <span style="font-size:12px;color:var(--muted)">%</span>
+  </div>`;
+  el.innerHTML=field("need","Needs","#3db87a")+field("want","Wants","#e0a040")+field("savings","Savings","#7b68ee")
+    +`<div style="display:flex;align-items:center;font-size:12px;color:${totClr};font-weight:600">Total: ${total.toFixed(0)}%${total!==100?" (of 100%)":""}</div>`;
+}
+function setNWTarget(key,val){
+  ensureBudgetSettings();
+  budgetData.settings.nwTargets[key]=Math.max(0,Math.min(100,parseFloat(val)||0));
+  saveBudgetData();
+  renderNWTargets();
+}
+
+function toggleRecNW(type,id){
+  const item=(budgetData.recurring[type]||[]).find(r=>r.id===id);if(!item)return;
+  item.nw=item.nw==="need"?"want":item.nw==="want"?null:"need"; // unset -> need -> want -> unset ...
   saveBudgetData();renderBudgetSettings();
 }
 function deleteRecurringItem(type,id){
@@ -7979,6 +8330,8 @@ function _openRecExpenseModal(title, isEdit, item){
   const dueWeekday=item?.dueWeekday??(item?.startDate?new Date(item.startDate+"T12:00:00").getDay():4);
   const mdEl=document.getElementById("re-monthday");if(mdEl)mdEl.value=dueDay;
   document.querySelectorAll("#b-re-weekday .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===dueWeekday));
+  const nwCur=item?.nw||"unset";
+  document.querySelectorAll("#re-nw-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.renw===nwCur));
   document.getElementById("re-startdate").value=item?.startDate||"";
   const endEl=document.getElementById("re-enddate");if(endEl)endEl.value=item?.endDate||"";
   updateReScheduleFields();
@@ -7988,6 +8341,9 @@ function _openRecExpenseModal(title, isEdit, item){
   setTimeout(()=>document.getElementById("re-name").focus(),50);
 }
 
+function pickReNW(nw,btn){
+  document.querySelectorAll("#re-nw-badges .badge").forEach(b=>b.classList.toggle("active",b===btn));
+}
 function saveRecExpense(){
   const name=document.getElementById("re-name").value.trim();if(!name){alert("Name required");return;}
   const amount=parseFloat(document.getElementById("re-amount").value)||0;
@@ -8005,12 +8361,14 @@ function saveRecExpense(){
     // Also derive from startDate if monthday not set
     if(!dueDay&&startDate) dueDay=new Date(startDate+"T12:00:00").getDate();
   }
+  const nwSel=document.querySelector("#re-nw-badges .badge.active")?.dataset.renw||"unset";
+  const nw=nwSel==="unset"?null:nwSel;
   const arr=budgetData.recurring[_reType]||(budgetData.recurring[_reType]=[]);
   if(_reEditId){
     const item=arr.find(x=>x.id===_reEditId);
-    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday});}
+    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw});}
   } else {
-    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday});
+    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw});
   }
   saveBudgetData();
   closeModal("modal-rec-expense");
