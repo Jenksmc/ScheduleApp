@@ -4118,26 +4118,12 @@ function renderPersonPanels(){
     const all=tasks.filter(t=>t.person===person&&t.type!=="work"&&!t.skipped&&activeFilters.has(t.type));
     // Partition into one-off and recurring
     const oneOff=all.filter(t=>!t.recurGroupId&&t.date>=start&&t.date<=end);
-    // For recurring: find the next undone instance globally
-    const recurSeen=new Set();
-    const recurNext=[];
-    // Sort all recurring tasks by date, then pick first undone per group
-    const allRecur=tasks.filter(t=>t.person===person&&t.recurGroupId&&!t.skipped&&!t.done)
+    // Recurring: show the instances that actually fall in the VIEWED range,
+    // so navigating weeks/months changes the list, and patterns like
+    // "1st & 3rd Saturday" show every in-range instance — not just the next
+    // one globally (which made the panel look frozen and incomplete).
+    const recurNext=tasks.filter(t=>t.person===person&&t.recurGroupId&&!t.skipped&&t.date>=start&&t.date<=end)
       .sort((a,b)=>a.date.localeCompare(b.date));
-    allRecur.forEach(t=>{
-      if(!recurSeen.has(t.recurGroupId)){
-        recurSeen.add(t.recurGroupId);
-        recurNext.push(t);
-      }
-    });
-    // Also include done recurring from this view range (so you can see them crossed off)
-    const recurDoneInRange=tasks.filter(t=>t.person===person&&t.recurGroupId&&!t.skipped&&t.done&&t.date>=start&&t.date<=end);
-    recurDoneInRange.forEach(t=>{
-      if(!recurSeen.has(t.recurGroupId)){
-        recurSeen.add(t.recurGroupId);
-        recurNext.push(t);
-      }
-    });
     return{oneOff,recurNext};
   }
 
@@ -4598,20 +4584,21 @@ function saveRecurringX(prefix, baseTask, groupId){
     const startD=new Date(baseTask.date+"T12:00:00");
     let cursor=new Date(startD.getFullYear(),startD.getMonth(),1);
     const endMonthCap=new Date(endD.getFullYear(),endD.getMonth(),1);
-    let first=true;
     while(cursor<=endMonthCap){
       const y=cursor.getFullYear(),m=cursor.getMonth();
       occs.forEach(occ=>{
         let occDate;
         if(occ===-1){let d=new Date(y,m+1,0);while(d.getDay()!==targetDow)d.setDate(d.getDate()-1);occDate=d;}
         else{let d=new Date(y,m,1),count=0;while(d.getMonth()===m){if(d.getDay()===targetDow){count++;if(count===occ)break;}d.setDate(d.getDate()+1);}occDate=(d.getMonth()===m&&d.getDay()===targetDow)?d:null;}
-        if(occDate&&occDate>=startD&&occDate<=endD){
-          if(!first){
+        // Value-based base skip (see chore path): midnight-vs-noon comparison
+        // made the positional flag consume the wrong occurrence.
+        if(occDate&&fd(occDate)!==baseTask.date&&fd(occDate)>=baseTask.date&&occDate<=endD){
+          {
             const idx=tasks.filter(x=>x.recurGroupId===groupId).length+1; // +1: base pushed after generation
             let p=baseTask.person;
             if(altEnabled){let flip=false;if(altMode==="occurrence")flip=(idx%2===1);else if(altMode==="week"){const wk=Math.floor((occDate-new Date(occDate.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}else if(altMode==="month")flip=(occDate.getMonth()%2===1);p=flip?altPerson:baseTask.person;}
             tasks.push({...baseTask,id:nid++,date:fd(occDate),done:false,person:p});
-          } else first=false;
+          }
         }
       });
       cursor.setMonth(cursor.getMonth()+1);
@@ -5025,7 +5012,6 @@ function saveTask(){
         if(recurEnd&&occurrences.length){
           const endD=new Date(recurEnd+"T12:00:00");
           const startD=new Date(t.date+"T12:00:00");
-          let first=true;
           // walk month by month from the start date's month through the end date
           let cursorMonth=new Date(startD.getFullYear(),startD.getMonth(),1);
           const endMonthCap=new Date(endD.getFullYear(),endD.getMonth(),1);
@@ -5046,9 +5032,24 @@ function saveTask(){
                 }
                 occDate=(d.getMonth()===m&&d.getDay()===targetDow)?d:null;
               }
-              if(occDate&&occDate>=startD&&occDate<=endD){
-                if(!first)tasks.push({...t,id:nid++,date:fd(occDate),done:false,rolledFrom:null});
-                else first=false;
+              // Skip the base's own date by VALUE, not by position: occDate is
+              // built at midnight but startD is noon, so ">=startD" used to
+              // reject the base's own date and the positional "first" flag ate
+              // the NEXT real occurrence instead (missing 1st Saturdays etc).
+              if(occDate&&fd(occDate)!==t.date&&fd(occDate)>=t.date&&occDate<=endD){
+                const idxN=tasks.filter(x=>x.recurGroupId===groupId).length+1; // +1: base pushed after generation
+                const altEnabledN=document.getElementById("f-alt-enabled")?.checked||false;
+                const altPersonN=document.getElementById("f-alt-person")?.value||"christian";
+                const altModeN=document.querySelector("#f-alt-mode .badge.active")?.dataset.v||"occurrence";
+                let pN=t.person;
+                if(altEnabledN){
+                  let flip=false;
+                  if(altModeN==="occurrence")flip=(idxN%2===1);
+                  else if(altModeN==="week"){const wk=Math.floor((occDate-new Date(occDate.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}
+                  else if(altModeN==="month")flip=(occDate.getMonth()%2===1);
+                  pN=flip?altPersonN:t.person;
+                }
+                tasks.push({...t,id:nid++,date:fd(occDate),done:false,rolledFrom:null,person:pN,altAssign:altEnabledN,altAssignPerson:altPersonN,altAssignMode:altModeN});
               }
             });
             cursorMonth.setMonth(cursorMonth.getMonth()+1);
