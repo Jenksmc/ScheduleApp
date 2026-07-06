@@ -56,9 +56,24 @@ def save_data():
     data = request.get_json(force=True)
     if not data:
         return jsonify({"error": "no data"}), 400
+
+    # ── STALE-SNAPSHOT GUARD (compare-and-swap) ──────────────
+    # Every client must include baseUpdated: the server "updated"
+    # stamp of the snapshot it last pulled. If the file on disk is
+    # newer, this client is holding stale data (classic case: an
+    # iPad tab frozen for days) and letting it write would wipe
+    # everything saved since. Reject; the client refetches instead.
+    # Old clients that send no baseUpdated are the dangerous ones —
+    # they get rejected too (until their tab is refreshed).
+    current = tasks_store.get_updated()
+    base = data.pop("baseUpdated", None)
+    if current > 0 and (base is None or int(base) < int(current)):
+        print(f"[stale guard] Rejected write: client base={base} < server={current}")
+        return jsonify({"error": "stale", "server_updated": current}), 409
+
     data = strip_demo_junk(data)
-    tasks_store.save_all(data)
-    return jsonify({"ok": True, "updated": data.get("updated", 0)})
+    new_stamp = tasks_store.save_all(data)
+    return jsonify({"ok": True, "updated": new_stamp})
 
 @app.route('/api/updated', methods=['GET'])
 def get_updated():

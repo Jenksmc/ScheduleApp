@@ -869,6 +869,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
   <div style="font-size:19px;color:var(--muted);margin-bottom:16px">Unchecked items carry over to next week automatically.</div>
+  <div id="shop-list-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
   <div class="card" id="shop-page-list" style="margin-bottom:12px"></div>
   <button class="btn" onclick="openAddShopItem()" style="width:100%;justify-content:center;padding:10px"><i class="ti ti-plus"></i> Add item</button>
 </div>
@@ -1567,6 +1568,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <option value="christian">Christian Personal</option>
           <option value="other">Other</option>
         </select>
+      </div>
+      <div class="two-col">
+        <div class="field" style="margin-bottom:0"><label>Price ($) <span class="opt-label">(opt — logs expense when checked)</span></label><input type="number" step="0.01" id="si-price" placeholder="0.00"/></div>
+        <div class="field" style="margin-bottom:0"><label>Link <span class="opt-label">(opt, e.g. Amazon)</span></label><input type="url" id="si-url" placeholder="https://…"/></div>
+      </div>
+      <div class="field"><label>Need or want?</label>
+        <div class="badges" id="si-nw-badges">
+          <button class="badge active" data-sinw="need" onclick="pickShopNW('need',this)">Need</button>
+          <button class="badge" data-sinw="want" onclick="pickShopNW('want',this)">Want</button>
+        </div>
       </div>
       <div class="two-col">
         <div class="field" style="margin-bottom:0"><label>Qty <span class="opt-label">(opt)</span></label><input type="text" id="si-qty" placeholder="e.g. x2, 1 bag"/></div>
@@ -2573,6 +2584,8 @@ async function pushToServer(){
       baseUpdated:_serverUpdated,
       tasks,
       shoppingList,
+      shoppingLists,
+      shopListNid,
       customHolidays,
       workSchedules,
       members,
@@ -2616,6 +2629,9 @@ async function pullFromServer(){
     if(d.updated)_serverUpdated=d.updated;
     if(d.tasks)tasks=d.tasks;
     if(d.shoppingList)shoppingList=d.shoppingList;
+    if(d.shoppingLists)shoppingLists=d.shoppingLists;
+    if(d.shopListNid)shopListNid=d.shopListNid;
+    migrateShoppingLists();
     if(d.customHolidays)customHolidays=d.customHolidays;
     if(d.workSchedules)workSchedules=d.workSchedules;
     if(d.members)members=d.members;
@@ -2811,8 +2827,29 @@ let activeDays=new Set(["mon","tue","wed","thu","fri"]);
 let editId=null,editPerson=null,editLightId=null;
 let selTrigger="nfc",lnid=20,rnid=10;
 let dragTaskId=null,wsdDragId=null,lightPressTimer=null,lightDidLong=false;
-let shoppingList=JSON.parse(localStorage.getItem("shoppingList")||"[]");
+let shoppingList=JSON.parse(localStorage.getItem("shoppingList")||"[]"); // legacy flat list (migrated on load)
+let shoppingLists=JSON.parse(localStorage.getItem("shoppingLists")||"[]");
 let shopNid=JSON.parse(localStorage.getItem("shopNid")||"1");
+let shopListNid=JSON.parse(localStorage.getItem("shopListNid")||"1");
+let activeShopListId=parseInt(localStorage.getItem("activeShopListId")||"0")||null; // per-device
+
+/* ── MULTIPLE SHOPPING LISTS ─────────────────────────────────────
+   shoppingLists=[{id,name,budgetCategory,logsTo,items:[...]}]
+   Items: {id,name,qty,group,checked,weekStart, price,amazonUrl,nw,expId}
+   budgetCategory: which variable-expense category check-offs log to.
+   logsTo: which profile's budget receives the expense (default britt). */
+function migrateShoppingLists(){
+  if(!Array.isArray(shoppingLists))shoppingLists=[];
+  if(!shoppingLists.length){
+    shoppingLists=[{id:shopListNid++,name:"Main",budgetCategory:"Groceries",logsTo:"britt",items:Array.isArray(shoppingList)?shoppingList:[]}];
+  }
+  shoppingLists.forEach(l=>{if(!Array.isArray(l.items))l.items=[];if(!l.budgetCategory)l.budgetCategory="Groceries";if(!l.logsTo)l.logsTo="britt";});
+  if(!activeShopListId||!shoppingLists.some(l=>l.id===activeShopListId))activeShopListId=shoppingLists[0].id;
+}
+function activeShopList(){migrateShoppingLists();return shoppingLists.find(l=>l.id===activeShopListId)||shoppingLists[0];}
+function activeShopItems(){return activeShopList().items;}
+function setActiveShopList(id){activeShopListId=id;localStorage.setItem("activeShopListId",String(id));renderShopPage();renderHomeShopList();}
+
 // Health & habit tracker (independent of budget; not PIN-gated)
 let healthData=(()=>{try{return JSON.parse(localStorage.getItem("healthData"))||{metrics:{},habits:{}};}catch(e){return{metrics:{},habits:{}};}})();
 if(!healthData.metrics)healthData.metrics={};
@@ -3701,7 +3738,7 @@ function renderPhShopList(){
   const el = document.getElementById("ph-shop-list");
   const ct = document.getElementById("ph-shop-count");
   if(!el) return;
-  const unchecked = shoppingList.filter(i=>!i.checked);
+  const unchecked = activeShopItems().filter(i=>!i.checked);
   if(ct) ct.textContent = unchecked.length;
   if(!unchecked.length){ el.innerHTML='<div class="empty">All clear</div>'; return; }
   el.innerHTML = unchecked.slice(0,10).map(i=>`
@@ -5147,7 +5184,11 @@ function checkWorkConflict(){
 
 /* ── SHOPPING LIST ── */
 function saveShoppingList(){
+  // Legacy mirror = first list's items, so any unrefreshed old client still sees something
+  shoppingList=shoppingLists[0]?shoppingLists[0].items:[];
   localStorage.setItem("shoppingList",JSON.stringify(shoppingList));
+  localStorage.setItem("shoppingLists",JSON.stringify(shoppingLists));
+  localStorage.setItem("shopListNid",JSON.stringify(shopListNid));
   localStorage.setItem("shopNid",JSON.stringify(shopNid));
 }
 
@@ -5156,7 +5197,7 @@ function rolloverShoppingList(){
   const todStr=fd(new Date());
   const sun=new Date();sun.setDate(sun.getDate()-sun.getDay());
   const thisWeekStart=fd(sun);
-  shoppingList.forEach(item=>{
+  shoppingLists.flatMap(l=>l.items).forEach(item=>{
     if(!item.checked&&item.weekStart&&item.weekStart<thisWeekStart){
       item.weekStart=thisWeekStart; // bump to this week
     }
@@ -5184,94 +5225,188 @@ const SHOP_GROUPS=[
   {key:"christian",  label:"Christian Personal"},
   {key:"other",      label:"Other"},
 ];
+function shopItemRow(item,thisWeek,pageMode){
+  const wk=item.weekStart||thisWeek;
+  const wkTag=wk>thisWeek?`<span class="shop-qty" style="opacity:0.6">next wk</span>`:"";
+  const priceTag=item.price>0?`<span class="shop-qty" style="color:var(--today-color);font-weight:600">${$f(item.price)}</span>`:"";
+  const linkTag=item.amazonUrl?`<a href="${item.amazonUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--muted);font-size:16px;display:flex;align-items:center" title="Open link"><i class="ti ti-external-link"></i></a>`:"";
+  const fn=pageMode?"Page":"";
+  return`<div class="shop-item${item.checked?" checked":""}">
+    <div class="shop-cb" onclick="toggleShopItem${fn}(${item.id})"></div>
+    <span class="shop-label">${item.name}</span>
+    ${item.qty?`<span class="shop-qty">${item.qty}</span>`:""}
+    ${priceTag}${wkTag}${linkTag}
+    <button class="shop-del" style="opacity:0.7" onclick="openEditShopItem(${item.id})" title="Edit"><i class="ti ti-pencil"></i></button>
+    <button class="shop-del" onclick="deleteShopItem${fn}(${item.id})"><i class="ti ti-x"></i></button>
+  </div>`;
+}
+
 function renderHomeShopList(){
   const el=document.getElementById("home-shop-list");if(!el)return;
   const thisWeek=getThisWeekStart();
   const nextWeek=fd(new Date(new Date(thisWeek+"T12:00:00").getTime()+7*86400000));
-  const unchecked=shoppingList.filter(i=>!i.checked).length;
+  const list=activeShopList();
+  const unchecked=list.items.filter(i=>!i.checked).length;
   const countEl=document.getElementById("shop-count");if(countEl)countEl.textContent=unchecked;
-  if(!shoppingList.length){el.innerHTML='<div class="empty" style="padding:8px 4px;font-size:19px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
-  let html="";
+  let html=shoppingLists.length>1?`<div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:2px 4px 4px">${list.name}</div>`:"";
+  if(!list.items.length){el.innerHTML=html+'<div class="empty" style="padding:8px 4px;font-size:19px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
   SHOP_GROUPS.forEach(g=>{
-    const items=shoppingList.filter(i=>i.group===g.key);
+    const items=list.items.filter(i=>i.group===g.key);
     if(!items.length)return;
     html+=`<div class="shop-group-header">${g.label}</div>`;
-    items.forEach(item=>{
-      const wk=item.weekStart||thisWeek;
-      const wkTag=wk>thisWeek?`<span class="shop-qty" style="opacity:0.6">next wk</span>`:"";
-      html+=`<div class="shop-item${item.checked?" checked":""}">
-        <div class="shop-cb" onclick="toggleShopItem(${item.id})"></div>
-        <span class="shop-label">${item.name}</span>
-        ${item.qty?`<span class="shop-qty">${item.qty}</span>`:""}
-        ${wkTag}
-        <button class="shop-del" onclick="deleteShopItem(${item.id})"><i class="ti ti-x"></i></button>
-      </div>`;
-    });
+    items.forEach(item=>{html+=shopItemRow(item,thisWeek,false);});
   });
   el.innerHTML=html;
 }
 
+/* Checking off a priced item logs it as a real variable expense in the
+   list's linked category; unchecking removes that expense. Expenses land in
+   the profile the list logs to (only possible when that profile is the one
+   currently loaded — otherwise we skip and note it in the console). */
+function shopExpenseSync(item,list){
+  const target=list.logsTo||"britt";
+  if(item.checked){
+    if(!(item.price>0))return; // nothing to log without a price
+    if(!budgetData||!budgetData.expenses||activeBudgetProfile!==target){
+      console.warn("Shop expense skipped: "+target+"'s budget not loaded in this session");
+      return;
+    }
+    const cat=list.budgetCategory||"Groceries";
+    const exp={id:budgetNid++,date:fd(new Date()),type:"variable",category:cat,effectiveCategory:cat,
+      title:item.name,amount:parseFloat(item.price)||0,nw:item.nw||"need",note:"Shopping: "+list.name};
+    budgetData.expenses.push(exp);
+    item.expId=exp.id;
+    saveBudgetData();
+  } else if(item.expId){
+    if(budgetData&&budgetData.expenses){
+      budgetData.expenses=budgetData.expenses.filter(e=>e.id!==item.expId);
+      saveBudgetData();
+    }
+    item.expId=null;
+  }
+}
+
 function toggleShopItem(id){
-  const item=shoppingList.find(x=>x.id===id);
-  if(item){item.checked=!item.checked;saveShoppingList();renderHomeShopList();}
+  const list=activeShopList();
+  const item=list.items.find(x=>x.id===id);
+  if(item){item.checked=!item.checked;shopExpenseSync(item,list);saveShoppingList();renderHomeShopList();}
 }
 function deleteShopItem(id){
-  shoppingList=shoppingList.filter(x=>x.id!==id);
+  const list=activeShopList();
+  list.items=list.items.filter(x=>x.id!==id);
   saveShoppingList();renderHomeShopList();
 }
 function clearCheckedShopItems(){
-  shoppingList=shoppingList.filter(x=>!x.checked);
+  const list=activeShopList();
+  list.items=list.items.filter(x=>!x.checked);
   saveShoppingList();renderHomeShopList();
 }
 
+function renderShopListTabs(){
+  const el=document.getElementById("shop-list-tabs");if(!el)return;
+  migrateShoppingLists();
+  el.innerHTML=shoppingLists.map(l=>{
+    const n=l.items.filter(i=>!i.checked).length;
+    const active=l.id===activeShopListId;
+    return`<button onclick="setActiveShopList(${l.id})" style="padding:5px 12px;border-radius:14px;border:1px solid ${active?"var(--today-color)":"var(--border)"};background:${active?"var(--today-color)":"var(--tag-bg)"};color:${active?"#fff":"var(--text)"};font-size:13px;cursor:pointer;font-weight:${active?"600":"400"};font-family:'DM Sans',sans-serif">${l.name}${n?` <span style="opacity:0.8">(${n})</span>`:""}</button>`;
+  }).join("")
+  +`<button onclick="createShopList()" style="padding:5px 10px;border-radius:14px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:13px;cursor:pointer" title="New list"><i class="ti ti-plus"></i> New</button>`
+  +`<button onclick="openShopListSettings()" style="padding:5px 10px;border-radius:14px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;cursor:pointer" title="List settings"><i class="ti ti-settings"></i></button>`;
+}
+
 function renderShopPage(){
+  renderShopListTabs();
   const el=document.getElementById("shop-page-list");if(!el)return;
   const thisWeek=getThisWeekStart();
-  if(!shoppingList.length){el.innerHTML='<div class="empty-msg">Nothing here yet. Add items below.</div>';return;}
+  const list=activeShopList();
+  if(!list.items.length){el.innerHTML='<div class="empty-msg">Nothing here yet. Add items below.</div>';return;}
   let html="";
   SHOP_GROUPS.forEach(g=>{
-    const items=shoppingList.filter(i=>i.group===g.key);
+    const items=list.items.filter(i=>i.group===g.key);
     if(!items.length)return;
     const uncheckedCount=items.filter(i=>!i.checked).length;
     html+=`<div class="shop-group-header" style="display:flex;align-items:center;justify-content:space-between">
       <span>${g.label}${uncheckedCount?` <span class="count-badge" style="margin-left:4px">${uncheckedCount}</span>`:""}</span>
       <button onclick="openAddShopItem('${g.key}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 4px;display:flex;align-items:center"><i class="ti ti-plus"></i></button>
     </div>`;
-    items.forEach(item=>{
-      const wk=item.weekStart||thisWeek;
-      const wkTag=wk>thisWeek?`<span class="shop-qty" style="opacity:0.6">next wk</span>`:"";
-      html+=`<div class="shop-item${item.checked?" checked":""}">
-        <div class="shop-cb" onclick="toggleShopItemPage(${item.id})"></div>
-        <span class="shop-label">${item.name}</span>
-        ${item.qty?`<span class="shop-qty">${item.qty}</span>`:""}
-        ${wkTag}
-        <button class="shop-del" onclick="deleteShopItemPage(${item.id})"><i class="ti ti-x"></i></button>
-      </div>`;
-    });
+    items.forEach(item=>{html+=shopItemRow(item,thisWeek,true);});
   });
   el.innerHTML=html||'<div class="empty-msg">Nothing here yet.</div>';
+}
+
+function createShopList(){
+  const name=prompt("New list name:");if(!name||!name.trim())return;
+  shoppingLists.push({id:shopListNid++,name:name.trim(),budgetCategory:"Groceries",logsTo:"britt",items:[]});
+  setActiveShopList(shoppingLists[shoppingLists.length-1].id);
+  saveShoppingList();
 }
 function toggleShopItemPage(id){toggleShopItem(id);renderShopPage();}
 function deleteShopItemPage(id){deleteShopItem(id);renderShopPage();}
 
+let _shopEditId=null;
+function pickShopNW(nw,btn){
+  document.querySelectorAll("#si-nw-badges .badge").forEach(b=>b.classList.toggle("active",b===btn));
+}
 function openAddShopItem(defaultGroup){
+  _shopEditId=null;
   const siName=document.getElementById("si-name");const siQty=document.getElementById("si-qty");
   if(siName)siName.value="";if(siQty)siQty.value="";
+  const siPrice=document.getElementById("si-price");if(siPrice)siPrice.value="";
+  const siUrl=document.getElementById("si-url");if(siUrl)siUrl.value="";
+  document.querySelectorAll("#si-nw-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.sinw==="need"));
   const siWeek=document.getElementById("si-week");if(siWeek)siWeek.value="this";
   const siGroup=document.getElementById("si-group");if(siGroup)siGroup.value=defaultGroup||"groceries";
   document.getElementById("modal-add-shop").style.display="block";
   setTimeout(()=>document.getElementById("si-name")?.focus(),50);
 }
+function openEditShopItem(id){
+  const item=activeShopList().items.find(x=>x.id===id);if(!item)return;
+  openAddShopItem(item.group);
+  _shopEditId=id;
+  document.getElementById("si-name").value=item.name;
+  document.getElementById("si-qty").value=item.qty||"";
+  document.getElementById("si-price").value=item.price||"";
+  document.getElementById("si-url").value=item.amazonUrl||"";
+  document.querySelectorAll("#si-nw-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.sinw===(item.nw||"need")));
+}
 function saveShopItem(){
   const name=document.getElementById("si-name")?.value.trim();if(!name)return;
   const qty=document.getElementById("si-qty")?.value.trim()||"";
+  const price=parseFloat(document.getElementById("si-price")?.value)||0;
+  const amazonUrl=document.getElementById("si-url")?.value.trim()||"";
+  const nw=document.querySelector("#si-nw-badges .badge.active")?.dataset.sinw||"need";
   const group=document.getElementById("si-group")?.value||"groceries";
   const weekPref=document.getElementById("si-week")?.value||"this";
   let weekStart=getThisWeekStart();
   if(weekPref==="next"){const sun=new Date(weekStart+"T12:00:00");sun.setDate(sun.getDate()+7);weekStart=fd(sun);}
-  shoppingList.push({id:shopNid++,name,qty,group,checked:false,weekStart});
+  const list=activeShopList();
+  if(_shopEditId){
+    const item=list.items.find(x=>x.id===_shopEditId);
+    if(item)Object.assign(item,{name,qty,price,amazonUrl,nw,group,weekStart});
+    _shopEditId=null;
+  } else {
+    list.items.push({id:shopNid++,name,qty,price,amazonUrl,nw,group,checked:false,weekStart});
+  }
   saveShoppingList();renderHomeShopList();renderShopPage();
   closeModal("modal-add-shop");
+}
+
+/* ── LIST SETTINGS (rename, budget category, delete) ─────────── */
+function openShopListSettings(){
+  const list=activeShopList();
+  const name=prompt("List name:",list.name);
+  if(name===null)return;
+  if(name.trim())list.name=name.trim();
+  const cats=(budgetData?.recurring?.variable||[]).map(v=>v.name);
+  const catMsg=cats.length?"Budget category for check-offs:\n("+cats.join(", ")+")":"Budget category for check-offs:";
+  const cat=prompt(catMsg,list.budgetCategory||"Groceries");
+  if(cat!==null&&cat.trim())list.budgetCategory=cat.trim();
+  if(shoppingLists.length>1&&!confirm("Keep this list? Press Cancel to DELETE '"+list.name+"' and its "+list.items.length+" item(s).")){
+    shoppingLists=shoppingLists.filter(l=>l.id!==list.id);
+    activeShopListId=shoppingLists[0].id;
+    localStorage.setItem("activeShopListId",String(activeShopListId));
+  }
+  saveShoppingList();renderShopPage();renderHomeShopList();
 }
 
 
@@ -8751,4 +8886,4 @@ _debouncedPush=function(){
 })();
 </script>
 </body>
-</html>
+</html> 

@@ -260,9 +260,32 @@ async function saveData(){
   if(!data)return;
   localStorage.setItem('mobileDataCache',JSON.stringify(data));
   try{
-    await fetch(`${API}/api/data`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    // baseUpdated = the server stamp of the snapshot we're editing. If the
+    // server has newer data (this device was asleep/offline with a stale
+    // copy), it rejects the write instead of letting us wipe newer saves.
+    const body=Object.assign({},data,{baseUpdated:data.updated||0});
+    const r=await fetch(`${API}/api/data`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.status===409){
+      await fetchData(); // take the newer data; redo the tap if needed
+      renderContent();
+      return;
+    }
+    const resp=await r.json().catch(()=>null);
+    if(resp&&resp.updated&&data)data.updated=resp.updated;
   }catch(e){/* offline — cached locally */}
 }
+
+// iPad Safari freezes background tabs for days. The moment this tab is
+// foregrounded again, check for newer server data before the user can
+// tap anything with a stale snapshot.
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible'||!data)return;
+  try{
+    const r=await fetch(`${API}/api/updated`);
+    const {updated}=await r.json();
+    if(updated>data.updated){await fetchData();renderContent();}
+  }catch(e){}
+});
 
 function startPolling(){
   // Poll every 30s for updates from other devices
@@ -472,24 +495,34 @@ function renderCalendar(){
 }
 
 // ── SHOPPING TAB ──────────────────────────────────────────────
+function shopListsArr(){
+  // Multiple lists when present; legacy single list otherwise
+  if(Array.isArray(data.shoppingLists)&&data.shoppingLists.length)return data.shoppingLists;
+  return [{id:0,name:"Shopping",budgetCategory:"Groceries",logsTo:"britt",items:data.shoppingList||[]}];
+}
 function renderShopping(){
-  const list=data.shoppingList||[];
+  const lists=shopListsArr();
   const thisWeek=getThisWeekStart();
-  if(!list.length)return`<div class="empty-state"><i class="ti ti-shopping-cart"></i><p>Shopping list is empty</p></div>`;
+  if(!lists.some(l=>l.items.length))return`<div class="empty-state"><i class="ti ti-shopping-cart"></i><p>Shopping list is empty</p></div>`;
   let html='<div style="padding-bottom:80px">';
-  SHOP_GROUPS.forEach(g=>{
-    const items=list.filter(i=>i.group===g.key);
-    if(!items.length)return;
-    const undone=items.filter(i=>!i.checked).length;
-    html+=`<div class="shop-group-hdr"><span>${g.label}</span>${undone?`<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--tag-bg);color:var(--muted)">${undone}</span>`:''}</div>`;
-    items.forEach(item=>{
-      const isNext=(item.weekStart||thisWeek)>thisWeek;
-      html+=`<div class="shop-row${item.checked?' done-shop':''}" data-id="${item.id}">
-        <div class="shop-cb"></div>
-        <span class="shop-name">${item.name}</span>
-        ${item.qty?`<span class="shop-qty-b">${item.qty}</span>`:''}
-        ${isNext?`<span class="shop-qty-b" style="opacity:0.6">next wk</span>`:''}
-      </div>`;
+  lists.forEach(l=>{
+    if(!l.items.length)return;
+    if(lists.length>1)html+=`<div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);padding:12px 0 2px">${l.name}</div>`;
+    SHOP_GROUPS.forEach(g=>{
+      const items=l.items.filter(i=>i.group===g.key);
+      if(!items.length)return;
+      const undone=items.filter(i=>!i.checked).length;
+      html+=`<div class="shop-group-hdr"><span>${g.label}</span>${undone?`<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--tag-bg);color:var(--muted)">${undone}</span>`:''}</div>`;
+      items.forEach(item=>{
+        const isNext=(item.weekStart||thisWeek)>thisWeek;
+        html+=`<div class="shop-row${item.checked?' done-shop':''}" data-id="${item.id}">
+          <div class="shop-cb"></div>
+          <span class="shop-name">${item.name}</span>
+          ${item.price>0?`<span class="shop-qty-b" style="color:var(--accent);font-weight:600">$${(+item.price).toFixed(2)}</span>`:''}
+          ${item.qty?`<span class="shop-qty-b">${item.qty}</span>`:''}
+          ${isNext?`<span class="shop-qty-b" style="opacity:0.6">next wk</span>`:''}
+        </div>`;
+      });
     });
   });
   html+='</div>';
@@ -510,8 +543,27 @@ function toggleTask(id){
 
 function toggleShop(id){
   if(!data)return;
-  const item=(data.shoppingList||[]).find(x=>x.id===id);
-  if(item){item.checked=!item.checked;saveData();renderContent();}
+  let item=null,list=null;
+  for(const l of shopListsArr()){const f=l.items.find(x=>x.id===id);if(f){item=f;list=l;break;}}
+  if(!item)return;
+  item.checked=!item.checked;
+  // Checking off a priced item logs a variable expense in the target
+  // profile's budget (default britt); unchecking removes it.
+  const target="budgetData_"+(list.logsTo||"britt");
+  const bd=data[target];
+  if(item.checked&&item.price>0&&bd&&Array.isArray(bd.expenses)){
+    const nidKey="budgetNid_"+(list.logsTo||"britt");
+    data[nidKey]=(data[nidKey]||9000)+1;
+    const cat=list.budgetCategory||"Groceries";
+    const exp={id:data[nidKey],date:fd(new Date()),type:"variable",category:cat,effectiveCategory:cat,
+      title:item.name,amount:+item.price,nw:item.nw||"need",note:"Shopping: "+list.name};
+    bd.expenses.push(exp);
+    item.expId=exp.id;
+  } else if(!item.checked&&item.expId&&bd&&Array.isArray(bd.expenses)){
+    bd.expenses=bd.expenses.filter(e=>e.id!==item.expId);
+    item.expId=null;
+  }
+  saveData();renderContent();
 }
 
 // ── QUICK ADD ─────────────────────────────────────────────────
