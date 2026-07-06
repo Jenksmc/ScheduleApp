@@ -2447,12 +2447,47 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <div class="modal-body">
       <div style="font-size:19px;color:var(--muted);margin-bottom:12px" id="er-subtitle">Changes apply to all future instances.</div>
       <div class="field"><label>Title</label><input type="text" id="er-title"/></div>
-      <div class="field"><label>Assigned to</label>
+      <div class="field"><label>Assigned to <span class="opt-label">(with alternation on, this person goes first)</span></label>
         <select id="er-person">
           <option value="unassigned">Unclaimed</option>
           <option value="britt">Brittni</option>
           <option value="christian">Christian</option>
         </select>
+      </div>
+      <div class="two-col">
+        <div class="field" style="margin-bottom:0"><label>Repeats</label>
+          <select id="er-freq" onchange="erFreqChanged()">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="nthweekday">Specific weeks</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0"><label>Start date</label>
+          <input type="date" id="er-start-date"/>
+        </div>
+      </div>
+      <div id="er-nth-fields" style="display:none">
+        <div class="field"><label>On which weekday</label>
+          <div class="badges" id="er-nthwd">
+            <button class="badge" data-v="0" onclick="pick(this,'er-nthwd')">Sun</button>
+            <button class="badge" data-v="1" onclick="pick(this,'er-nthwd')">Mon</button>
+            <button class="badge" data-v="2" onclick="pick(this,'er-nthwd')">Tue</button>
+            <button class="badge" data-v="3" onclick="pick(this,'er-nthwd')">Wed</button>
+            <button class="badge" data-v="4" onclick="pick(this,'er-nthwd')">Thu</button>
+            <button class="badge" data-v="5" onclick="pick(this,'er-nthwd')">Fri</button>
+            <button class="badge" data-v="6" onclick="pick(this,'er-nthwd')">Sat</button>
+          </div>
+        </div>
+        <div class="field"><label>Which weeks of the month</label>
+          <div class="badges" id="er-nthocc">
+            <button class="badge" data-v="1" onclick="this.classList.toggle('active')">1st</button>
+            <button class="badge" data-v="2" onclick="this.classList.toggle('active')">2nd</button>
+            <button class="badge" data-v="3" onclick="this.classList.toggle('active')">3rd</button>
+            <button class="badge" data-v="4" onclick="this.classList.toggle('active')">4th</button>
+            <button class="badge" data-v="-1" onclick="this.classList.toggle('active')">Last</button>
+          </div>
+        </div>
       </div>
       <!-- Alternate assignment -->
       <div class="field" style="background:var(--tag-bg);border-radius:10px;padding:10px;margin-top:2px">
@@ -2483,7 +2518,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           </div>
         </div>
       </div>
-      <div class="field"><label>Active weekdays</label>
+      <div class="field" id="er-weekdays-wrap"><label>Active weekdays</label>
         <div class="badges" id="er-weekdays">
           <button class="badge" data-v="sun" onclick="this.classList.toggle('active')">Sun</button>
           <button class="badge active" data-v="mon" onclick="this.classList.toggle('active')">Mon</button>
@@ -2495,7 +2530,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
       </div>
       <div class="field">
-        <label>End date <span class="opt-label">(extend or shorten series)</span></label>
+        <label>End date <span class="opt-label">(optional — blank repeats forever)</span></label>
         <input type="date" id="er-end-date"/>
         <div style="font-size:16px;color:var(--muted);margin-top:4px" id="er-end-hint"></div>
       </div>
@@ -4118,12 +4153,20 @@ function renderPersonPanels(){
     const all=tasks.filter(t=>t.person===person&&t.type!=="work"&&!t.skipped&&activeFilters.has(t.type));
     // Partition into one-off and recurring
     const oneOff=all.filter(t=>!t.recurGroupId&&t.date>=start&&t.date<=end);
-    // Recurring: show the instances that actually fall in the VIEWED range,
-    // so navigating weeks/months changes the list, and patterns like
-    // "1st & 3rd Saturday" show every in-range instance — not just the next
-    // one globally (which made the panel look frozen and incomplete).
-    const recurNext=tasks.filter(t=>t.person===person&&t.recurGroupId&&!t.skipped&&t.date>=start&&t.date<=end)
+    // Recurring: ONE entry per group — its next occurrence WITHIN the viewed
+    // range (undone preferred; if the whole range is done, the latest done one
+    // shows crossed off). Groups with nothing in range stay hidden, so the
+    // list changes as you navigate weeks/months without flooding (a daily
+    // chore shows once, not seven times).
+    const inRange=tasks.filter(t=>t.person===person&&t.recurGroupId&&!t.skipped&&t.date>=start&&t.date<=end)
       .sort((a,b)=>a.date.localeCompare(b.date));
+    const seen=new Map();
+    inRange.forEach(t=>{
+      const cur=seen.get(t.recurGroupId);
+      if(!cur)seen.set(t.recurGroupId,t);
+      else if(cur.done&&!t.done)seen.set(t.recurGroupId,t); // first undone beats done
+    });
+    const recurNext=[...seen.values()].sort((a,b)=>a.date.localeCompare(b.date));
     return{oneOff,recurNext};
   }
 
@@ -4474,6 +4517,40 @@ function snapToAllowedDays(dateStr,allowedDays){
   while(!allowedDays.includes(_DOW_KEYS[d.getDay()])&&g++<7)d.setDate(d.getDate()+1);
   return fd(d);
 }
+// Pure date generator shared by the recurring editor. Returns every
+// pattern date from start through end, INCLUDING the start date.
+function genRecurDates(freq,startStr,endStr,allowedDays,nthWeekday,nthOccs){
+  const out=[];const endD=new Date(endStr+"T12:00:00");
+  if(freq==="nthweekday"){
+    const startD=new Date(startStr+"T12:00:00");
+    let cursor=new Date(startD.getFullYear(),startD.getMonth(),1);
+    const endCap=new Date(endD.getFullYear(),endD.getMonth(),1);
+    let guard=0;
+    while(cursor<=endCap&&guard++<80){
+      const y=cursor.getFullYear(),m=cursor.getMonth();
+      (nthOccs||[]).forEach(occ=>{
+        let d;
+        if(occ===-1){d=new Date(y,m+1,0);while(d.getDay()!==nthWeekday)d.setDate(d.getDate()-1);}
+        else{d=new Date(y,m,1);let c=0;while(d.getMonth()===m){if(d.getDay()===nthWeekday){c++;if(c===occ)break;}d.setDate(d.getDate()+1);}if(!(d.getMonth()===m&&d.getDay()===nthWeekday))d=null;}
+        if(d&&fd(d)>=startStr&&d<=endD)out.push(fd(d));
+      });
+      cursor.setMonth(cursor.getMonth()+1);
+    }
+    out.sort();
+  } else if(freq==="monthly"){
+    let cur=new Date(startStr+"T12:00:00");let guard=0;
+    while(cur<=endD&&guard++<80){out.push(fd(cur));cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}
+  } else {
+    const allowed=(allowedDays&&allowedDays.length)?allowedDays:[_DOW_KEYS[new Date(startStr+"T12:00:00").getDay()]];
+    let cur=new Date(startStr+"T12:00:00");let guard=0;
+    while(cur<=endD&&guard++<1200){
+      if(allowed.includes(_DOW_KEYS[cur.getDay()]))out.push(fd(cur));
+      cur=new Date(cur.getTime()+86400000);
+    }
+  }
+  return out;
+}
+
 function snapToNthPattern(dateStr,targetDow,occs){
   if(occs==null||!occs.length)return dateStr;
   let d=new Date(dateStr+"T12:00:00");
@@ -4564,7 +4641,8 @@ function saveRecurringX(prefix, baseTask, groupId){
   const openEnded=!recurEnd;
   if(openEnded)recurEnd=recurHorizonEnd(freq); // blank = forever (rolling horizon)
   const altEnabled=document.getElementById("f-"+prefix+"alt-enabled")?.checked||false;
-  const altPerson=document.getElementById("f-"+prefix+"alt-person")?.value||"christian";
+  let altPerson=document.getElementById("f-"+prefix+"alt-person")?.value||"christian";
+  if(altEnabled&&altPerson===baseTask.person)altPerson=baseTask.person==="britt"?"christian":"britt"; // self-alternation guard
   const altMode=document.querySelector("#f-"+prefix+"alt-mode .badge.active")?.dataset.v||"occurrence";
   const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
 
@@ -4725,8 +4803,18 @@ function getRecurGroups(){
   const groups={};
   tasks.filter(t=>t.recurGroupId).forEach(t=>{
     const g=t.recurGroupId;
-    if(!groups[g])groups[g]={id:g,title:t.title,person:t.person,type:t.type,instances:[],allowedDays:t.allowedDays};
+    if(!groups[g])groups[g]={id:g,title:t.title,type:t.type,instances:[],allowedDays:t.allowedDays};
     groups[g].instances.push(t);
+  });
+  // person/base fields come from the EARLIEST instance — with alternation,
+  // an arbitrary instance may be the flipped one, which is how the list
+  // showed "Brittni / Brittni" for a perfectly alternating pair.
+  Object.values(groups).forEach(g=>{
+    const sorted=g.instances.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const src=sorted.find(t=>!t.done&&!t.skipped)||sorted[0]; // live settings, not stale history
+    g.person=src?.person;
+    g.allowedDays=src?.allowedDays;
+    g.settingsSrc=src;
   });
   return Object.values(groups).sort((a,b)=>a.title.localeCompare(b.title));
 }
@@ -4747,18 +4835,19 @@ function renderRecurGroups(){
           <div style="font-size:18px;font-weight:500;color:var(--text)">${g.title}</div>
           <div style="font-size:16px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
             <span>${(()=>{
-              const freq=g.instances[0]?.recurring||"recurring";
+              const freq=(g.settingsSrc||g.instances[0])?.recurring||"recurring";
               if(freq==="nthweekday"){
                 const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
                 const OCC={"1":"1st","2":"2nd","3":"3rd","4":"4th","-1":"Last"};
-                const wd=g.instances[0]?.nthWeekday!=null?DOW[g.instances[0].nthWeekday]:"?";
-                const occs=(g.instances[0]?.nthOccurrences||[]).map(o=>OCC[String(o)]||o).join(" & ");
+                const s0=g.settingsSrc||g.instances[0];
+                const wd=s0?.nthWeekday!=null?DOW[s0.nthWeekday]:"?";
+                const occs=(s0?.nthOccurrences||[]).map(o=>OCC[String(o)]||o).join(" & ");
                 return occs+" "+wd+" of month";
               }
               return freq;
             })()} · ${g.type}</span>
             <span>${(()=>{
-              const t0=g.instances[0];
+              const t0=g.settingsSrc||g.instances[0];
               if(t0?.altAssign){
                 const labels={britt:"Brittni",christian:"Christian",unassigned:"Unclaimed"};
                 const p1=labels[g.person]||g.person;
@@ -4779,6 +4868,13 @@ function renderRecurGroups(){
     </div>`;
   }).join("");
 }
+function erFreqChanged(){
+  const f=document.getElementById("er-freq")?.value||"weekly";
+  const wd=document.getElementById("er-weekdays-wrap");
+  const nth=document.getElementById("er-nth-fields");
+  if(wd)wd.style.display=(f==="daily"||f==="weekly")?"block":"none";
+  if(nth)nth.style.display=f==="nthweekday"?"block":"none";
+}
 function openEditRecurGroup(groupId){
   editRecurGroupId=groupId;
   const group=getRecurGroups().find(g=>g.id===groupId);if(!group)return;
@@ -4792,22 +4888,33 @@ function openEditRecurGroup(groupId){
   });
   // end date — show last instance date
   const instances=group.instances.slice().sort((a,b)=>a.date.localeCompare(b.date));
-  const firstDate=instances[0]?.date||"";
+  const live=instances.find(t=>!t.done&&!t.skipped)||instances[0];
+  const firstDate=live?.date||instances[0]?.date||"";
   const lastDate=instances[instances.length-1]?.date||"";
   const endEl=document.getElementById("er-end-date");
   const hintEl=document.getElementById("er-end-hint");
-  if(endEl)endEl.value=lastDate;
+  if(endEl)endEl.value=group.instances.some(t=>t.openEnded)?"":lastDate;
   if(hintEl)hintEl.textContent=`Currently ${instances.length} instance${instances.length!==1?"s":""} · starts ${firstDate} · ends ${lastDate}`;
   const subEl=document.getElementById("er-subtitle");
-  if(subEl)subEl.textContent=`Recurring ${group.instances[0]?.recurring||""} task. Adjust end date to extend or shorten.`;
+  if(subEl)subEl.textContent="Saving regenerates upcoming instances with these settings. Completed ones keep their history.";
+  // frequency + start date + nth pattern
+  const base=live||instances[0]||{};
+  const freqEl=document.getElementById("er-freq");
+  if(freqEl)freqEl.value=base.recurring||"weekly";
+  const startEl=document.getElementById("er-start-date");
+  if(startEl)startEl.value=firstDate;
+  document.querySelectorAll("#er-nthwd .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===(base.nthWeekday??0)));
+  const occsCur=base.nthOccurrences||[];
+  document.querySelectorAll("#er-nthocc .badge").forEach(b=>b.classList.toggle("active",occsCur.includes(parseInt(b.dataset.v))));
+  erFreqChanged();
   // Load alternate assignment settings
-  const altEnabled=!!group.instances[0]?.altAssign;
+  const altEnabled=!!(live||group.instances[0])?.altAssign;
   const altCb=document.getElementById("er-alt-enabled");
   if(altCb)altCb.checked=altEnabled;
   const altFields=document.getElementById("er-alt-fields");
   if(altFields)altFields.style.display=altEnabled?"block":"none";
-  const altPerson=group.instances[0]?.altAssignPerson||"christian";
-  const altMode=group.instances[0]?.altAssignMode||"occurrence";
+  const altPerson=(live||group.instances[0])?.altAssignPerson||"christian";
+  const altMode=(live||group.instances[0])?.altAssignMode||"occurrence";
   const altPersonEl=document.getElementById("er-alt-person");
   if(altPersonEl)altPersonEl.value=altPerson;
   document.querySelectorAll("#er-alt-mode .badge").forEach(b=>{
@@ -4818,81 +4925,58 @@ function openEditRecurGroup(groupId){
 }
 function saveRecurGroup(){
   if(editRecurGroupId===null)return;
-  const title=document.getElementById("er-title").value.trim();
+  const gid=editRecurGroupId;
+  const existing=tasks.filter(t=>t.recurGroupId===gid).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!existing.length)return;
+  const proto=existing[0]; // carries type/time/notes and other fields forward
+
+  const title=document.getElementById("er-title").value.trim()||proto.title;
   const person=document.getElementById("er-person").value;
+  const freq=document.getElementById("er-freq")?.value||proto.recurring||"weekly";
+  let startDate=document.getElementById("er-start-date")?.value||existing[0].date;
+  const endRaw=document.getElementById("er-end-date").value;
   const days=[...document.querySelectorAll("#er-weekdays .badge.active")].map(b=>b.dataset.v);
-  const newEndDate=document.getElementById("er-end-date").value;
-  const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
-
-  // Alt assignment settings
+  const nthWd=parseInt(document.querySelector("#er-nthwd .badge.active")?.dataset.v??"0");
+  const nthOccs=[...document.querySelectorAll("#er-nthocc .badge.active")].map(b=>parseInt(b.dataset.v));
   const altEnabled=document.getElementById("er-alt-enabled")?.checked||false;
-  const altPerson=document.getElementById("er-alt-person")?.value||"christian";
+  let altPerson=document.getElementById("er-alt-person")?.value||"christian";
   const altMode=document.querySelector("#er-alt-mode .badge.active")?.dataset.v||"occurrence";
+  // Alternating with yourself is never intentional — auto-pick the other person
+  if(altEnabled&&altPerson===person)altPerson=person==="britt"?"christian":"britt";
 
-  // Update all existing instances, computing alt assignment per instance
-  const groupTasks=tasks.filter(t=>t.recurGroupId===editRecurGroupId)
-    .sort((a,b)=>a.date.localeCompare(b.date));
+  if(freq==="nthweekday"&&!nthOccs.length){alert("Pick at least one week of the month (1st, 2nd, ...)");return;}
 
-  groupTasks.forEach((t,idx)=>{
-    if(title)t.title=title;
-    t.altAssign=altEnabled;
-    t.altAssignPerson=altPerson;
-    t.altAssignMode=altMode;
-    // Compute person based on alt mode
+  const openEnded=!endRaw;
+  const endDate=endRaw||recurHorizonEnd(freq);
+  // Snap the start onto the pattern (monthly keeps its date-of-month meaning)
+  if(freq==="nthweekday")startDate=snapToNthPattern(startDate,nthWd,nthOccs);
+  else if(freq!=="monthly")startDate=snapToAllowedDays(startDate,days);
+
+  // Completed/skipped instances are history — keep them. Everything else regenerates.
+  const kept=existing.filter(t=>t.done||t.skipped);
+  const keptDates=new Set(kept.map(t=>t.date));
+  tasks=tasks.filter(t=>t.recurGroupId!==gid||t.done||t.skipped);
+
+  const dates=genRecurDates(freq,startDate,endDate,days,nthWd,nthOccs).filter(d=>!keptDates.has(d));
+  dates.forEach((d,i)=>{
+    let p=person;
     if(altEnabled){
       let flip=false;
-      if(altMode==="occurrence") flip=(idx%2===1);
-      else if(altMode==="week"){const d=new Date(t.date+"T12:00:00");const wk=Math.floor((d-new Date(d.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}
-      else if(altMode==="month"){const d=new Date(t.date+"T12:00:00");flip=(d.getMonth()%2===1);}
-      t.person=flip?altPerson:person;
-    } else {
-      t.person=person;
+      const dObj=new Date(d+"T12:00:00");
+      if(altMode==="occurrence")flip=(i%2===1);
+      else if(altMode==="week"){const wk=Math.floor((dObj-new Date(dObj.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}
+      else if(altMode==="month")flip=(dObj.getMonth()%2===1);
+      p=flip?altPerson:person;
     }
-    const dow=new Date(t.date+"T12:00:00").getDay();
-    t.allowedDays=days;
-    t.skipped=!days.includes(DOW_KEYS[dow]);
+    tasks.push({...proto,id:nid++,title,date:d,done:false,skipped:false,rolledFrom:null,person:p,
+      recurring:freq,recurGroupId:gid,openEnded,
+      allowedDays:(freq==="daily"||freq==="weekly")?days:[],
+      nthWeekday:freq==="nthweekday"?nthWd:undefined,
+      nthOccurrences:freq==="nthweekday"?nthOccs:undefined,
+      altAssign:altEnabled,altAssignPerson:altPerson,altAssignMode:altMode});
   });
-
-  // Remove instances after new end date
-  if(newEndDate){
-    tasks=tasks.filter(t=>!(t.recurGroupId===editRecurGroupId&&t.date>newEndDate));
-  }
-
-  // Extend if new end date is after current last instance
-  if(newEndDate){
-    const existing=tasks.filter(t=>t.recurGroupId===editRecurGroupId).sort((a,b)=>a.date.localeCompare(b.date));
-    const lastExisting=existing[existing.length-1];
-    if(lastExisting&&newEndDate>lastExisting.date){
-      const freq=lastExisting.recurring||"daily";
-      const step=freq==="daily"?1:freq==="weekly"?7:freq==="biweekly"?14:0;
-      const monthly=freq==="monthly";
-      let cur=new Date(lastExisting.date+"T12:00:00");
-      const endD=new Date(newEndDate+"T12:00:00");
-      // advance one step first to avoid duplicating last
-      if(monthly)cur.setMonth(cur.getMonth()+1);
-      else if(step>0)cur=new Date(cur.getTime()+step*86400000);
-      while(cur<=endD){
-        const dow=cur.getDay();
-        const dowKey=DOW_KEYS[dow];
-        if(days.includes(dowKey)){
-          const newIdx=tasks.filter(t=>t.recurGroupId===editRecurGroupId).length;
-              const altE=altEnabled;const altP=altPerson;const altM=altMode;
-              let newPerson=person;
-              if(altE){
-                let flip=false;
-                if(altM==="occurrence")flip=(newIdx%2===1);
-                else if(altM==="week"){const d2=new Date(fd(cur)+"T12:00:00");const wk=Math.floor((d2-new Date(d2.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}
-                else if(altM==="month"){const d2=new Date(fd(cur)+"T12:00:00");flip=(d2.getMonth()%2===1);}
-                newPerson=flip?altP:person;
-              }
-              tasks.push({...lastExisting,id:nid++,date:fd(cur),done:false,rolledFrom:null,allowedDays:days,person:newPerson,title:title||lastExisting.title,altAssign:altE,altAssignPerson:altP,altAssignMode:altM});
-        }
-        if(monthly)cur.setMonth(cur.getMonth()+1);
-        else if(step>0)cur=new Date(cur.getTime()+step*86400000);
-        else break;
-      }
-    }
-  }
+  // History keeps the new title too
+  kept.forEach(t=>{t.title=title;});
 
   closeModal("modal-edit-recur");renderRecurGroups();render();renderHome();
 }
@@ -5039,7 +5123,8 @@ function saveTask(){
               if(occDate&&fd(occDate)!==t.date&&fd(occDate)>=t.date&&occDate<=endD){
                 const idxN=tasks.filter(x=>x.recurGroupId===groupId).length+1; // +1: base pushed after generation
                 const altEnabledN=document.getElementById("f-alt-enabled")?.checked||false;
-                const altPersonN=document.getElementById("f-alt-person")?.value||"christian";
+                let altPersonN=document.getElementById("f-alt-person")?.value||"christian";
+                if(altPersonN===t.person)altPersonN=t.person==="britt"?"christian":"britt"; // self-alternation is never intentional
                 const altModeN=document.querySelector("#f-alt-mode .badge.active")?.dataset.v||"occurrence";
                 let pN=t.person;
                 if(altEnabledN){
