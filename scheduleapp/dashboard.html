@@ -2775,7 +2775,12 @@ function _touchEndDrag(touch){
 
 // Attach to any element that should be touch-draggable
 function makeTouchDraggable(el,id,type){
-  el.setAttribute("draggable","false"); // disable HTML5 drag on iOS
+  // Only disable HTML5 drag on touch-primary devices (iPad/phone) where the
+  // long-press shim takes over. Killing it everywhere broke desktop mouse
+  // drag entirely — coarse-pointer detection scopes it correctly.
+  if(window.matchMedia&&window.matchMedia("(pointer: coarse)").matches){
+    el.setAttribute("draggable","false");
+  }
   el.addEventListener("touchstart",e=>{
     const touch=e.touches[0];
     _touchHoldTimer=setTimeout(()=>{
@@ -4212,12 +4217,12 @@ function rMonth(){
   const first=new Date(yr,mo,1),last=new Date(yr,mo+1,0),pad=first.getDay();
   let h='<div class="week-header">';DAYS.forEach(d=>h+=`<div class="dh">${d}</div>`);h+='</div><div class="month-grid">';
   for(let i=0;i<pad;i++){const d=ad(first,-pad+i);const ds=fd(d);
-    h+=`<div class="day-cell other-month" onclick="openAddModal('${ds}')" ondragover="calDragOver(event,'${ds}')" ondragleave="calDragLeave(event)" ondrop="calDrop(event,'${ds}')">
+    h+=`<div class="day-cell other-month" data-date="${ds}" onclick="openAddModal('${ds}')" ondragover="calDragOver(event,'${ds}')" ondragleave="calDragLeave(event)" ondrop="calDrop(event,'${ds}')">
       <div class="day-num">${d.getDate()}</div><div class="day-events">${tf(ds).map(t=>calPillHtml(t)).join("")}</div></div>`;}
   for(let d=1;d<=last.getDate();d++){const ds=fd(new Date(yr,mo,d));h+=dayCell(ds,d,"");}
   const rem=(7-((pad+last.getDate())%7))%7;
   for(let i=1;i<=rem;i++){const d=new Date(yr,mo+1,i);const ds=fd(d);
-    h+=`<div class="day-cell other-month" onclick="openAddModal('${ds}')" ondragover="calDragOver(event,'${ds}')" ondragleave="calDragLeave(event)" ondrop="calDrop(event,'${ds}')">
+    h+=`<div class="day-cell other-month" data-date="${ds}" onclick="openAddModal('${ds}')" ondragover="calDragOver(event,'${ds}')" ondragleave="calDragLeave(event)" ondrop="calDrop(event,'${ds}')">
       <div class="day-num">${i}</div><div class="day-events">${tf(ds).map(t=>calPillHtml(t)).join("")}</div></div>`;}
   h+="</div>";document.getElementById("cal").innerHTML=h;
 }
@@ -4473,6 +4478,33 @@ function showRecurFields_v(){ _showRecurFieldsX("v"); }
 const RECUR_HORIZON_DAYS={daily:180,weekly:365,monthly:730,nthweekday:730};
 function recurHorizonEnd(freq){const days=RECUR_HORIZON_DAYS[freq]||365;return fd(new Date(Date.now()+days*86400000));}
 
+// Picking a Wednesday start for a Friday task used to plant the first
+// instance on the Wednesday. Snap the start date forward to the first
+// date that actually matches the pattern.
+const _DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
+function snapToAllowedDays(dateStr,allowedDays){
+  if(!allowedDays||!allowedDays.length)return dateStr;
+  let d=new Date(dateStr+"T12:00:00"),g=0;
+  while(!allowedDays.includes(_DOW_KEYS[d.getDay()])&&g++<7)d.setDate(d.getDate()+1);
+  return fd(d);
+}
+function snapToNthPattern(dateStr,targetDow,occs){
+  if(occs==null||!occs.length)return dateStr;
+  let d=new Date(dateStr+"T12:00:00");
+  for(let g=0;g<70;g++){
+    if(d.getDay()===targetDow){
+      const y=d.getFullYear(),m=d.getMonth();
+      let c=0,probe=new Date(y,m,1);
+      while(probe<=d){if(probe.getDay()===targetDow)c++;probe.setDate(probe.getDate()+1);}
+      let probe2=new Date(d);probe2.setDate(probe2.getDate()+7);
+      const isLast=probe2.getMonth()!==m;
+      if(occs.includes(c)||(occs.includes(-1)&&isLast))return fd(d);
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return dateStr;
+}
+
 function extendOpenEndedRecurrences(){
   const groups={};
   tasks.forEach(t=>{
@@ -4520,9 +4552,10 @@ function extendOpenEndedRecurrences(){
         cursor.setMonth(cursor.getMonth()+1);
       }
     } else {
-      const allowed=base.allowedDays||[];
+      let allowed=base.allowedDays||[];
+      if(!allowed.length&&freq!=="monthly")allowed=[_DOW_KEYS[new Date(base.date+"T12:00:00").getDay()]];
       let cur=new Date(lastD);
-      const step=()=>{if(freq==="daily")cur=new Date(cur.getTime()+86400000);else if(freq==="weekly")cur=new Date(cur.getTime()+7*86400000);else if(freq==="monthly"){cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}else cur=new Date(endD.getTime()+86400000);};
+      const step=()=>{if(freq==="daily"||freq==="weekly")cur=new Date(cur.getTime()+86400000);else if(freq==="monthly"){cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}else cur=new Date(endD.getTime()+86400000);};
       step();
       while(cur<=endD){
         if(!allowed.length||allowed.includes(DOW_KEYS[cur.getDay()]))mk(new Date(cur));
@@ -4560,6 +4593,7 @@ function saveRecurringX(prefix, baseTask, groupId){
     const targetDow=parseInt(document.querySelector("#b-"+prefix+"nthwd .badge.active")?.dataset.v??"0");
     const occs=[...document.querySelectorAll("#b-"+prefix+"nthocc .badge.active")].map(b=>parseInt(b.dataset.v));
     baseTask.nthWeekday=targetDow;baseTask.nthOccurrences=occs;
+    baseTask.date=snapToNthPattern(baseTask.date,targetDow,occs); // base lands ON the pattern
     const endD=new Date(recurEnd+"T12:00:00");
     const startD=new Date(baseTask.date+"T12:00:00");
     let cursor=new Date(startD.getFullYear(),startD.getMonth(),1);
@@ -4573,7 +4607,7 @@ function saveRecurringX(prefix, baseTask, groupId){
         else{let d=new Date(y,m,1),count=0;while(d.getMonth()===m){if(d.getDay()===targetDow){count++;if(count===occ)break;}d.setDate(d.getDate()+1);}occDate=(d.getMonth()===m&&d.getDay()===targetDow)?d:null;}
         if(occDate&&occDate>=startD&&occDate<=endD){
           if(!first){
-            const idx=tasks.filter(x=>x.recurGroupId===groupId).length;
+            const idx=tasks.filter(x=>x.recurGroupId===groupId).length+1; // +1: base pushed after generation
             let p=baseTask.person;
             if(altEnabled){let flip=false;if(altMode==="occurrence")flip=(idx%2===1);else if(altMode==="week"){const wk=Math.floor((occDate-new Date(occDate.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}else if(altMode==="month")flip=(occDate.getMonth()%2===1);p=flip?altPerson:baseTask.person;}
             tasks.push({...baseTask,id:nid++,date:fd(occDate),done:false,person:p});
@@ -4583,7 +4617,11 @@ function saveRecurringX(prefix, baseTask, groupId){
       cursor.setMonth(cursor.getMonth()+1);
     }
   } else {
-    const allowedDays=[...document.querySelectorAll("#b-"+prefix+"recurdays .badge.active")].map(b=>b.dataset.v);
+    let allowedDays=[...document.querySelectorAll("#b-"+prefix+"recurdays .badge.active")].map(b=>b.dataset.v);
+    if(freq!=="monthly"){
+      baseTask.date=snapToAllowedDays(baseTask.date,allowedDays); // base lands on an allowed day
+      if(!allowedDays.length)allowedDays=[_DOW_KEYS[new Date(baseTask.date+"T12:00:00").getDay()]];
+    }
     baseTask.allowedDays=allowedDays;
     const endD=new Date(recurEnd+"T12:00:00");
     let cur=new Date(baseTask.date+"T12:00:00");
@@ -4593,14 +4631,13 @@ function saveRecurringX(prefix, baseTask, groupId){
       const isAllowed=allowedDays.includes(dowKey);
       if(isAllowed){
         if(!first){
-          const idx=tasks.filter(x=>x.recurGroupId===groupId).length;
+          const idx=tasks.filter(x=>x.recurGroupId===groupId).length+1; // +1: base pushed after generation
           let p=baseTask.person;
           if(altEnabled){let flip=false;if(altMode==="occurrence")flip=(idx%2===1);else if(altMode==="week"){const d2=new Date(cur);const wk=Math.floor((d2-new Date(d2.getFullYear(),0,1))/(7*86400000));flip=(wk%2===1);}else if(altMode==="month")flip=(cur.getMonth()%2===1);p=flip?altPerson:baseTask.person;}
           tasks.push({...baseTask,id:nid++,date:fd(cur),done:false,person:p,allowedDays});
         } else first=false;
       }
-      if(freq==="daily")cur=new Date(cur.getTime()+86400000);
-      else if(freq==="weekly")cur=new Date(cur.getTime()+7*86400000);
+      if(freq==="daily"||freq==="weekly")cur=new Date(cur.getTime()+86400000); // day-walk; allowedDays filter picks the days
       else if(freq==="monthly"){cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}
       else break;
     }
@@ -4984,9 +5021,10 @@ function saveTask(){
         const targetDow=parseInt(document.getElementById("b-nthwd")?.querySelector(".badge.active")?.dataset.v??"0");
         const occurrences=[...document.querySelectorAll("#b-nthocc .badge.active")].map(b=>parseInt(b.dataset.v));
         t.nthWeekday=targetDow;t.nthOccurrences=occurrences;
+        t.date=snapToNthPattern(t.date,targetDow,occurrences); // base lands ON the pattern
         if(recurEnd&&occurrences.length){
           const endD=new Date(recurEnd+"T12:00:00");
-          const startD=new Date(date+"T12:00:00");
+          const startD=new Date(t.date+"T12:00:00");
           let first=true;
           // walk month by month from the start date's month through the end date
           let cursorMonth=new Date(startD.getFullYear(),startD.getMonth(),1);
@@ -5018,12 +5056,19 @@ function saveTask(){
         }
       } else {
         // Get allowed weekdays (daily/weekly/monthly)
-        const allowedDays=[...document.querySelectorAll("#b-recurdays .badge.active")].map(b=>b.dataset.v);
+        let allowedDays=[...document.querySelectorAll("#b-recurdays .badge.active")].map(b=>b.dataset.v);
+        // Snap the base task onto an allowed day (Wednesday start + Friday
+        // pattern -> first instance is that Friday, not the Wednesday).
+        // Monthly keeps its date-of-month semantics untouched.
+        if(freq!=="monthly"){
+          t.date=snapToAllowedDays(t.date,allowedDays);
+          if(!allowedDays.length)allowedDays=[_DOW_KEYS[new Date(t.date+"T12:00:00").getDay()]];
+        }
         t.allowedDays=allowedDays;
         const DOW_KEYS=["sun","mon","tue","wed","thu","fri","sat"];
         if(recurEnd){
           const endD=new Date(recurEnd+"T12:00:00");
-          let cur2=new Date(date+"T12:00:00");
+          let cur2=new Date(t.date+"T12:00:00");
           let first=true;
           while(cur2<=endD){
             const dow=cur2.getDay();
@@ -5034,7 +5079,9 @@ function saveTask(){
                 const altEnabled2=document.getElementById("f-alt-enabled")?.checked||false;
                 const altPerson2=document.getElementById("f-alt-person")?.value||"christian";
                 const altMode2=document.querySelector("#f-alt-mode .badge.active")?.dataset.v||"occurrence";
-                const thisIdx=tasks.filter(x=>x.recurGroupId===groupId).length;
+                // +1: base task is pushed AFTER generation; without it the first
+                // generated instance repeats the base person ("first person twice")
+                const thisIdx=tasks.filter(x=>x.recurGroupId===groupId).length+1;
                 let newPerson2=t.person;
                 if(altEnabled2){
                   let flip=false;
@@ -5046,9 +5093,9 @@ function saveTask(){
                 tasks.push({...t,id:nid++,date:fd(cur2),done:false,rolledFrom:null,person:newPerson2,altAssign:altEnabled2,altAssignPerson:altPerson2,altAssignMode:altMode2});
               } else first=false;
             }
-            // advance
-            if(freq==="daily")cur2=new Date(cur2.getTime()+86400000);
-            else if(freq==="weekly")cur2=new Date(cur2.getTime()+7*86400000);
+            // advance — daily AND weekly walk day-by-day (allowedDays filters
+            // which stick), so weekly patterns with multiple days work too
+            if(freq==="daily"||freq==="weekly")cur2=new Date(cur2.getTime()+86400000);
             else if(freq==="monthly"){cur2=new Date(cur2);cur2.setMonth(cur2.getMonth()+1);}
             else break;
           }
@@ -7225,18 +7272,7 @@ function saveIncomeWeek(){
 }
 
 /* ── ADD EXPENSE MODAL ───────────────────────────────────────── */
-function openAddExpenseSheet(){
-  _expType="variable";_savBucket="household";
-  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.v==="variable"));
-  document.querySelectorAll("[data-savbucket]").forEach(b=>b.classList.toggle("active",b.dataset.savbucket==="household"));
-  document.getElementById("exp-cat-field").style.display="block";
-  document.getElementById("exp-sav-field").style.display="none";
-  const ed=document.getElementById("exp-date");if(ed)ed.value=fd(new Date());
-  const ea=document.getElementById("exp-amount");if(ea)ea.value="";
-  const en=document.getElementById("exp-note");if(en)en.value="";
-  document.getElementById("modal-add-expense").style.display="block";
-  setTimeout(()=>document.getElementById("exp-amount")?.focus(),50);
-}
+// (removed: dead duplicate of openAddExpenseSheet — the later definition is the live one)
 function pickExpType(type,btn){
   _expType=type;
   document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b===btn));
