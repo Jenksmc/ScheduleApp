@@ -1626,8 +1626,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
-            <button class="badge active" data-savbucket="household" onclick="pickSavBucket('household',this)">Household</button>
-            <button class="badge" data-savbucket="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+            <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
+            <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
           </div>
         </div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label>
@@ -7286,6 +7286,7 @@ function renderSavExpList(listId,totalId,exps){
   el.innerHTML=exps.map(e=>`<div class="exp-tracker-row">
     <div class="exp-info"><div class="exp-desc">${e.note||"Transfer"}</div><div class="exp-meta">${e.date}</div></div>
     <div class="exp-amt">${$f(e.amount)}</div>
+    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="openEditExpense(${e.id})" title="Edit"><i class="ti ti-pencil"></i></button>
     <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="deleteExpenseB(${e.id})"><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
@@ -7371,7 +7372,7 @@ function pickExpNW(nw,btn){
 }
 function pickSavBucket(bucket,btn){
   _savBucket=bucket;
-  document.querySelectorAll("[data-savbucket]").forEach(b=>b.classList.toggle("active",b===btn));
+  document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b===btn));
 }
 
 function populateExpCategories(){
