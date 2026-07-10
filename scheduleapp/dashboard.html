@@ -1548,6 +1548,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <button class="btn-save" style="background:#c0392b;border-color:#c0392b" onclick="clearExecute(true)">Yes, clear all</button>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1557,37 +1558,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
   <div class="modal-bg" onclick="bgClose(event,'modal-add-shop')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
       <div class="modal-hdr"><h3>Add shopping item</h3><button class="close-x" onclick="closeModal('modal-add-shop')"><i class="ti ti-x"></i></button></div>
-<div class="modal-body">
-      <div class="field"><label>Item</label><input type="text" id="si-name" placeholder="e.g. Oat milk, Dish soap"/></div>
-      <div class="field"><label>Group</label>
-        <select id="si-group">
-          <option value="groceries">Groceries</option>
-          <option value="household">Household</option>
-          <option value="cats">Cats</option>
-          <option value="britt">Brittni Personal</option>
-          <option value="christian">Christian Personal</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="two-col">
-        <div class="field" style="margin-bottom:0"><label>Price ($) <span class="opt-label">(opt — logs expense when checked)</span></label><input type="number" step="0.01" id="si-price" placeholder="0.00"/></div>
-        <div class="field" style="margin-bottom:0"><label>Link <span class="opt-label">(opt, e.g. Amazon)</span></label><input type="url" id="si-url" placeholder="https://…"/></div>
-      </div>
-      <div class="field"><label>Need or want?</label>
-        <div class="badges" id="si-nw-badges">
-          <button class="badge active" data-sinw="need" onclick="pickShopNW('need',this)">Need</button>
-          <button class="badge" data-sinw="want" onclick="pickShopNW('want',this)">Want</button>
-        </div>
-      </div>
-      <div class="two-col">
-        <div class="field" style="margin-bottom:0"><label>Qty <span class="opt-label">(opt)</span></label><input type="text" id="si-qty" placeholder="e.g. x2, 1 bag"/></div>
-        <div class="field" style="margin-bottom:0"><label>Week</label>
-          <select id="si-week">
-            <option value="this">This week</option>
-            <option value="next">Next week</option>
+      <div class="modal-body">
+        <div class="field"><label>Item</label><input type="text" id="si-name" placeholder="e.g. Oat milk, Dish soap"/></div>
+        <div class="field"><label>Group</label>
+          <select id="si-group">
+            <option value="groceries">Groceries</option>
+            <option value="household">Household</option>
+            <option value="cats">Cats</option>
+            <option value="britt">Brittni Personal</option>
+            <option value="christian">Christian Personal</option>
+            <option value="other">Other</option>
           </select>
         </div>
-      </div>
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0"><label>Price ($) <span class="opt-label">(opt — logs expense when checked)</span></label><input type="number" step="0.01" id="si-price" placeholder="0.00"/></div>
+          <div class="field" style="margin-bottom:0"><label>Link <span class="opt-label">(opt, e.g. Amazon)</span></label><input type="url" id="si-url" placeholder="https://…"/></div>
+        </div>
+        <div class="field"><label>Need or want?</label>
+          <div class="badges" id="si-nw-badges">
+            <button class="badge active" data-sinw="need" onclick="pickShopNW('need',this)">Need</button>
+            <button class="badge" data-sinw="want" onclick="pickShopNW('want',this)">Want</button>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0"><label>Qty <span class="opt-label">(opt)</span></label><input type="text" id="si-qty" placeholder="e.g. x2, 1 bag"/></div>
+          <div class="field" style="margin-bottom:0"><label>Week</label>
+            <select id="si-week">
+              <option value="this">This week</option>
+              <option value="next">Next week</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="mfooter"><button class="btn-cancel" onclick="closeModal('modal-add-shop')">Cancel</button><button class="btn-save" onclick="saveShopItem()">Add</button></div>
     </div>
@@ -5450,12 +5451,12 @@ function shopItemRow(item,thisWeek,pageMode){
 }
 
 function renderHomeShopList(){
-  const el=document.getElementById("ph-shop-list");if(!el)return;
+  const el=document.getElementById("home-shop-list");if(!el)return;
   const thisWeek=getThisWeekStart();
   const nextWeek=fd(new Date(new Date(thisWeek+"T12:00:00").getTime()+7*86400000));
   const list=activeShopList();
   const unchecked=list.items.filter(i=>!i.checked).length;
-  const countEl=document.getElementById("ph-shop-count");if(countEl)countEl.textContent=unchecked;
+  const countEl=document.getElementById("shop-count");if(countEl)countEl.textContent=unchecked;
   let html=shoppingLists.length>1?`<div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:2px 4px 4px">${list.name}</div>`:"";
   if(!list.items.length){el.innerHTML=html+'<div class="empty" style="padding:8px 4px;font-size:19px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
   SHOP_GROUPS.forEach(g=>{
