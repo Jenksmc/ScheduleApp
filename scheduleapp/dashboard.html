@@ -7362,7 +7362,7 @@ function saveIncomeWeek(){
 // (removed: dead duplicate of openAddExpenseSheet — the later definition is the live one)
 function pickExpType(type,btn){
   _expType=type;
-  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b===btn));
+  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",btn?b===btn:b.dataset.v===type));
   document.getElementById("exp-cat-field").style.display=type==="variable"?"block":"none";
   document.getElementById("exp-sav-field").style.display=type==="savings"?"block":"none";
   const nwF=document.getElementById("exp-nw-field");if(nwF)nwF.style.display=type==="variable"?"block":"none";
