@@ -5450,12 +5450,12 @@ function shopItemRow(item,thisWeek,pageMode){
 }
 
 function renderHomeShopList(){
-  const el=document.getElementById("home-shop-list");if(!el)return;
+  const el=document.getElementById("ph-shop-list");if(!el)return;
   const thisWeek=getThisWeekStart();
   const nextWeek=fd(new Date(new Date(thisWeek+"T12:00:00").getTime()+7*86400000));
   const list=activeShopList();
   const unchecked=list.items.filter(i=>!i.checked).length;
-  const countEl=document.getElementById("shop-count");if(countEl)countEl.textContent=unchecked;
+  const countEl=document.getElementById("ph-shop-count");if(countEl)countEl.textContent=unchecked;
   let html=shoppingLists.length>1?`<div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:2px 4px 4px">${list.name}</div>`:"";
   if(!list.items.length){el.innerHTML=html+'<div class="empty" style="padding:8px 4px;font-size:19px;color:var(--muted);font-style:italic">Nothing here — add items below</div>';return;}
   SHOP_GROUPS.forEach(g=>{
