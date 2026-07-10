@@ -558,9 +558,11 @@ function toggleShop(id){
     const exp={id:data[nidKey],date:fd(new Date()),type:"variable",category:cat,effectiveCategory:cat,
       title:item.name,amount:+item.price,nw:item.nw||"need",note:"Shopping: "+list.name};
     bd.expenses.push(exp);
+    bd._ts=Date.now(); // freshness stamp: this budget copy just changed
     item.expId=exp.id;
   } else if(!item.checked&&item.expId&&bd&&Array.isArray(bd.expenses)){
     bd.expenses=bd.expenses.filter(e=>e.id!==item.expId);
+    bd._ts=Date.now();
     item.expId=null;
   }
   saveData();renderContent();

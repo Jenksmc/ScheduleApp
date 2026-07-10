@@ -72,7 +72,31 @@ def save_data():
         return jsonify({"error": "stale", "server_updated": current}), 409
 
     data = strip_demo_junk(data)
-    new_stamp = tasks_store.save_all(data)
+
+    # ── MERGE, NEVER REPLACE ──────────────────────────────────
+    # The old behavior replaced the entire file with the posted
+    # payload. Any client that didn't include a key (e.g. a locked
+    # budget tab that doesn't know budgetData_britt exists) silently
+    # DELETED that key from disk. Now we merge posted keys into the
+    # existing file: keys a client doesn't send are always preserved.
+    current_data = tasks_store.get_all()
+
+    # ── BUDGET FRESHNESS GUARD ────────────────────────────────
+    # budgetData* objects carry a _ts stamp (set client-side on every
+    # save). If a client pushes a budget copy OLDER than what's on
+    # disk (stale tab, device that pulled before someone else saved),
+    # keep the newer disk copy instead of letting old data win.
+    for key in list(data.keys()):
+        if key.startswith("budgetData") and isinstance(data[key], dict):
+            existing = current_data.get(key)
+            if isinstance(existing, dict):
+                if data[key].get("_ts", 0) < existing.get("_ts", 0):
+                    print(f"[budget guard] Kept newer server copy of {key} "
+                          f"(client _ts={data[key].get('_ts', 0)} < server _ts={existing.get('_ts', 0)})")
+                    del data[key]
+
+    current_data.update(data)
+    new_stamp = tasks_store.save_all(current_data)
     return jsonify({"ok": True, "updated": new_stamp})
 
 @app.route('/api/updated', methods=['GET'])

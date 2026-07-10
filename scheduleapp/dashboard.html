@@ -2671,15 +2671,27 @@ async function pullFromServer(){
     if(d.workSchedules)workSchedules=d.workSchedules;
     if(d.members)members=d.members;
     if(d.healthData){healthData=d.healthData;if(!healthData.metrics)healthData.metrics={};if(!healthData.habits)healthData.habits={};}
-    // Load profile-specific budget data if a profile is active
+    // Load profile-specific budget data if a profile is active.
+    // Freshness guard: only adopt the server copy if it's at least as
+    // new as what we're holding (_ts). A pull triggered by a stale 409
+    // must not revert local budget edits that haven't synced yet.
+    const _newerBudget=(incoming)=>{
+      if(!incoming)return false;
+      if(!budgetData)return true;
+      return (incoming._ts||0)>=(budgetData._ts||0);
+    };
     if(activeBudgetProfile){
       const profileKey="budgetData_"+activeBudgetProfile;
       const profileNidKey="budgetNid_"+activeBudgetProfile;
-      if(d[profileKey])budgetData=d[profileKey];
-      if(d[profileNidKey])budgetNid=d[profileNidKey];
+      if(_newerBudget(d[profileKey])){
+        budgetData=d[profileKey];
+        if(d[profileNidKey])budgetNid=d[profileNidKey];
+      }
     } else {
-      if(d.budgetData)budgetData=d.budgetData;
-      if(d.budgetNid)budgetNid=d.budgetNid;
+      if(_newerBudget(d.budgetData)){
+        budgetData=d.budgetData;
+        if(d.budgetNid)budgetNid=d.budgetNid;
+      }
     }
     if(d.budgetPins)budgetPins=d.budgetPins;
     if(d.nid)nid=d.nid;
@@ -5681,47 +5693,58 @@ async function loadProfileBudgetData(){
   if(!activeBudgetProfile)return;
   const key=getDataKey(activeBudgetProfile);
   const nidKey=getNidKey(activeBudgetProfile);
-  // Try server first for freshest data
+
+  // Load BOTH copies, then keep whichever is newer (_ts stamp).
+  // The old version trusted the server unconditionally and overwrote
+  // localStorage with it — so a stale/gutted server copy destroyed
+  // newer local data the moment you unlocked. Never again.
+  let localBD=null,localNid=parseInt(localStorage.getItem(nidKey)||"200");
+  try{const raw=localStorage.getItem(key);localBD=raw?JSON.parse(raw):null;}catch(e){localBD=null;}
+
+  let serverBD=null,serverNid=null;
   try{
     const r=await fetch(API_BASE+"/api/data");
     if(r.ok){
       const d=await r.json();
-      const profileKey="budgetData_"+activeBudgetProfile;
-      const profileNidKey="budgetNid_"+activeBudgetProfile;
-      if(d[profileKey]){
-        budgetData=d[profileKey];
-        budgetNid=d[profileNidKey]||200;
-        localStorage.setItem(key,JSON.stringify(budgetData));
-        localStorage.setItem(nidKey,String(budgetNid));
-        if(d.budgetPins)budgetPins=d.budgetPins;
-        if(!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
-        ensureBudgetSettings();
-        return;
-      }
+      if(d.budgetPins)budgetPins=d.budgetPins;
+      serverBD=d["budgetData_"+activeBudgetProfile]||null;
+      serverNid=d["budgetNid_"+activeBudgetProfile]||null;
     }
   }catch(e){}
-  // Fall back to localStorage
-  try{
-    const d=localStorage.getItem(key);
-    budgetData=d?JSON.parse(d):null;
-    budgetNid=parseInt(localStorage.getItem(nidKey)||"200");
-  }catch(e){budgetData=null;}
+
+  const localTs=(localBD&&localBD._ts)||0;
+  const serverTs=(serverBD&&serverBD._ts)||0;
+
+  if(serverBD&&(!localBD||serverTs>=localTs)){
+    // Server copy is newest (or local doesn't exist): adopt it.
+    budgetData=serverBD;
+    budgetNid=serverNid||localNid;
+    localStorage.setItem(key,JSON.stringify(budgetData));
+    localStorage.setItem(nidKey,String(budgetNid));
+  }else if(localBD){
+    // Local copy is newest (or server has nothing): keep it and
+    // push it up so the server catches back up.
+    budgetData=localBD;
+    budgetNid=localNid;
+    if(typeof pushToServer==="function")pushToServer();
+  }else{
+    budgetData=null;
+  }
+
   if(!budgetData||!budgetData.recurring) initBudgetDataForProfile(activeBudgetProfile);
   ensureBudgetSettings();
 }
 
 function saveProfileBudgetData(){
   if(!activeBudgetProfile)return;
+  if(budgetData&&!budgetData._ts)budgetData._ts=Date.now();
   localStorage.setItem(getDataKey(activeBudgetProfile), JSON.stringify(budgetData));
   localStorage.setItem(getNidKey(activeBudgetProfile), String(budgetNid));
-  // Push profile data to server immediately
-  try{
-    const payload={};
-    payload["budgetData_"+activeBudgetProfile]=budgetData;
-    payload["budgetNid_"+activeBudgetProfile]=budgetNid;
-    payload.budgetPins=budgetPins;
-    fetch(API_BASE+"/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  }catch(e){console.warn("Profile budget push failed:",e);}
+  // Server push removed from here. The old standalone fetch sent no
+  // baseUpdated, so the stale guard rejected it with a 409 EVERY time,
+  // silently — budget edits never actually synced through this path.
+  // The main pushToServer() (triggered by saveBudgetData) carries the
+  // profile keys with a valid baseUpdated and is the one real sync.
 }
 
 /* Override saveBudgetData to also save to profile key */
@@ -6019,6 +6042,9 @@ const DEFAULT_HOURS=40;
 /* ── LOAD / SAVE ─────────────────────────────────────────────── */
 function saveBudgetData(){
   bvCacheClear();
+  // Freshness stamp: every save marks this copy's age. Server and
+  // clients compare _ts so an older copy can never overwrite a newer one.
+  if(budgetData)budgetData._ts=Date.now();
   localStorage.setItem("budgetData",JSON.stringify(budgetData));
   localStorage.setItem("budgetNid",String(budgetNid));
   if(typeof _bootComplete!=="undefined"&&_bootComplete&&typeof pushToServer==="function")pushToServer();
@@ -6028,22 +6054,10 @@ function loadBudgetFromStore(){
   try{budgetData=JSON.parse(localStorage.getItem("budgetData"));budgetNid=parseInt(localStorage.getItem("budgetNid")||"200");}catch(e){budgetData=null;}
   if(!budgetData||!budgetData.recurring)initBudgetDataV3();
   ensureBudgetSettings();
-  // Seed demo expenses if none exist yet (first time seeing real budget UI)
-  if(budgetData&&(!budgetData.expenses||budgetData.expenses.length===0)){
-    budgetData.expenses=[
-      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"Groceries",amount:62.40,note:"Trader Joes"},
-      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"DoorDash",amount:34.80,note:"Friday dinner"},
-      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Groceries",amount:28.15,note:"QFC run"},
-      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Pets",amount:45.00,note:"Cat food and litter"},
-      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Household Items",amount:31.20,note:"Target"},
-      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Amazon",amount:67.50,note:"Amazon order"},
-      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"Eating Out",amount:22.80,note:"Lunch"},
-      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"DoorDash",amount:41.25,note:"Monday dinner"},
-      {id:budgetNid++,date:"2026-06-23",type:"variable",category:"Groceries",amount:54.90,note:"Costco run"},
-      {id:budgetNid++,date:"2026-06-19",type:"savings",category:"Savings",savingsBucket:"household",amount:557,note:"Auto-transfer"},
-    ];
-    saveBudgetData();
-  }
+  // Demo expense seeding REMOVED. It used to inject fake entries any
+  // time expenses was empty, which disguised data-loss bugs as "data"
+  // and polluted real budgets. An empty budget now stays visibly empty.
+  if(budgetData&&!budgetData.expenses)budgetData.expenses=[];
 }
 
 function initBudgetDataV3(){
@@ -6091,18 +6105,9 @@ function initBudgetDataV3(){
     incomeWeeks:[],
     // Expenses & savings transfers logged by user
     // {id, date, type:"variable"|"savings", category, savingsBucket, amount, note}
-    expenses:[
-      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"Groceries",amount:62.40,note:"Trader Joes"},
-      {id:budgetNid++,date:"2026-06-19",type:"variable",category:"DoorDash",amount:34.80,note:"Friday dinner"},
-      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Groceries",amount:28.15,note:"QFC run"},
-      {id:budgetNid++,date:"2026-06-20",type:"variable",category:"Pets",amount:45.00,note:"Cat food and litter"},
-      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Household Items",amount:31.20,note:"Target"},
-      {id:budgetNid++,date:"2026-06-21",type:"variable",category:"Amazon",amount:67.50,note:"Amazon order"},
-      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"Eating Out",amount:22.80,note:"Lunch"},
-      {id:budgetNid++,date:"2026-06-22",type:"variable",category:"DoorDash",amount:41.25,note:"Monday dinner"},
-      {id:budgetNid++,date:"2026-06-23",type:"variable",category:"Groceries",amount:54.90,note:"Costco run"},
-      {id:budgetNid++,date:"2026-06-19",type:"savings",category:"Savings",savingsBucket:"household",amount:557,note:"Auto-transfer"},
-    ],
+    // Demo expenses removed — a fresh budget starts empty so fake data
+    // can never masquerade as real entries after a reset.
+    expenses:[],
     // Per-period overrides for bills/subs actual amounts
     periods:{},
   };
