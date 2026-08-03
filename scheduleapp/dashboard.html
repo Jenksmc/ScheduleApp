@@ -1672,7 +1672,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
         <div class="two-col">
           <div class="field"><label>Hourly rate ($)</label><input type="number" step="0.01" id="mis-rate" placeholder="49.80"/></div>
-          <div class="field"><label>Default hours/wk</label><input type="number" step="0.5" id="mis-hours" placeholder="40"/></div>
+          <div class="field"><label>Hours per pay period</label><input type="number" step="0.5" id="mis-hours" placeholder="40"/></div>
         </div>
         <div class="field"><label>Pay frequency</label>
           <select id="mis-payfreq" onchange="updateIncomeScheduleFields()">
@@ -6207,15 +6207,14 @@ function getLastThursday(fromDate){
 function generateIncomeWeeks(){
   if(!budgetData)return;
   const sources=budgetData.recurring.incomeSources||[];
-  // Remove pending entries that no longer match their source's schedule.
+  // Remove generated entries that no longer match their source's schedule.
   if(budgetData.incomeWeeks){
     budgetData.incomeWeeks=budgetData.incomeWeeks.filter(w=>{
-      if(w.status==="received")return true; // always keep received
       const src2=sources.find(s=>s.id===w.sourceId);if(!src2)return false;
       return isIncomeCycleStart(w.weekStartDate,src2);
     });
   }
-  const existing=new Set((budgetData.incomeWeeks||[]).map(w=>w.weekStartDate+":"+w.sourceId));
+  const existing=new Map((budgetData.incomeWeeks||[]).map(w=>[w.weekStartDate+":"+w.sourceId,w]));
   const today=new Date();
   const todayStr=fd(today);
   // Project paychecks ~6 months into the future so weeks you haven't worked yet
@@ -6236,13 +6235,20 @@ function generateIncomeWeeks(){
     while(fd(cur)<=horizonStr){
       const ws=fd(cur);
       const key=ws+":"+src.id;
-      if(!existing.has(key)&&ws>=src.startDate&&ws<=endStr){
-        existing.add(key);
-        // A biweekly entry represents the complete two-week paycheck.
-        const cycleWeeks=frequency==="biweekly"?2:1;
+      if(ws>=src.startDate&&ws<=endStr){
         // Pay date = cycle start + processing delay.
         const payD=new Date(cur.getTime()+(src.processingWeeks||2)*7*86400000);
         const payDateStr=fd(payD);
+        const existingWeek=existing.get(key);
+        if(existingWeek){
+          if(!existingWeek.hoursOverridden)existingWeek.hours=src.defaultHours||40;
+          existingWeek.rate=src.hourlyRate||HOURLY_RATE_DEFAULT;
+          existingWeek.payDate=payDateStr;
+          existingWeek.sourceName=src.name;
+          existingWeek.frequency=frequency;
+          cur.setDate(cur.getDate()+intervalDays);
+          continue;
+        }
         // received = already paid · pending = worked, awaiting pay · scheduled = not yet worked
         let status;
         if(payDateStr<=todayStr)status="received";
@@ -6251,7 +6257,7 @@ function generateIncomeWeeks(){
         budgetData.incomeWeeks.push({
           id:budgetNid++,
           weekStartDate:ws,
-          hours:(src.defaultHours||40)*cycleWeeks,
+          hours:src.defaultHours||40,
           rate:src.hourlyRate||HOURLY_RATE_DEFAULT,
           status,
           payDate:payDateStr,
@@ -6259,6 +6265,7 @@ function generateIncomeWeeks(){
           sourceName:src.name,
           frequency,
         });
+        existing.set(key,budgetData.incomeWeeks[budgetData.incomeWeeks.length-1]);
       }
       cur.setDate(cur.getDate()+intervalDays);
     }
@@ -7457,6 +7464,7 @@ function openEditIncomeWeek(id){
 function saveIncomeWeek(){
   const w=(budgetData.incomeWeeks||[]).find(x=>x.id===_editIWid);if(!w)return;
   w.hours=parseFloat(document.getElementById("eiw-hours").value)||w.hours;
+  w.hoursOverridden=true;
   saveBudgetData();closeModal("modal-edit-income-week");renderTrackerIncome();
 }
 
@@ -7620,7 +7628,7 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
       if(pf==="weekly"||pf==="biweekly") sched+=" · "+DOW[item.payWeekday??4]+"s";
       else if(pf==="monthly") sched+=" · "+(""+(""+item.payMonthday||"15"))+"th";
       else if(pf==="custom") sched="Custom: "+(item.payCustomDates||[]).join(" & ");
-      topLine=`<span class="bs-item-amount">${$f(item.hourlyRate||0)}/hr</span><span class="bs-item-freq">${item.defaultHours||40}h/wk</span>`;
+      topLine=`<span class="bs-item-amount">${$f(item.hourlyRate||0)}/hr</span><span class="bs-item-freq">${item.defaultHours||40}h/pay period</span>`;
       midLine=`<div style="font-size:12px;color:var(--muted);margin-top:3px">${sched}</div>`;
       if(item.startDate) dateLine=`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> ${new Date(item.startDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>`;
     } else {
@@ -7736,7 +7744,7 @@ function renderBudgetSettings(){
 
   // Sub-labels for accordion rows
   const incomeSub=document.getElementById("bs-income-sub");
-  if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+(s2.hourlyRate||0)*(s2.defaultHours||40),0))+"/wk expected":"No income sources";}
+  if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+(s2.hourlyRate||0)*(s2.defaultHours||40),0))+" expected per pay period":"No income sources";}
   const billsSub=document.getElementById("bs-bills-sub");
   if(billsSub){const b=rec.bills||[];const tot=b.reduce((t,x)=>t+x.amount,0);billsSub.textContent=b.length?b.length+" bill"+(b.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No bills";}
   const subsSub=document.getElementById("bs-subs-sub");
