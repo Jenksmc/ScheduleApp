@@ -5805,6 +5805,10 @@ function composeJointBudgetData(britt, christian, existing){
   const recurring={incomeSources:[],savingsTransfers:[],autoTransfers:[],bills:[],subscriptions:[],variable:[],savings_household:[],savings_personal:[]};
   const debtJointIds=new Set((existing?.recurring?.bills||[]).filter(x=>x.isDebt).map(x=>String(x.id)));
   const byName=(items,name)=>items.find(x=>String(x.name||"").trim().toLowerCase()===name);
+  const jointVarWeeklyDefault=sources.reduce((total,[,d])=>{
+    const value=parseFloat(d.settings?.varWeeklyDefault);
+    return total+(isNaN(value)?350:value);
+  },0);
   sources.forEach(([owner,d])=>{
     const r=d.recurring;
     (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
@@ -5814,7 +5818,10 @@ function composeJointBudgetData(britt, christian, existing){
       const name=String(x.name||"").trim().toLowerCase();
       const same=byName(recurring.bills,name);
       if(!same)recurring.bills.push({...x,id:`joint-bill-${owner}-${x.id}`,sourceProfiles:[owner]});
-      else same.sourceProfiles=[...(same.sourceProfiles||[]),owner];
+      else{
+        same.amount=(parseFloat(same.amount)||0)+(parseFloat(x.amount)||0);
+        same.sourceProfiles=[...(same.sourceProfiles||[]),owner];
+      }
     });
     (r.subscriptions||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
@@ -5844,6 +5851,7 @@ function composeJointBudgetData(britt, christian, existing){
     recurring,incomeWeeks,
     expenses:[...sourceExpenses,...oldExpenses],
     periods:existing?.periods||{},
+    settings:{...(existing?.settings||{}),varWeeklyDefault:jointVarWeeklyDefault},
     jointSourcesUpdated:Date.now()
   };
 }
