@@ -1624,6 +1624,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <button class="badge" data-nw="want" onclick="pickExpNW('want',this)">Want</button>
           </div>
         </div>
+        <div class="field" id="exp-owner-field" style="display:none"><label>Spent by</label>
+          <select id="exp-owner">
+            <option value="britt">Brittni</option>
+            <option value="christian">Christian</option>
+            <option value="joint">Both</option>
+          </select>
+        </div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
             <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
@@ -5642,6 +5649,7 @@ function openShopListSettings(){
 const BUDGET_PROFILES = [
   { id:"britt",    name:"Brittni", color:"#e85d8a", bg:"rgba(232,93,138,0.15)", initial:"B" },
   { id:"christian",name:"Christian", color:"#3db87a", bg:"rgba(61,184,122,0.15)", initial:"C" },
+  { id:"joint",    name:"Joint", color:"#378add", bg:"rgba(55,138,221,0.15)", initial:"J" },
 ];
 
 let activeBudgetProfile = null; // set on unlock
@@ -5691,6 +5699,10 @@ function loadPinsFromServer(serverData){
 /* ── Load / save budget data for active profile ── */
 async function loadProfileBudgetData(){
   if(!activeBudgetProfile)return;
+  if(activeBudgetProfile==="joint"){
+    await loadJointBudgetData();
+    return;
+  }
   const key=getDataKey(activeBudgetProfile);
   const nidKey=getNidKey(activeBudgetProfile);
 
@@ -5754,6 +5766,69 @@ saveBudgetData = function(){
   if(activeBudgetProfile) saveProfileBudgetData();
 };
 
+function composeJointBudgetData(britt, christian, existing){
+  const sources=[["britt",britt],["christian",christian]].filter(([,d])=>d&&d.recurring);
+  const recurring={incomeSources:[],savingsTransfers:[],autoTransfers:[],bills:[],subscriptions:[],variable:[],savings_household:[],savings_personal:[]};
+  const byName=(items,name)=>items.find(x=>String(x.name||"").trim().toLowerCase()===name);
+  sources.forEach(([owner,d])=>{
+    const r=d.recurring;
+    (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
+    (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({...x,id:`${owner}-sav-${x.id}`,sourceProfile:owner}));
+    (r.bills||[]).forEach(x=>{
+      const name=String(x.name||"").trim().toLowerCase();
+      const same=byName(recurring.bills,name);
+      if(!same)recurring.bills.push({...x,id:`joint-bill-${owner}-${x.id}`,sourceProfiles:[owner]});
+      else same.sourceProfiles=[...(same.sourceProfiles||[]),owner];
+    });
+    (r.subscriptions||[]).forEach(x=>{
+      const name=String(x.name||"").trim().toLowerCase();
+      if(!byName(recurring.subscriptions,name))recurring.subscriptions.push({...x,id:`joint-sub-${owner}-${x.id}`,sourceProfile:owner});
+    });
+    (r.variable||[]).forEach(x=>{
+      const name=String(x.name||"").trim().toLowerCase();
+      const same=byName(recurring.variable,name);
+      if(!same)recurring.variable.push({...x,id:`joint-var-${owner}-${x.id}`,sourceProfiles:[owner]});
+      else{same.weeklyBudget=(same.weeklyBudget||0)+(x.weeklyBudget||0);same.sourceProfiles=[...(same.sourceProfiles||[]),owner];}
+    });
+    (r.savings_household||[]).forEach(x=>recurring.savings_household.push({...x,id:`${owner}-hh-${x.id}`,sourceProfile:owner}));
+    (r.savings_personal||[]).forEach(x=>recurring.savings_personal.push({...x,id:`${owner}-pers-${x.id}`,sourceProfile:owner}));
+  });
+  const incomeWeeks=[];
+  sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
+  const oldExpenses=(existing?.expenses||[]).filter(e=>e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId));
+  const sourceExpenses=[];
+  sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
+    sourceExpenses.push({...e,id:`${owner}-exp-${e.id||i}`,owner,sourceProfile:owner,sourceExpenseId:e.id});
+  }));
+  return {
+    ...(existing||{}),
+    _ts:Math.max(existing?._ts||0,britt?._ts||0,christian?._ts||0),
+    recurring,incomeWeeks,
+    expenses:[...sourceExpenses,...oldExpenses],
+    periods:existing?.periods||{},
+    jointSourcesUpdated:Date.now()
+  };
+}
+
+async function loadJointBudgetData(){
+  let server=null;
+  try{const r=await fetch(API_BASE+"/api/data");if(r.ok)server=await r.json();}catch(e){}
+  const read=(id)=>{
+    let local=null;try{const raw=localStorage.getItem(getDataKey(id));local=raw?JSON.parse(raw):null;}catch(e){}
+    const remote=server?.[getDataKey(id)];
+    return remote&&(!local||(remote._ts||0)>=(local._ts||0))?remote:local;
+  };
+  const britt=read("britt"), christian=read("christian");
+  let existing=null;try{const raw=localStorage.getItem(getDataKey("joint"));existing=raw?JSON.parse(raw):null;}catch(e){}
+  const remoteJoint=server?.budgetData_joint;
+  if(remoteJoint&&(!existing||(remoteJoint._ts||0)>=(existing._ts||0)))existing=remoteJoint;
+  budgetData=composeJointBudgetData(britt,christian,existing);
+  budgetNid=parseInt(localStorage.getItem(getNidKey("joint"))||"1000");
+  localStorage.setItem(getDataKey("joint"),JSON.stringify(budgetData));
+  localStorage.setItem(getNidKey("joint"),String(budgetNid));
+  ensureBudgetSettings();
+}
+
 function initBudgetDataForProfile(profileId){
   // Each profile gets their own income/bills/etc
   // Britt gets real data, Christian gets placeholder
@@ -5761,6 +5836,9 @@ function initBudgetDataForProfile(profileId){
   if(profileId==="britt"){
     // Same as existing initBudgetDataV3 but keyed to this profile
     initBudgetDataV3();
+  } else if(profileId==="joint") {
+    budgetData=composeJointBudgetData(null,null,null);
+    budgetData.expenses=[];
   } else {
     // Christian placeholder
     budgetNid=1;
@@ -7244,7 +7322,11 @@ function renderTrackerVariable(){
   if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
   exps.sort((a,b)=>b.date.localeCompare(a.date));
   const total=exps.reduce((s,e)=>s+e.amount,0);
-  t("tv-total",$f(total));
+  const ownerTotals=exps.reduce((o,e)=>{const k=e.owner||"joint";o[k]=(o[k]||0)+e.amount;return o;},{});
+  const ownerText=activeBudgetProfile==="joint"
+    ?` · Brittni ${$f(ownerTotals.britt||0)} · Christian ${$f(ownerTotals.christian||0)} · Both ${$f(ownerTotals.joint||0)}`
+    :"";
+  t("tv-total",$f(total)+ownerText);
   const el=document.getElementById("tv-list");if(!el)return;
   if(!exps.length){el.innerHTML='<div class="empty-msg">No expenses found</div>';return;}
   el.innerHTML=exps.map(e=>{
@@ -7257,7 +7339,7 @@ function renderTrackerVariable(){
           +'<span class="exp-desc">'+(e.title||e.note||e.category)+'</span>'
           +(hasAmazon?'<span style="font-size:11px;color:var(--muted);background:var(--tag-bg);padding:1px 6px;border-radius:10px"><i class="ti ti-brand-amazon"></i> '+e.amazonLinks.length+'</span>':"")
         +'</div>'
-        +'<div class="exp-meta">'+e.category+(e.subcategory?' <span style="font-size:11px;background:var(--tag-bg);padding:1px 5px;border-radius:8px;color:var(--muted)">'+e.subcategory+'</span>':'') +' &middot; '+e.date+'</div>'
+        +'<div class="exp-meta">'+e.category+(e.subcategory?' <span style="font-size:11px;background:var(--tag-bg);padding:1px 5px;border-radius:8px;color:var(--muted)">'+e.subcategory+'</span>':'') +' &middot; '+e.date+(activeBudgetProfile==="joint"?' · '+({britt:"Brittni",christian:"Christian",joint:"Both"}[e.owner||"joint"]):"")+'</div>'
       +'</div>'
       +(hasNotes?'<div style="font-size:12px;color:var(--muted);max-width:180px;text-align:right;line-height:1.4;padding-left:8px;flex-shrink:0">'+e.note+'</div>':"")
       +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
@@ -7371,6 +7453,7 @@ function pickExpType(type,btn){
   document.getElementById("exp-cat-field").style.display=type==="variable"?"block":"none";
   document.getElementById("exp-sav-field").style.display=type==="savings"?"block":"none";
   const nwF=document.getElementById("exp-nw-field");if(nwF)nwF.style.display=type==="variable"?"block":"none";
+  const ownerF=document.getElementById("exp-owner-field");if(ownerF)ownerF.style.display=activeBudgetProfile==="joint"&&type==="variable"?"block":"none";
 }
 function pickExpNW(nw,btn){
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b===btn));
@@ -7423,6 +7506,7 @@ function openAddExpenseSheet(){
   document.getElementById("exp-amount").value="";
   document.getElementById("exp-date").value=fd(new Date());
   document.getElementById("exp-note").value="";
+  const ownerSel=document.getElementById("exp-owner");if(ownerSel)ownerSel.value="joint";
   document.getElementById("exp-amazon-links").innerHTML="";
   document.getElementById("exp-amazon-section").style.display="none";
   const subSelR=document.getElementById("exp-subcategory");if(subSelR)subSelR.value="";
@@ -7442,6 +7526,7 @@ function openEditExpense(id){
   document.getElementById("exp-amount").value=e.amount||"";
   document.getElementById("exp-date").value=e.date||fd(new Date());
   document.getElementById("exp-note").value=e.note||"";
+  const ownerSel=document.getElementById("exp-owner");if(ownerSel){ownerSel.value=e.owner||"joint";}
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b.dataset.nw===(e.nw||"need")));
   setTimeout(()=>{document.getElementById("exp-category").value=e.category||"";showAmazonFields();},10);
   document.getElementById("exp-delete").style.display="flex";
@@ -7481,14 +7566,17 @@ function saveExpenseFromModal(){
   const note=document.getElementById("exp-note").value.trim();
   const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
   const subcategory=category==="Amazon"?(document.getElementById("exp-subcategory")?.value||""):"";
+  const owner=activeBudgetProfile==="joint"&&expType==="variable"
+    ?(document.getElementById("exp-owner")?.value||"joint")
+    :(activeBudgetProfile||"joint");
   // effectiveCategory: if Amazon + subcategory set, count toward subcategory in totals
   const effectiveCategory=subcategory||category;
   if(!budgetData.expenses)budgetData.expenses=[];
   if(_editExpenseId){
     const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
-    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks});
+    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner});
   } else {
-    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks});
+    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner});
   }
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
