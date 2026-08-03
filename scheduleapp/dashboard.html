@@ -467,6 +467,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .exp-desc{font-size:15px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .exp-meta{font-size:12px;color:var(--muted);margin-top:2px}
 .exp-amt{font-family:"DM Mono",monospace;font-size:15px;font-weight:600;color:var(--text)}
+.tv-month-group+.tv-month-group{margin-top:18px}
+.tv-month-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px 8px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.tv-month-total{font-family:"DM Mono",monospace;color:var(--text);letter-spacing:0}
 .rec-edit-row{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border)}
 .rec-edit-row:last-child{border-bottom:none}
 .rec-edit-name{flex:1;font-size:15px;color:var(--text)}
@@ -1244,6 +1247,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
     <!-- Variable Expenses Tracker -->
     <div id="tracker-variable">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="tv-period-view" onchange="setTvPeriodView(this.value)" style="background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:14px">
+          <option value="weekly">Weekly</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <button class="cnav-btn" onclick="tvNav(-1)" aria-label="Previous expense period"><i class="ti ti-chevron-left"></i></button>
+        <div class="period-label" id="tv-period-label" style="font-size:15px;flex:1;text-align:center;min-width:160px"></div>
+        <button class="cnav-btn" onclick="tvNav(1)" aria-label="Next expense period"><i class="ti ti-chevron-right"></i></button>
+        <button class="today-btn" onclick="tvGoToday()">Today</button>
+      </div>
       <!-- Category filter bar -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="tv-filter-bar">
         <button class="filter-btn active" data-cat="all" onclick="setTvFilter('all',this)">All</button>
@@ -7529,11 +7543,52 @@ function renderTrackerView(){
 }
 
 let _tvFilter="all";
+let _tvPeriodView="monthly";
+let _tvPeriodDate=null;
 
 function setTvFilter(cat,btn){
   _tvFilter=cat;
   document.querySelectorAll("#tv-filter-bar .filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.cat===cat));
   renderTrackerVariable();
+}
+
+function setTvPeriodView(view){
+  _tvPeriodView=view;
+  renderTrackerVariable();
+}
+
+function tvGoToday(){
+  _tvPeriodDate=fd(new Date());
+  renderTrackerVariable();
+}
+
+function tvNav(dir){
+  const d=new Date((_tvPeriodDate||fd(new Date()))+"T12:00:00");
+  if(_tvPeriodView==="weekly")d.setDate(d.getDate()+dir*7);
+  else if(_tvPeriodView==="monthly")d.setMonth(d.getMonth()+dir);
+  else d.setFullYear(d.getFullYear()+dir);
+  _tvPeriodDate=fd(d);
+  renderTrackerVariable();
+}
+
+function getTvPeriod(){
+  if(!_tvPeriodDate)_tvPeriodDate=fd(new Date());
+  const d=new Date(_tvPeriodDate+"T12:00:00");
+  let start,end,label;
+  if(_tvPeriodView==="weekly"){
+    start=getFridayWeekStart(d);
+    const endDate=new Date(start+"T12:00:00");endDate.setDate(endDate.getDate()+6);end=fd(endDate);
+    label=new Date(start+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})
+      +" – "+endDate.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  } else if(_tvPeriodView==="yearly"){
+    const year=d.getFullYear();
+    start=year+"-01-01";end=year+"-12-31";label=String(year);
+  } else {
+    const year=d.getFullYear(),month=d.getMonth();
+    start=fd(new Date(year,month,1,12));end=fd(new Date(year,month+1,0,12));
+    label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+  }
+  return{start,end,label};
 }
 
 function buildTvFilterBar(){
@@ -7544,8 +7599,11 @@ function buildTvFilterBar(){
 }
 
 function renderTrackerVariable(){
+  const period=getTvPeriod();
+  const periodSelect=document.getElementById("tv-period-view");if(periodSelect)periodSelect.value=_tvPeriodView;
+  t("tv-period-label",period.label);
   buildTvFilterBar();
-  let exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable")];
+  let exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable"&&e.date>=period.start&&e.date<=period.end)];
   if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
   exps.sort((a,b)=>b.date.localeCompare(a.date));
   const total=exps.reduce((s,e)=>s+e.amount,0);
@@ -7555,8 +7613,17 @@ function renderTrackerVariable(){
     :"";
   t("tv-total",$f(total)+ownerText);
   const el=document.getElementById("tv-list");if(!el)return;
-  if(!exps.length){el.innerHTML='<div class="empty-msg">No expenses found</div>';return;}
-  el.innerHTML=exps.map(e=>{
+  if(!exps.length){el.innerHTML='<div class="empty-msg">No variable expenses found for this period</div>';return;}
+  const months=exps.reduce((groups,e)=>{
+    const key=e.date.slice(0,7);
+    if(!groups[key])groups[key]=[];
+    groups[key].push(e);
+    return groups;
+  },{});
+  el.innerHTML=Object.entries(months).map(([month,monthExps])=>{
+    const monthTotal=monthExps.reduce((sum,e)=>sum+e.amount,0);
+    const monthLabel=new Date(month+"-15T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"});
+    const rows=monthExps.map(e=>{
     const hasAmazon=e.amazonLinks&&e.amazonLinks.length>0;
     const hasNotes=e.note&&e.note.trim();
     return '<div class="exp-tracker-row">'
@@ -7572,6 +7639,11 @@ function renderTrackerVariable(){
       +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
       +'<button class="bs-item-btn" style="flex-shrink:0" onclick="openEditExpense('+e.id+')" title="Edit"><i class="ti ti-pencil"></i></button>'
     +'</div>';
+    }).join("");
+    return '<div class="tv-month-group">'
+     +'<div class="tv-month-header"><span>'+monthLabel+'</span><span class="tv-month-total">'+$f(monthTotal)+'</span></div>'
+     +rows
+     +'</div>';
   }).join("");
 }
 
