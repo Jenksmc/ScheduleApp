@@ -1275,7 +1275,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     <!-- Income Tracker -->
     <div id="tracker-income" style="display:none">
       <div class="budget-summary-card" style="margin-bottom:14px">
-        <div class="bsum-row"><span class="bsum-lbl">Hourly rate</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">$49.80/hr</span></div></div>
+        <div class="bsum-row"><span class="bsum-lbl">Income sources</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">0 configured</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Pending paychecks</span><div class="bsum-vals"><span class="bsum-a" id="ti-pending-count">0</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Scheduled (upcoming)</span><div class="bsum-vals"><span class="bsum-a" id="ti-scheduled-count">0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (YTD)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
@@ -7451,8 +7451,8 @@ function renderTrackerIncome(){
   const upcoming=scheduled.slice(0,3);
 
   const ytd=received.filter(w=>w.payDate.slice(0,4)===String(new Date().getFullYear())).reduce((s,w)=>s+incomeWeekAmount(w),0);
-  const rate=budgetData.recurring.incomeSources[0]?.hourlyRate||HOURLY_RATE_DEFAULT;
-  t("ti-rate","$"+rate.toFixed(2)+"/hr");
+  const sources=budgetData.recurring.incomeSources||[];
+  t("ti-rate",sources.length+" configured");
   t("ti-pending-count",pending.length);
   t("ti-scheduled-count",scheduled.length);
   t("ti-ytd",$f(ytd));
