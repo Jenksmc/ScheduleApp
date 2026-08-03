@@ -1275,7 +1275,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
     <!-- Income Tracker -->
     <div id="tracker-income" style="display:none">
       <div class="budget-summary-card" style="margin-bottom:14px">
-        <div class="bsum-row"><span class="bsum-lbl">Hourly rate</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">$49.80/hr</span></div></div>
+        <div class="bsum-row"><span class="bsum-lbl">Income sources</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">0 configured</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Pending paychecks</span><div class="bsum-vals"><span class="bsum-a" id="ti-pending-count">0</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Scheduled (upcoming)</span><div class="bsum-vals"><span class="bsum-a" id="ti-scheduled-count">0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (YTD)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
@@ -1670,10 +1670,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3 id="mis-heading">Add Income Source</h3><button class="close-x" onclick="closeModal('modal-income-source')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
-        <div class="two-col">
+        <div class="field"><label>Income type</label>
+          <select id="mis-income-type" onchange="updateIncomeTypeFields()">
+            <option value="hourly">Hourly</option>
+            <option value="lump-sum">Lump sum</option>
+          </select>
+        </div>
+        <div class="two-col" id="mis-hourly-fields">
           <div class="field"><label>Hourly rate ($)</label><input type="number" step="0.01" id="mis-rate" placeholder="49.80"/></div>
           <div class="field"><label>Hours per pay period</label><input type="number" step="0.5" id="mis-hours" placeholder="40"/></div>
         </div>
+        <div class="field" id="mis-lump-sum-field" style="display:none"><label>Amount per pay period ($)</label><input type="number" min="0" step="0.01" id="mis-amount" placeholder="0.00"/></div>
         <div class="field"><label>Pay frequency</label>
           <select id="mis-payfreq" onchange="updateIncomeScheduleFields()">
             <option value="weekly">Weekly</option>
@@ -1747,10 +1754,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <div id="modal-edit-income-week" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-income-week')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
-      <div class="modal-hdr"><h3>Edit Work Week</h3><button class="close-x" onclick="closeModal('modal-edit-income-week')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-hdr"><h3>Edit Income Payment</h3><button class="close-x" onclick="closeModal('modal-edit-income-week')"><i class="ti ti-x"></i></button></div>
 <div class="modal-body">
       <div style="font-size:14px;color:var(--muted);margin-bottom:12px" id="eiw-label"></div>
-      <div class="field"><label>Hours worked</label><input type="number" step="0.5" id="eiw-hours" placeholder="40"/></div>
+      <div class="field"><label id="eiw-value-label">Hours worked</label><input type="number" step="0.5" id="eiw-hours" placeholder="40"/></div>
       <div style="font-size:15px;color:var(--muted);margin-top:4px">Calculated pay: <strong id="eiw-calc">$0.00</strong></div>
       </div>
 <div class="mfooter">
@@ -6241,8 +6248,13 @@ function generateIncomeWeeks(){
         const payDateStr=fd(payD);
         const existingWeek=existing.get(key);
         if(existingWeek){
-          if(!existingWeek.hoursOverridden)existingWeek.hours=src.defaultHours||40;
-          existingWeek.rate=src.hourlyRate||HOURLY_RATE_DEFAULT;
+          existingWeek.incomeType=src.incomeType||"hourly";
+          if(existingWeek.incomeType==="lump-sum"){
+            if(!existingWeek.amountOverridden)existingWeek.amount=parseFloat(src.amount)||0;
+          }else{
+            if(!existingWeek.hoursOverridden)existingWeek.hours=src.defaultHours||40;
+            existingWeek.rate=src.hourlyRate||HOURLY_RATE_DEFAULT;
+          }
           existingWeek.payDate=payDateStr;
           existingWeek.sourceName=src.name;
           existingWeek.frequency=frequency;
@@ -6264,14 +6276,29 @@ function generateIncomeWeeks(){
           sourceId:src.id,
           sourceName:src.name,
           frequency,
+          incomeType:src.incomeType||"hourly",
+          amount:src.incomeType==="lump-sum"?(parseFloat(src.amount)||0):undefined,
         });
         existing.set(key,budgetData.incomeWeeks[budgetData.incomeWeeks.length-1]);
       }
+
       cur.setDate(cur.getDate()+intervalDays);
     }
   });
   // Sort by weekStartDate descending (most recent first)
   budgetData.incomeWeeks.sort((a,b)=>b.weekStartDate.localeCompare(a.weekStartDate));
+}
+
+function incomeSourceAmount(src){
+  return (src.incomeType||"hourly")==="lump-sum"
+    ?(parseFloat(src.amount)||0)
+    :(parseFloat(src.hourlyRate)||0)*(parseFloat(src.defaultHours)||40);
+}
+
+function incomeWeekAmount(w){
+  return (w.incomeType||"hourly")==="lump-sum"
+    ?(parseFloat(w.amount)||0)
+    :(parseFloat(w.hours)||0)*(parseFloat(w.rate)||0);
 }
 
 function isIncomeCycleStart(dateStr,src){
@@ -6497,8 +6524,8 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 
   // Income: every paycheck landing in range counts toward budget; received ones toward actual
   const paychecks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
-  const budgIncome=paychecks.reduce((s,w)=>s+(w.hours*w.rate),0);
-  const actualIncome=paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+(w.hours*w.rate),0);
+  const budgIncome=paychecks.reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const actualIncome=paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+incomeWeekAmount(w),0);
 
   // Bills & subs: budgeted from due dates in range, actuals from materialized expense records
   const dueOf=items=>items.flatMap(item=>recurringDueDatesIn(item,start,end).map(ds=>({item,dueDate:ds})));
@@ -7423,9 +7450,9 @@ function renderTrackerIncome(){
   const scheduled=weeks.filter(w=>w.status==="scheduled").sort((a,b)=>a.weekStartDate.localeCompare(b.weekStartDate));
   const upcoming=scheduled.slice(0,3);
 
-  const ytd=received.filter(w=>w.payDate.slice(0,4)===String(new Date().getFullYear())).reduce((s,w)=>s+(w.hours*w.rate),0);
-  const rate=budgetData.recurring.incomeSources[0]?.hourlyRate||HOURLY_RATE_DEFAULT;
-  t("ti-rate","$"+rate.toFixed(2)+"/hr");
+  const ytd=received.filter(w=>w.payDate.slice(0,4)===String(new Date().getFullYear())).reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const sources=budgetData.recurring.incomeSources||[];
+  t("ti-rate",sources.length+" configured");
   t("ti-pending-count",pending.length);
   t("ti-scheduled-count",scheduled.length);
   t("ti-ytd",$f(ytd));
@@ -7440,8 +7467,8 @@ function renderTrackerIncome(){
         <div class="iw-week">Week of ${w.weekStartDate}</div>
         <div style="font-size:12px;color:var(--muted)">${w.status==="received"?"Received: "+w.payDate:"Pay date: "+w.payDate} · ${w.sourceName||"Income"}</div>
       </div>
-      <span class="iw-hours">${w.hours}h</span>
-      <div class="iw-amount ${w.status}">${$f(w.hours*w.rate)}</div>
+      <span class="iw-hours">${(w.incomeType||"hourly")==="lump-sum"?"Lump sum":w.hours+"h"}</span>
+      <div class="iw-amount ${w.status}">${$f(incomeWeekAmount(w))}</div>
     </div>`).join("");
   };
   renderWeekList("ti-received-list",recent);
@@ -7455,16 +7482,25 @@ function openEditIncomeWeek(id){
   const w=(budgetData.incomeWeeks||[]).find(x=>x.id===id);if(!w)return;
   _editIWid=id;
   t("eiw-label","Week of "+w.weekStartDate+" · "+w.sourceName);
-  document.getElementById("eiw-hours").value=w.hours;
-  t("eiw-calc",$f(w.hours*w.rate));
-  document.getElementById("eiw-hours").oninput=function(){t("eiw-calc",$f((parseFloat(this.value)||0)*w.rate));};
+  const isLumpSum=(w.incomeType||"hourly")==="lump-sum";
+  t("eiw-value-label",isLumpSum?"Amount received ($)":"Hours worked");
+  document.getElementById("eiw-hours").step=isLumpSum?"0.01":"0.5";
+  document.getElementById("eiw-hours").value=isLumpSum?w.amount:w.hours;
+  t("eiw-calc",$f(incomeWeekAmount(w)));
+  document.getElementById("eiw-hours").oninput=function(){t("eiw-calc",$f(isLumpSum?(parseFloat(this.value)||0):(parseFloat(this.value)||0)*w.rate));};
   document.getElementById("modal-edit-income-week").style.display="block";
   setTimeout(()=>document.getElementById("eiw-hours").focus(),50);
 }
 function saveIncomeWeek(){
   const w=(budgetData.incomeWeeks||[]).find(x=>x.id===_editIWid);if(!w)return;
-  w.hours=parseFloat(document.getElementById("eiw-hours").value)||w.hours;
-  w.hoursOverridden=true;
+  const value=parseFloat(document.getElementById("eiw-hours").value);
+  if((w.incomeType||"hourly")==="lump-sum"){
+    if(!isNaN(value))w.amount=value;
+    w.amountOverridden=true;
+  }else{
+    if(!isNaN(value))w.hours=value;
+    w.hoursOverridden=true;
+  }
   saveBudgetData();closeModal("modal-edit-income-week");renderTrackerIncome();
 }
 
@@ -7628,7 +7664,9 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
       if(pf==="weekly"||pf==="biweekly") sched+=" · "+DOW[item.payWeekday??4]+"s";
       else if(pf==="monthly") sched+=" · "+(""+(""+item.payMonthday||"15"))+"th";
       else if(pf==="custom") sched="Custom: "+(item.payCustomDates||[]).join(" & ");
-      topLine=`<span class="bs-item-amount">${$f(item.hourlyRate||0)}/hr</span><span class="bs-item-freq">${item.defaultHours||40}h/pay period</span>`;
+      topLine=(item.incomeType||"hourly")==="lump-sum"
+        ?`<span class="bs-item-amount">${$f(item.amount||0)}</span><span class="bs-item-freq">Lump sum</span>`
+        :`<span class="bs-item-amount">${$f(item.hourlyRate||0)}/hr</span><span class="bs-item-freq">${item.defaultHours||40}h/pay period</span>`;
       midLine=`<div style="font-size:12px;color:var(--muted);margin-top:3px">${sched}</div>`;
       if(item.startDate) dateLine=`<div class="bs-item-date"><i class="ti ti-calendar" style="font-size:11px"></i> ${new Date(item.startDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>`;
     } else {
@@ -7744,7 +7782,7 @@ function renderBudgetSettings(){
 
   // Sub-labels for accordion rows
   const incomeSub=document.getElementById("bs-income-sub");
-  if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+(s2.hourlyRate||0)*(s2.defaultHours||40),0))+" expected per pay period":"No income sources";}
+  if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+incomeSourceAmount(s2),0))+" expected per pay period":"No income sources";}
   const billsSub=document.getElementById("bs-bills-sub");
   if(billsSub){const b=rec.bills||[];const tot=b.reduce((t,x)=>t+x.amount,0);billsSub.textContent=b.length?b.length+" bill"+(b.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No bills";}
   const subsSub=document.getElementById("bs-subs-sub");
@@ -7814,15 +7852,25 @@ function updateIncomeScheduleFields(){
   if(cf)cf.style.display=(freq==="custom")?"block":"none";
 }
 
-function openAddIncomeSource(){_editMIS=null;populateMIS({name:"",hourlyRate:49.80,defaultHours:40,processingWeeks:2,startDate:fd(new Date()),endDate:""});document.getElementById("mis-delete").style.display="none";t("mis-heading","Add Income Source");document.getElementById("modal-income-source").style.display="block";}
+function updateIncomeTypeFields(){
+  const isLumpSum=document.getElementById("mis-income-type")?.value==="lump-sum";
+  const hourly=document.getElementById("mis-hourly-fields");
+  const lumpSum=document.getElementById("mis-lump-sum-field");
+  if(hourly)hourly.style.display=isLumpSum?"none":"grid";
+  if(lumpSum)lumpSum.style.display=isLumpSum?"block":"none";
+}
+
+function openAddIncomeSource(){_editMIS=null;populateMIS({name:"",incomeType:"hourly",hourlyRate:49.80,defaultHours:40,amount:0,processingWeeks:2,startDate:fd(new Date()),endDate:""});document.getElementById("mis-delete").style.display="none";t("mis-heading","Add Income Source");document.getElementById("modal-income-source").style.display="block";}
 function openEditIncomeSource(id){
   const s=budgetData.recurring.incomeSources.find(x=>x.id===id);if(!s)return;
   _editMIS=id;populateMIS(s);document.getElementById("mis-delete").style.display="flex";t("mis-heading","Edit Income Source");document.getElementById("modal-income-source").style.display="block";
 }
 function populateMIS(s){
   document.getElementById("mis-name").value=s.name||"";
+  document.getElementById("mis-income-type").value=s.incomeType||"hourly";
   document.getElementById("mis-rate").value=s.hourlyRate||49.80;
   document.getElementById("mis-hours").value=s.defaultHours||40;
+  document.getElementById("mis-amount").value=parseFloat(s.amount)||"";
   document.getElementById("mis-start").value=s.startDate||fd(new Date());
   document.getElementById("mis-end").value=s.endDate||"";
   const pfEl=document.getElementById("mis-payfreq");if(pfEl)pfEl.value=s.payFrequency||"biweekly";
@@ -7830,18 +7878,22 @@ function populateMIS(s){
   document.querySelectorAll("#b-mis-weekday .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===wd));
   if(document.getElementById("mis-monthday"))document.getElementById("mis-monthday").value=s.payMonthday||15;
   if(document.getElementById("mis-customdates"))document.getElementById("mis-customdates").value=(s.payCustomDates||[1,15]).join(", ");
+  updateIncomeTypeFields();
   updateIncomeScheduleFields();
 }
 function saveIncomeSource(){
   const name=document.getElementById("mis-name").value.trim();if(!name)return;
+  const incomeType=document.getElementById("mis-income-type")?.value||"hourly";
   const payfreq=document.getElementById("mis-payfreq")?.value||"biweekly";
   const weekday=parseInt(document.querySelector("#b-mis-weekday .badge.active")?.dataset.v??"4");
   const monthday=parseInt(document.getElementById("mis-monthday")?.value||"15");
   const customdates=(document.getElementById("mis-customdates")?.value||"").split(",").map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
   const data={
     name,
+    incomeType,
     hourlyRate:parseFloat(document.getElementById("mis-rate").value)||49.80,
     defaultHours:parseFloat(document.getElementById("mis-hours").value)||40,
+    amount:incomeType==="lump-sum"?(parseFloat(document.getElementById("mis-amount").value)||0):null,
     payFrequency:payfreq,
     payWeekday:weekday,
     payMonthday:monthday,
