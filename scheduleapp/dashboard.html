@@ -1344,11 +1344,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="budget-section-hdr"><div class="bsect-title" style="color:#e0a040"><i class="ti ti-clock"></i> Pending</div></div>
         <div id="ti-pending-list"></div>
       </div>
-      <!-- Upcoming (next 3 future paychecks) -->
+      <!-- Upcoming paychecks in the selected period -->
       <div class="budget-card" style="margin-bottom:14px">
         <div class="budget-section-hdr"><div class="bsect-title" style="color:#5b8def"><i class="ti ti-calendar-clock"></i> Upcoming</div></div>
         <div id="ti-scheduled-list"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">Further-out paychecks are hidden here but still count toward budgeted income.</div>
       </div>
       <!-- History (older received) -->
       <div class="budget-card">
@@ -6245,6 +6244,7 @@ let _editIWid=null; // editing income week id
 
 const HOURLY_RATE_DEFAULT=49.80;
 const DEFAULT_HOURS=40;
+const INCOME_PROJECTION_YEARS=4;
 
 /* ── LOAD / SAVE ─────────────────────────────────────────────── */
 function saveBudgetData(){
@@ -6341,19 +6341,23 @@ function generateIncomeWeeks(){
     budgetData.incomeWeeks=budgetData.incomeWeeks.filter(w=>{
       if(w.isOneTime)return true;
       const src2=sources.find(s=>s.id===w.sourceId);if(!src2)return false;
-      return isIncomeCycleStart(w.weekStartDate,src2);
+      return w.weekStartDate>=src2.startDate
+        &&(!src2.endDate||w.weekStartDate<=src2.endDate)
+        &&isIncomeCycleStart(w.weekStartDate,src2);
     });
   }
   const existing=new Map((budgetData.incomeWeeks||[]).map(w=>[w.weekStartDate+":"+w.sourceId,w]));
   const today=new Date();
   const todayStr=fd(today);
-  // Project paychecks ~6 months into the future so weeks you haven't worked yet
+  // Project paychecks four years into the future so weeks you haven't worked yet
   // appear as "scheduled" and feed the budgeted (not actual) numbers.
-  const horizonStr=fd(new Date(today.getTime()+26*7*86400000));
+  const horizon=new Date(today);
+  horizon.setFullYear(horizon.getFullYear()+INCOME_PROJECTION_YEARS);
+  const horizonStr=fd(horizon);
 
   sources.forEach(src=>{
     if(!src.startDate)return;
-    const endStr=src.endDate||horizonStr;
+    const generationEndStr=src.endDate&&src.endDate<horizonStr?src.endDate:horizonStr;
     const frequency=src.payFrequency||"weekly";
     const cycleDates=[];
     let cur=new Date(src.startDate+"T12:00:00");
@@ -6361,7 +6365,7 @@ function generateIncomeWeeks(){
       const payWd=src.payWeekday??4;
       while(cur.getDay()!==payWd)cur.setDate(cur.getDate()+1);
       const intervalDays=frequency==="biweekly"?14:7;
-      while(fd(cur)<=horizonStr){
+      while(fd(cur)<=generationEndStr){
         cycleDates.push(new Date(cur));
         cur.setDate(cur.getDate()+intervalDays);
       }
@@ -6370,7 +6374,7 @@ function generateIncomeWeeks(){
         ?[parseInt(src.payMonthday)||1]
         :(src.payCustomDates||[]).map(Number).filter(d=>d>=1&&d<=31);
       cur=new Date(cur.getFullYear(),cur.getMonth(),1,12);
-      while(fd(cur)<=horizonStr){
+      while(fd(cur)<=generationEndStr){
         const lastDay=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
         days.forEach(day=>cycleDates.push(new Date(cur.getFullYear(),cur.getMonth(),Math.min(day,lastDay),12)));
         cur.setMonth(cur.getMonth()+1);
@@ -6379,7 +6383,7 @@ function generateIncomeWeeks(){
     cycleDates.sort((a,b)=>a-b).forEach(cur=>{
       const ws=fd(cur);
       const key=ws+":"+src.id;
-      if(ws>=src.startDate&&ws<=endStr){
+      if(ws>=src.startDate&&ws<=generationEndStr){
         const payD=(frequency==="weekly"||frequency==="biweekly")
           ?new Date(cur.getTime()+(src.processingWeeks||2)*7*86400000)
           :new Date(cur);
@@ -7826,10 +7830,8 @@ function renderTrackerIncome(){
   const history=received.slice(3);
   // Pending: worked, awaiting pay (soonest pay date first)
   const pending=weeks.filter(w=>w.status==="pending").sort((a,b)=>a.payDate.localeCompare(b.payDate));
-  // Upcoming: next 3 scheduled only. The rest exist in data (they still feed
-  // budgeted income in every view) but stay hidden here until they get close.
+  // Upcoming: every scheduled paycheck in the selected period.
   const scheduled=weeks.filter(w=>w.status==="scheduled").sort((a,b)=>a.weekStartDate.localeCompare(b.weekStartDate));
-  const upcoming=scheduled.slice(0,3);
 
   const ytd=received.reduce((s,w)=>s+incomeWeekAmount(w),0);
   const sources=budgetData.recurring.incomeSources||[];
@@ -7854,7 +7856,7 @@ function renderTrackerIncome(){
   };
   renderWeekList("ti-received-list",recent);
   renderWeekList("ti-pending-list",pending);
-  renderWeekList("ti-scheduled-list",upcoming);
+  renderWeekList("ti-scheduled-list",scheduled);
   renderWeekList("ti-history-list",history);
 }
 
