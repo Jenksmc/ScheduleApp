@@ -1031,7 +1031,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ws-sav-hh" onclick="openEditBudgSav('weekly','household')" style="cursor:pointer" title="Edit budgeted household savings for this week">$0</span><span class="bcompact-a" id="wa-sav-hh">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ws-sav-pers" onclick="openEditBudgSav('weekly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this week">$0</span><span class="bcompact-a" id="wa-sav-pers">$0</span></div>
+          <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ws-sav-pers" onclick="openEditBudgSav('weekly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this week">$0</span><span class="bcompact-a" id="wa-sav-pers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ws-end">$0</span><span class="bcompact-a" id="wa-end">$0</span></div>
           <!-- hidden fields still needed for JS -->
           <span id="ws-subs" style="display:none"></span><span id="wa-subs" style="display:none"></span>
@@ -1094,7 +1094,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">SAVINGS</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+          <div id="w-savings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
             <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
               <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">HOUSEHOLD</div>
               <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period budgeted</div>
@@ -1106,7 +1106,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
               <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:2px">Total saved</div>
               <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:#378add" id="w-sav-hh-total">$0</div>
             </div>
-            <div style="background:var(--tag-bg);border-radius:10px;padding:10px">
+            <div class="personal-savings-only" style="background:var(--tag-bg);border-radius:10px;padding:10px">
               <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px">PERSONAL</div>
               <div style="font-size:11px;color:var(--muted);margin-bottom:2px">This period budgeted</div>
               <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--muted)" id="w-sav-pers-budg">$0</div>
@@ -1136,7 +1136,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ms-sav-hh" onclick="openEditBudgSav('monthly','household')" style="cursor:pointer" title="Edit budgeted household savings for this month">$0</span><span class="bcompact-a" id="ma-sav-hh">$0</span></div>
-          <div class="bcompact-row neg"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ms-sav-pers" onclick="openEditBudgSav('monthly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this month">$0</span><span class="bcompact-a" id="ma-sav-pers">$0</span></div>
+          <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ms-sav-pers" onclick="openEditBudgSav('monthly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this month">$0</span><span class="bcompact-a" id="ma-sav-pers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ms-end">$0</span><span class="bcompact-a" id="ma-end">$0</span></div>
         </div>
         <div class="budget-card bcompact-card">
@@ -1164,7 +1164,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div id="m-var-lines"></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div id="m-savings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="budget-card bcompact-card">
           <div class="bcompact-title">HOUSEHOLD SAVINGS</div>
           <div style="font-size:11px;color:var(--muted);margin-top:6px">This month budgeted</div>
@@ -1176,7 +1176,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <div style="font-size:11px;color:var(--muted);margin-top:6px">Total saved</div>
           <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#378add" id="m-sav-hh-total">$0</div>
         </div>
-        <div class="budget-card bcompact-card">
+        <div class="budget-card bcompact-card personal-savings-only">
           <div class="bcompact-title">PERSONAL SAVINGS</div>
           <div style="font-size:11px;color:var(--muted);margin-top:6px">This month budgeted</div>
           <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--muted)" id="m-sav-pers-budg">$0</div>
@@ -1260,12 +1260,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="bsum-row"><span class="bsum-lbl">Expected saved (auto-transfers)</span><div class="bsum-vals"><span class="bsum-a" id="ts-expected">$0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Actual saved (logged)</span><div class="bsum-vals"><span class="bsum-a good" id="ts-actual">$0</span></div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div id="tracker-savings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div class="budget-card">
           <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-home"></i> Household</div><div class="bsect-total" id="ts-hh-total">$0</div></div>
           <div id="ts-hh-list"></div>
         </div>
-        <div class="budget-card">
+        <div class="budget-card personal-savings-only">
           <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-user"></i> Personal</div><div class="bsect-total" id="ts-pers-total">$0</div></div>
           <div id="ts-pers-list"></div>
         </div>
@@ -1634,7 +1634,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
             <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
-            <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+            <button class="badge personal-savings-only" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
           </div>
         </div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label>
@@ -1737,7 +1737,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="field"><label>Savings bucket</label>
         <select id="mat-bucket">
           <option value="household">Household</option>
-          <option value="personal">Personal</option>
+          <option class="personal-savings-only" value="personal">Personal</option>
         </select>
       </div>
       </div>
@@ -1941,7 +1941,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Bucket</label>
           <select id="st-bucket">
             <option value="household">Household / work</option>
-            <option value="personal">Personal</option>
+            <option class="personal-savings-only" value="personal">Personal</option>
           </select>
         </div>
       </div>
@@ -5827,7 +5827,7 @@ function composeJointBudgetData(britt, christian, existing){
   sources.forEach(([owner,d])=>{
     const r=d.recurring;
     (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
-    (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({
+    (r.savingsTransfers||r.autoTransfers||[]).filter(x=>x.bucket!=="personal").forEach(x=>recurring.savingsTransfers.push({
       ...x,
       id:`${owner}-sav-${x.id}`,
       incomeSourceId:x.incomeSourceId==null?null:`${owner}-${x.incomeSourceId}`,
@@ -5857,16 +5857,17 @@ function composeJointBudgetData(britt, christian, existing){
       else{same.weeklyBudget=(same.weeklyBudget||0)+(x.weeklyBudget||0);same.sourceProfiles=[...(same.sourceProfiles||[]),owner];}
     });
     (r.savings_household||[]).forEach(x=>recurring.savings_household.push({...x,id:`${owner}-hh-${x.id}`,sourceProfile:owner}));
-    (r.savings_personal||[]).forEach(x=>recurring.savings_personal.push({...x,id:`${owner}-pers-${x.id}`,sourceProfile:owner}));
   });
   const incomeWeeks=[];
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
   (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
-  const oldExpenses=(existing?.expenses||[]).filter(e=>!debtJointIds.has(String(e.recurringId))
+  const oldExpenses=(existing?.expenses||[]).filter(e=>!(e.type==="savings"&&e.savingsBucket==="personal")
+    &&!debtJointIds.has(String(e.recurringId))
     &&!(String(e.recKey||"").startsWith("joint-")&&e.owner!=="joint")
     &&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
   const sourceExpenses=[];
   sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
+    if(e.type==="savings"&&e.savingsBucket==="personal")return;
     if(e.type==="bill"&&(d.recurring.bills||[]).some(b=>b.isDebt&&String(b.id)===String(e.recurringId)))return;
     const recurringId=jointRecurringIds.get(`${owner}:${e.type}:${e.recurringId}`)??e.recurringId;
     const recKey=e.recKey&&recurringId!==e.recurringId?`${recurringId}:${e.date}`:e.recKey;
@@ -6675,11 +6676,12 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const _savAuto=_isMonthlySav?computeMonthlySavFromWeeks(start,end):scheduledSavingsBuckets(start,end);
   const budgSavHH=period.overrideBudgSavHH!=null?period.overrideBudgSavHH
     :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_savAuto.hh);
-  const budgSavPers=period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_savAuto.pers;
+  const budgSavPers=activeBudgetProfile==="joint"?0
+    :(period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_savAuto.pers);
   const budgSav=budgSavHH+budgSavPers;
   const savExps=getExpensesFor(start,end,"savings");
   const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
-  const actualSavPers=savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const actualSavPers=activeBudgetProfile==="joint"?0:savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const actualSav=actualSavHH+actualSavPers;
 
   // Variable budget default: a flat weekly amount from settings ($350 unless
@@ -7149,6 +7151,12 @@ function renderBudgetPage(){
 }
 
 function renderBudgetOverview(){
+  const jointSavings=activeBudgetProfile==="joint";
+  document.querySelectorAll(".personal-savings-only").forEach(el=>el.style.display=jointSavings?"none":"");
+  ["w-savings-grid","m-savings-grid","tracker-savings-grid"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.gridTemplateColumns=jointSavings?"1fr":"1fr 1fr";
+  });
   const mbContainer = document.getElementById("mb-container");
   const isMobile = document.body.classList.contains("mobile-mode");
   if(isMobile){
@@ -7389,9 +7397,15 @@ function renderMonthlyView(){
   t("m-sav-pers-budg",$f(cp.budgSavPers));
   t("m-sav-household",$f(cp.actualSavHH));
   t("m-sav-personal",$f(cp.actualSavPers));
-  t("m-sav-hh-tbudg",$f(_tbM.hh));
+  const previousMonthStart=fd(new Date(y,m-2,1));
+  const previousMonthEnd=fd(new Date(y,m-1,0));
+  const previousMonthActualHH=allSavExpsM.filter(e=>(e.savingsBucket||"household")==="household"&&e.date>=previousMonthStart&&e.date<=previousMonthEnd).reduce((s,e)=>s+e.amount,0);
+  const previousActualTotalHH=allSavExpsM.filter(e=>(e.savingsBucket||"household")==="household"&&e.date<=previousMonthEnd).reduce((s,e)=>s+e.amount,0);
+  const totalBudgetedHH=activeBudgetProfile==="joint"?previousMonthActualHH+cp.budgSavHH:_tbM.hh;
+  const totalSavedHH=activeBudgetProfile==="joint"?previousActualTotalHH+cp.actualSavHH:hhTotalM;
+  t("m-sav-hh-tbudg",$f(totalBudgetedHH));
   t("m-sav-pers-tbudg",$f(_tbM.pers));
-  t("m-sav-hh-total",$f(hhTotalM));
+  t("m-sav-hh-total",$f(totalSavedHH));
   t("m-sav-pers-total",$f(persTotalM));
   const periodLabel=new Date(y,m-1,15).toLocaleDateString("en-US",{month:"long",year:"numeric"});
   t("m-period-label",periodLabel);
@@ -7562,11 +7576,12 @@ function renderTrackerVariable(){
 }
 
 function renderTrackerSavings(){
-  const savExps=[...(budgetData.expenses||[]).filter(e=>e.type==="savings")].sort((a,b)=>b.date.localeCompare(a.date));
+  const jointSavings=activeBudgetProfile==="joint";
+  const savExps=[...(budgetData.expenses||[]).filter(e=>e.type==="savings"&&(!jointSavings||e.savingsBucket!=="personal"))].sort((a,b)=>b.date.localeCompare(a.date));
   const today=fd(new Date());
   const earliest=savingsScheduleEarliestDate();
   const expectedBuckets=earliest?scheduledSavingsBuckets(earliest,today,true):{hh:0,pers:0};
-  const expected=expectedBuckets.hh+expectedBuckets.pers;
+  const expected=expectedBuckets.hh+(jointSavings?0:expectedBuckets.pers);
   const actual=savExps.reduce((s,e)=>s+e.amount,0);
   t("ts-expected",$f(expected));t("ts-actual",$f(actual));
 
@@ -7702,6 +7717,10 @@ function pickExpNW(nw,btn){
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b===btn));
 }
 function pickSavBucket(bucket,btn){
+  if(activeBudgetProfile==="joint"){
+    bucket="household";
+    btn=document.querySelector("#exp-sav-field [data-v='household']");
+  }
   _savBucket=bucket;
   document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b===btn));
 }
@@ -8904,7 +8923,7 @@ function renderMobileBudget(){
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">+ Income</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgIncome)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#3db87a">${$f(actualIncome)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− Expenses</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgExpenses)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#e05555">${$f(actualExpenses)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− HH Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavHH:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavHH:0)}</td></tr>
-        <tr><td style="padding:5px 0;color:var(--muted)">− Pers. Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavPers:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavPers:0)}</td></tr>
+        ${activeBudgetProfile==="joint"?"":`<tr><td style="padding:5px 0;color:var(--muted)">− Pers. Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavPers:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavPers:0)}</td></tr>`}
         <tr style="border-top:2px solid var(--border)"><td style="padding:6px 0;font-weight:700">END BALANCE</td><td style="text-align:right;padding:6px 4px;font-family:'DM Mono',monospace;font-weight:700">${$f(budgEnd)}</td><td style="text-align:right;padding:6px 0;font-family:'DM Mono',monospace;font-weight:700;color:${ebClr}">${$f(actualEnd)}</td></tr>
       </table>
     </div>`;
@@ -9019,15 +9038,15 @@ function renderMbSection(){
     const hh=savExps.filter(e=>e.savingsBucket==="household");
     const pp=savExps.filter(e=>e.savingsBucket==="personal");
     el.innerHTML=`<div class="bcompact-title">SAVINGS</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:${activeBudgetProfile==="joint"?"1fr":"1fr 1fr"};gap:8px;margin-bottom:8px">
         <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">HOUSEHOLD</div>
           <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#378add">${$f(hh.reduce((s,e)=>s+e.amount,0))}</div>
         </div>
-        <div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
+        ${activeBudgetProfile==="joint"?"":`<div style="text-align:center;padding:8px;background:var(--tag-bg);border-radius:8px">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">PERSONAL</div>
           <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#378add">${$f(pp.reduce((s,e)=>s+e.amount,0))}</div>
-        </div>
+        </div>`}
       </div>`;
   }
 }
@@ -9184,7 +9203,7 @@ function saveSavingsTransfer(){
   const incomeSourceId=sourceValue===""?null:(budgetData.recurring.incomeSources||[]).find(x=>String(x.id)===sourceValue)?.id??sourceValue;
   const startDate=document.getElementById("st-startdate").value||fd(new Date());
   const endDate=document.getElementById("st-enddate").value||null;
-  const bucket=document.getElementById("st-bucket").value;
+  const bucket=activeBudgetProfile==="joint"?"household":document.getElementById("st-bucket").value;
   const data={name,amount,scheduleType,frequency,incomeSourceId,startDate,endDate,bucket};
   if(!budgetData.recurring.savingsTransfers)budgetData.recurring.savingsTransfers=[];
   if(_editSavTransferId){
