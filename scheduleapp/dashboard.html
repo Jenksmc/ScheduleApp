@@ -6207,14 +6207,12 @@ function getLastThursday(fromDate){
 function generateIncomeWeeks(){
   if(!budgetData)return;
   const sources=budgetData.recurring.incomeSources||[];
-  // Remove pending weeks with wrong weekday for their source (stale from old settings)
+  // Remove pending entries that no longer match their source's schedule.
   if(budgetData.incomeWeeks){
     budgetData.incomeWeeks=budgetData.incomeWeeks.filter(w=>{
       if(w.status==="received")return true; // always keep received
       const src2=sources.find(s=>s.id===w.sourceId);if(!src2)return false;
-      const payWd2=src2.payWeekday??4;
-      const wDay=new Date(w.weekStartDate+"T12:00:00").getDay();
-      return wDay===payWd2; // only keep pending weeks with correct weekday
+      return isIncomeCycleStart(w.weekStartDate,src2);
     });
   }
   const existing=new Set((budgetData.incomeWeeks||[]).map(w=>w.weekStartDate+":"+w.sourceId));
@@ -6227,17 +6225,22 @@ function generateIncomeWeeks(){
   sources.forEach(src=>{
     if(!src.startDate)return;
     const endStr=src.endDate||horizonStr;
-    // Use payWeekday from income source settings (default Thursday=4)
-    const payWd = src.payWeekday??4;
+    const frequency=src.payFrequency||"weekly";
+    const intervalDays=frequency==="biweekly"?14:7;
     let cur=new Date(src.startDate+"T12:00:00");
-    // Snap to first payWeekday on or after startDate
-    while(cur.getDay()!==payWd)cur.setDate(cur.getDate()+1);
+    if(frequency==="weekly"||frequency==="biweekly"){
+      // Use payWeekday from income source settings (default Thursday=4).
+      const payWd=src.payWeekday??4;
+      while(cur.getDay()!==payWd)cur.setDate(cur.getDate()+1);
+    }
     while(fd(cur)<=horizonStr){
       const ws=fd(cur);
       const key=ws+":"+src.id;
       if(!existing.has(key)&&ws>=src.startDate&&ws<=endStr){
         existing.add(key);
-        // Pay date = ws + processingWeeks * 7 days (same weekday)
+        // A biweekly entry represents the complete two-week paycheck.
+        const cycleWeeks=frequency==="biweekly"?2:1;
+        // Pay date = cycle start + processing delay.
         const payD=new Date(cur.getTime()+(src.processingWeeks||2)*7*86400000);
         const payDateStr=fd(payD);
         // received = already paid · pending = worked, awaiting pay · scheduled = not yet worked
@@ -6248,19 +6251,31 @@ function generateIncomeWeeks(){
         budgetData.incomeWeeks.push({
           id:budgetNid++,
           weekStartDate:ws,
-          hours:src.defaultHours||40,
+          hours:(src.defaultHours||40)*cycleWeeks,
           rate:src.hourlyRate||HOURLY_RATE_DEFAULT,
           status,
           payDate:payDateStr,
           sourceId:src.id,
           sourceName:src.name,
+          frequency,
         });
       }
-      cur.setDate(cur.getDate()+7);
+      cur.setDate(cur.getDate()+intervalDays);
     }
   });
   // Sort by weekStartDate descending (most recent first)
   budgetData.incomeWeeks.sort((a,b)=>b.weekStartDate.localeCompare(a.weekStartDate));
+}
+
+function isIncomeCycleStart(dateStr,src){
+  const frequency=src.payFrequency||"weekly";
+  if(frequency!=="weekly"&&frequency!=="biweekly")return true;
+  const d=new Date(dateStr+"T12:00:00");
+  if(d.getDay()!==(src.payWeekday??4))return false;
+  if(frequency==="weekly")return true;
+  const anchor=new Date(src.startDate+"T12:00:00");
+  while(anchor.getDay()!==(src.payWeekday??4))anchor.setDate(anchor.getDate()+1);
+  return Math.round((d-anchor)/86400000)%14===0;
 }
 
 function autoUpdateIncomeStatuses(){
