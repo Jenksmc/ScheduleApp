@@ -462,6 +462,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .hhabit-cell.today-col{box-shadow:inset 0 0 0 1px var(--today-color)}
 .exp-tracker-row{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border)}
 .exp-tracker-row:last-child{border-bottom:none}
+.expense-select{width:17px;height:17px;accent-color:var(--today-color);cursor:pointer;flex-shrink:0}
+.expense-selection-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 0 10px;min-height:32px}
+.expense-selection-count{font-size:13px;color:var(--muted);margin-right:auto}
 .exp-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .exp-info{flex:1;min-width:0}
 .exp-desc{font-size:15px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1269,15 +1272,36 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div class="budget-card" style="margin-bottom:14px">
         <div class="budget-section-hdr"><div class="bsect-title"><i class="ti ti-receipt"></i> Variable Expenses</div><div class="bsect-total" id="tv-total">$0</div></div>
+        <div class="expense-selection-bar" id="tv-selection-bar">
+          <span class="expense-selection-count" id="tv-selection-count">0 selected</span>
+          <button class="btn" id="tv-select-all" onclick="selectAllVisibleExpenses()">Select all</button>
+          <button class="btn btn-danger" id="tv-delete-selected" onclick="deleteSelectedExpenses()" disabled><i class="ti ti-trash"></i> Delete selected</button>
+        </div>
         <div id="tv-list"></div>
       </div>
     </div>
 
     <!-- Savings Tracker -->
     <div id="tracker-savings" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="ts-period-view" onchange="setTsPeriodView(this.value)" style="background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:14px">
+          <option value="weekly">Weekly</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <button class="cnav-btn" onclick="tsNav(-1)" aria-label="Previous savings period"><i class="ti ti-chevron-left"></i></button>
+        <div class="period-label" id="ts-period-label" style="font-size:15px;flex:1;text-align:center;min-width:160px"></div>
+        <button class="cnav-btn" onclick="tsNav(1)" aria-label="Next savings period"><i class="ti ti-chevron-right"></i></button>
+        <button class="today-btn" onclick="tsGoToday()">Today</button>
+      </div>
       <div class="budget-summary-card" style="margin-bottom:14px">
         <div class="bsum-row"><span class="bsum-lbl">Expected saved (auto-transfers)</span><div class="bsum-vals"><span class="bsum-a" id="ts-expected">$0</span></div></div>
         <div class="bsum-row total-brow"><span class="bsum-lbl">Actual saved (logged)</span><div class="bsum-vals"><span class="bsum-a good" id="ts-actual">$0</span></div></div>
+      </div>
+      <div class="expense-selection-bar" id="ts-selection-bar">
+        <span class="expense-selection-count" id="ts-selection-count">0 selected</span>
+        <button class="btn" id="ts-select-all" onclick="selectAllVisibleExpenses()">Select all</button>
+        <button class="btn btn-danger" id="ts-delete-selected" onclick="deleteSelectedExpenses()" disabled><i class="ti ti-trash"></i> Delete selected</button>
       </div>
       <div id="tracker-savings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div class="budget-card">
@@ -1293,11 +1317,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 
     <!-- Income Tracker -->
     <div id="tracker-income" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="ti-period-view" onchange="setTiPeriodView(this.value)" style="background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:14px">
+          <option value="weekly">Weekly</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <button class="cnav-btn" onclick="tiNav(-1)" aria-label="Previous income period"><i class="ti ti-chevron-left"></i></button>
+        <div class="period-label" id="ti-period-label" style="font-size:15px;flex:1;text-align:center;min-width:160px"></div>
+        <button class="cnav-btn" onclick="tiNav(1)" aria-label="Next income period"><i class="ti ti-chevron-right"></i></button>
+        <button class="today-btn" onclick="tiGoToday()">Today</button>
+      </div>
       <div class="budget-summary-card" style="margin-bottom:14px">
         <div class="bsum-row"><span class="bsum-lbl">Income sources</span><div class="bsum-vals"><span class="bsum-a" id="ti-rate">0 configured</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Pending paychecks</span><div class="bsum-vals"><span class="bsum-a" id="ti-pending-count">0</span></div></div>
         <div class="bsum-row"><span class="bsum-lbl">Scheduled (upcoming)</span><div class="bsum-vals"><span class="bsum-a" id="ti-scheduled-count">0</span></div></div>
-        <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (YTD)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
+        <div class="bsum-row total-brow"><span class="bsum-lbl">Total received (filtered)</span><div class="bsum-vals"><span class="bsum-a good" id="ti-ytd">$0</span></div></div>
       </div>
       <!-- Recent paychecks (last 3 received) -->
       <div class="budget-card" style="margin-bottom:14px">
@@ -7556,6 +7591,12 @@ let _tvFilter="all";
 let _tvPersonFilter="all";
 let _tvPeriodView="monthly";
 let _tvPeriodDate=null;
+let _tsPeriodView="monthly";
+let _tsPeriodDate=null;
+let _tiPeriodView="monthly";
+let _tiPeriodDate=null;
+const _selectedExpenseIds=new Set();
+let _visibleExpenseIds=[];
 
 function setTvFilter(cat,btn){
   _tvFilter=cat;
@@ -7579,24 +7620,19 @@ function tvGoToday(){
 }
 
 function tvNav(dir){
-  const d=new Date((_tvPeriodDate||fd(new Date()))+"T12:00:00");
-  if(_tvPeriodView==="weekly")d.setDate(d.getDate()+dir*7);
-  else if(_tvPeriodView==="monthly")d.setMonth(d.getMonth()+dir);
-  else d.setFullYear(d.getFullYear()+dir);
-  _tvPeriodDate=fd(d);
+  _tvPeriodDate=trackerPeriodNav(_tvPeriodView,_tvPeriodDate,dir);
   renderTrackerVariable();
 }
 
-function getTvPeriod(){
-  if(!_tvPeriodDate)_tvPeriodDate=fd(new Date());
-  const d=new Date(_tvPeriodDate+"T12:00:00");
+function getTrackerPeriod(view,date){
+  const d=new Date((date||fd(new Date()))+"T12:00:00");
   let start,end,label;
-  if(_tvPeriodView==="weekly"){
+  if(view==="weekly"){
     start=getFridayWeekStart(d);
     const endDate=new Date(start+"T12:00:00");endDate.setDate(endDate.getDate()+6);end=fd(endDate);
     label=new Date(start+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})
       +" – "+endDate.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-  } else if(_tvPeriodView==="yearly"){
+  } else if(view==="yearly"){
     const year=d.getFullYear();
     start=year+"-01-01";end=year+"-12-31";label=String(year);
   } else {
@@ -7605,6 +7641,66 @@ function getTvPeriod(){
     label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});
   }
   return{start,end,label};
+}
+
+function getTvPeriod(){
+  if(!_tvPeriodDate)_tvPeriodDate=fd(new Date());
+  return getTrackerPeriod(_tvPeriodView,_tvPeriodDate);
+}
+
+function trackerPeriodNav(view,date,dir){
+  const d=new Date((date||fd(new Date()))+"T12:00:00");
+  if(view==="weekly")d.setDate(d.getDate()+dir*7);
+  else if(view==="monthly")d.setMonth(d.getMonth()+dir);
+  else d.setFullYear(d.getFullYear()+dir);
+  return fd(d);
+}
+
+function setTsPeriodView(view){_tsPeriodView=view;renderTrackerSavings();}
+function tsGoToday(){_tsPeriodDate=fd(new Date());renderTrackerSavings();}
+function tsNav(dir){_tsPeriodDate=trackerPeriodNav(_tsPeriodView,_tsPeriodDate,dir);renderTrackerSavings();}
+function setTiPeriodView(view){_tiPeriodView=view;renderTrackerIncome();}
+function tiGoToday(){_tiPeriodDate=fd(new Date());renderTrackerIncome();}
+function tiNav(dir){_tiPeriodDate=trackerPeriodNav(_tiPeriodView,_tiPeriodDate,dir);renderTrackerIncome();}
+
+function setVisibleExpenses(exps,prefix){
+  _visibleExpenseIds=exps.map(e=>String(e.id));
+  const visible=new Set(_visibleExpenseIds);
+  [..._selectedExpenseIds].forEach(id=>{if(!visible.has(id))_selectedExpenseIds.delete(id);});
+  updateExpenseSelectionBar(prefix);
+}
+
+function updateExpenseSelectionBar(prefix){
+  const count=_selectedExpenseIds.size;
+  t(prefix+"-selection-count",count+" selected");
+  const allBtn=document.getElementById(prefix+"-select-all");
+  if(allBtn){
+    allBtn.disabled=!_visibleExpenseIds.length;
+    allBtn.textContent=_visibleExpenseIds.length&&_visibleExpenseIds.every(id=>_selectedExpenseIds.has(id))?"Clear selection":"Select all";
+  }
+  const deleteBtn=document.getElementById(prefix+"-delete-selected");
+  if(deleteBtn)deleteBtn.disabled=!count;
+}
+
+function toggleExpenseSelection(id,checked){
+  if(checked)_selectedExpenseIds.add(String(id));
+  else _selectedExpenseIds.delete(String(id));
+  updateExpenseSelectionBar(trackerView==="savings"?"ts":"tv");
+}
+
+function selectAllVisibleExpenses(){
+  const allSelected=_visibleExpenseIds.length&&_visibleExpenseIds.every(id=>_selectedExpenseIds.has(id));
+  _visibleExpenseIds.forEach(id=>allSelected?_selectedExpenseIds.delete(id):_selectedExpenseIds.add(id));
+  renderTrackerView();
+}
+
+function deleteSelectedExpenses(){
+  const count=_selectedExpenseIds.size;if(!count)return;
+  if(!confirm("Delete "+count+" selected expense"+(count===1?"":"s")+"?"))return;
+  (budgetData.expenses||[]).filter(e=>_selectedExpenseIds.has(String(e.id))).forEach(e=>_tombstoneRecExpense(e.id));
+  budgetData.expenses=(budgetData.expenses||[]).filter(e=>!_selectedExpenseIds.has(String(e.id)));
+  _selectedExpenseIds.clear();
+  saveBudgetData();renderBudgetOverview();renderTrackerView();
 }
 
 function buildTvFilterBar(){
@@ -7628,6 +7724,7 @@ function renderTrackerVariable(){
   if(activeBudgetProfile==="joint"&&_tvPersonFilter!=="all")exps=exps.filter(e=>e.owner===_tvPersonFilter);
   if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
   exps.sort((a,b)=>b.date.localeCompare(a.date));
+  setVisibleExpenses(exps,"tv");
   const total=exps.reduce((s,e)=>s+e.amount,0);
   const ownerTotals=exps.reduce((o,e)=>{const k=e.owner||"joint";o[k]=(o[k]||0)+e.amount;return o;},{});
   const ownerText=activeBudgetProfile==="joint"
@@ -7649,6 +7746,7 @@ function renderTrackerVariable(){
     const hasAmazon=e.amazonLinks&&e.amazonLinks.length>0;
     const hasNotes=e.note&&e.note.trim();
     return '<div class="exp-tracker-row">'
+      +'<input class="expense-select" type="checkbox" aria-label="Select expense" data-expense-id="'+e.id+'" onchange="toggleExpenseSelection(this.dataset.expenseId,this.checked)"'+(_selectedExpenseIds.has(String(e.id))?' checked':'')+'>'
       +'<div class="exp-cat-dot" style="background:'+catColor(e.category)+'"></div>'
       +'<div class="exp-info" style="flex:1;min-width:0">'
         +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
@@ -7671,10 +7769,15 @@ function renderTrackerVariable(){
 
 function renderTrackerSavings(){
   const jointSavings=activeBudgetProfile==="joint";
-  const savExps=[...(budgetData.expenses||[]).filter(e=>e.type==="savings"&&(!jointSavings||e.savingsBucket!=="personal"))].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!_tsPeriodDate)_tsPeriodDate=fd(new Date());
+  const period=getTrackerPeriod(_tsPeriodView,_tsPeriodDate);
+  const periodSelect=document.getElementById("ts-period-view");if(periodSelect)periodSelect.value=_tsPeriodView;
+  t("ts-period-label",period.label);
+  const savExps=[...(budgetData.expenses||[]).filter(e=>e.type==="savings"&&e.date>=period.start&&e.date<=period.end&&(!jointSavings||e.savingsBucket!=="personal"))].sort((a,b)=>b.date.localeCompare(a.date));
+  setVisibleExpenses(savExps,"ts");
   const today=fd(new Date());
-  const earliest=savingsScheduleEarliestDate();
-  const expectedBuckets=earliest?scheduledSavingsBuckets(earliest,today,true):{hh:0,pers:0};
+  const expectedEnd=period.end<today?period.end:today;
+  const expectedBuckets=period.start<=expectedEnd?scheduledSavingsBuckets(period.start,expectedEnd,true):{hh:0,pers:0};
   const expected=expectedBuckets.hh+(jointSavings?0:expectedBuckets.pers);
   const actual=savExps.reduce((s,e)=>s+e.amount,0);
   t("ts-expected",$f(expected));t("ts-actual",$f(actual));
@@ -7693,6 +7796,7 @@ function renderSavExpList(listId,totalId,exps){
   if(!el)return;
   if(!exps.length){el.innerHTML='<div class="empty-msg" style="font-size:13px">None logged yet</div>';return;}
   el.innerHTML=exps.map(e=>`<div class="exp-tracker-row">
+    <input class="expense-select" type="checkbox" aria-label="Select savings expense" data-expense-id="${e.id}" onchange="toggleExpenseSelection(this.dataset.expenseId,this.checked)"${_selectedExpenseIds.has(String(e.id))?" checked":""}>
     <div class="exp-info"><div class="exp-desc">${e.note||"Transfer"}</div><div class="exp-meta">${e.date}</div></div>
     <div class="exp-amt">${$f(e.amount)}</div>
     <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="openEditExpense(${e.id})" title="Edit"><i class="ti ti-pencil"></i></button>
@@ -7711,7 +7815,11 @@ function toggleIncomeHistory(){
 
 function renderTrackerIncome(){
   generateIncomeWeeks();autoUpdateIncomeStatuses();
-  const weeks=budgetData.incomeWeeks||[];
+  if(!_tiPeriodDate)_tiPeriodDate=fd(new Date());
+  const period=getTrackerPeriod(_tiPeriodView,_tiPeriodDate);
+  const periodSelect=document.getElementById("ti-period-view");if(periodSelect)periodSelect.value=_tiPeriodView;
+  t("ti-period-label",period.label);
+  const weeks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=period.start&&w.payDate<=period.end);
   // Recent: last 3 received (newest first). Older received → History.
   const received=weeks.filter(w=>w.status==="received").sort((a,b)=>b.payDate.localeCompare(a.payDate));
   const recent=received.slice(0,3);
@@ -7723,7 +7831,7 @@ function renderTrackerIncome(){
   const scheduled=weeks.filter(w=>w.status==="scheduled").sort((a,b)=>a.weekStartDate.localeCompare(b.weekStartDate));
   const upcoming=scheduled.slice(0,3);
 
-  const ytd=received.filter(w=>w.payDate.slice(0,4)===String(new Date().getFullYear())).reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const ytd=received.reduce((s,w)=>s+incomeWeekAmount(w),0);
   const sources=budgetData.recurring.incomeSources||[];
   t("ti-rate",sources.length+" configured");
   t("ti-pending-count",pending.length);
