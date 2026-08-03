@@ -1910,23 +1910,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 <!-- SAVINGS TRANSFER MODAL -->
-<div id="modal-savings-transfer","modal-rec-expense" style="display:none">
+<div id="modal-savings-transfer" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-savings-transfer')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-hdr"><h3 id="st-heading">Add Savings Transfer</h3><button class="close-x" onclick="closeModal('modal-savings-transfer')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="st-name" placeholder="e.g. Emergency Fund"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="st-amount" placeholder="557"/></div>
-        <div class="field"><label>Frequency</label>
+        <div class="field"><label>Schedule</label>
+          <select id="st-schedule-type" onchange="updateSavingsScheduleFields()">
+            <option value="paycheck">Per paycheck</option>
+            <option value="interval">Specific time period</option>
+          </select>
+        </div>
+        <div class="field" id="st-paycheck-field"><label>Based on paycheck</label>
+          <select id="st-income-source"></select>
+        </div>
+        <div class="field" id="st-frequency-field" style="display:none"><label>Frequency</label>
           <select id="st-freq">
+            <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
-            <option value="biweekly" selected>Every 2 weeks (per paycheck)</option>
+            <option value="biweekly">Every 2 weeks</option>
             <option value="monthly">Monthly</option>
           </select>
         </div>
+        <div class="two-col">
+          <div class="field"><label>Start date</label><input type="date" id="st-startdate"/></div>
+          <div class="field"><label>End date <span class="opt-label">(opt)</span></label><input type="date" id="st-enddate"/></div>
+        </div>
         <div class="field"><label>Bucket</label>
           <select id="st-bucket">
-            <option value="household">Household</option>
+            <option value="household">Household / work</option>
             <option value="personal">Personal</option>
           </select>
         </div>
@@ -5812,7 +5826,12 @@ function composeJointBudgetData(britt, christian, existing){
   sources.forEach(([owner,d])=>{
     const r=d.recurring;
     (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
-    (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({...x,id:`${owner}-sav-${x.id}`,sourceProfile:owner}));
+    (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({
+      ...x,
+      id:`${owner}-sav-${x.id}`,
+      incomeSourceId:x.incomeSourceId==null?null:`${owner}-${x.incomeSourceId}`,
+      sourceProfile:owner
+    }));
     (r.bills||[]).filter(x=>x.isDebt).forEach(x=>debtJointIds.add(`joint-bill-${owner}-${x.id}`));
     (r.bills||[]).filter(x=>!x.isDebt).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
@@ -6426,6 +6445,72 @@ function ensureBudgetSettings(){
 function savingsPerPaycheck(){ensureBudgetSettings();return parseFloat(budgetData.settings.savingsPerPaycheck)||0;}
 function savingsPerPaycheckBuckets(){ensureBudgetSettings();const s=budgetData.settings;return{hh:parseFloat(s.savPPHousehold)||0,pers:parseFloat(s.savPPPersonal)||0};}
 
+function savingsTransferScheduleType(transfer){
+  if(transfer.scheduleType)return transfer.scheduleType;
+  return transfer.frequency==="per-paycheck"||transfer.frequency==="biweekly"?"paycheck":"interval";
+}
+
+function savingsScheduleEarliestDate(){
+  const transfers=budgetData.recurring?.savingsTransfers||[];
+  const dates=transfers.map(transfer=>{
+    if(savingsTransferScheduleType(transfer)==="paycheck"){
+      const checks=(budgetData.incomeWeeks||[]).filter(w=>transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId));
+      return checks.reduce((earliest,w)=>!earliest||w.payDate<earliest?w.payDate:earliest,null);
+    }
+    return transfer.startDate||null;
+  }).filter(Boolean);
+  return dates.length?dates.sort()[0]:null;
+}
+
+function intervalOccurrenceCount(transfer,start,end){
+  const anchor=transfer.startDate||budgetData.settings?.materializeSince||start;
+  const finalEnd=transfer.endDate&&transfer.endDate<end?transfer.endDate:end;
+  if(anchor>finalEnd)return 0;
+  const rangeStart=anchor>start?anchor:start;
+  const frequency=transfer.frequency||"monthly";
+  if(frequency==="monthly"){
+    const anchorDate=new Date(anchor+"T12:00:00");
+    let month=new Date(rangeStart+"T12:00:00");
+    month=new Date(month.getFullYear(),month.getMonth(),1,12);
+    let count=0;
+    while(fd(month)<=finalEnd){
+      const lastDay=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
+      const occurrence=fd(new Date(month.getFullYear(),month.getMonth(),Math.min(anchorDate.getDate(),lastDay),12));
+      if(occurrence>=rangeStart&&occurrence<=finalEnd&&occurrence>=anchor)count++;
+      month.setMonth(month.getMonth()+1);
+    }
+    return count;
+  }
+  const intervalDays=frequency==="daily"?1:frequency==="weekly"?7:14;
+  const dayMs=86400000;
+  const anchorMs=new Date(anchor+"T12:00:00").getTime();
+  const startMs=new Date(rangeStart+"T12:00:00").getTime();
+  const endMs=new Date(finalEnd+"T12:00:00").getTime();
+  const first=anchorMs+Math.max(0,Math.ceil((startMs-anchorMs)/(intervalDays*dayMs)))*intervalDays*dayMs;
+  return first>endMs?0:Math.floor((endMs-first)/(intervalDays*dayMs))+1;
+}
+
+function scheduledSavingsBuckets(start,end,receivedOnly=false){
+  const transfers=budgetData.recurring?.savingsTransfers||[];
+  const totals={hh:0,pers:0};
+  transfers.forEach(transfer=>{
+    let count=0;
+    if(savingsTransferScheduleType(transfer)==="paycheck"){
+      count=(budgetData.incomeWeeks||[]).filter(w=>
+        w.payDate>=start&&w.payDate<=end&&
+        (!transfer.startDate||w.payDate>=transfer.startDate)&&
+        (!transfer.endDate||w.payDate<=transfer.endDate)&&
+        (transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))&&
+        (!receivedOnly||w.status==="received")
+      ).length;
+    }else{
+      count=intervalOccurrenceCount(transfer,start,end);
+    }
+    totals[transfer.bucket==="personal"?"pers":"hh"]+=(parseFloat(transfer.amount)||0)*count;
+  });
+  return totals;
+}
+
 // Cumulative budgeted savings THROUGH the end of the viewed period: the
 // total you'd have if the budget was followed each week up to that point.
 // Sums every week's budgeted amount from the first paycheck through
@@ -6434,10 +6519,9 @@ function savingsPerPaycheckBuckets(){ensureBudgetSettings();const s=budgetData.s
 // contribute setting x paychecks landing that week. Weeks are the source
 // of truth; monthly-view overrides only affect that month's summary row.
 function totalBudgetedSavingsBuckets(through){
-  const spp=savingsPerPaycheckBuckets();
   if(!through)through=fd(new Date());
   // Earliest relevant date: first paycheck or first week with a savings override
-  let earliest=null;
+  let earliest=savingsScheduleEarliestDate();
   (budgetData.incomeWeeks||[]).forEach(w=>{if(!earliest||w.payDate<earliest)earliest=w.payDate;});
   Object.keys(budgetData.periods||{}).forEach(k=>{
     if(!k.startsWith("week:"))return;
@@ -6453,10 +6537,10 @@ function totalBudgetedSavingsBuckets(through){
   while(ws<=through&&guard++<600){
     const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
     const p=budgetData.periods?.["week:"+ws]||{};
-    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we&&x.payDate<=through).length;
+    const auto=scheduledSavingsBuckets(ws,we<through?we:through);
     hh+=p.overrideBudgSavHH!=null?p.overrideBudgSavHH
-      :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:spp.hh*pays);
-    pers+=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:spp.pers*pays;
+      :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:auto.hh);
+    pers+=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:auto.pers;
     ws=fd(new Date(new Date(ws+"T12:00:00").getTime()+7*86400000));
   }
   return{hh,pers};
@@ -6536,30 +6620,9 @@ function computeMonthlyVarFromWeeks(monthStart,monthEnd){
   return out;
 }
 
-/* ── Monthly savings budget = day-weighted weekly budgets ────── */
-// Same model as variable expenses: each Friday-start week overlapping the
-// month contributes its budgeted savings (weekly override or setting x
-// paychecks landing that week) x (days inside the month / 7). This is what
-// makes a weekly savings plan show up in the month that contains it.
-// Reads only overrides + incomeWeeks — no engine recursion.
+/* ── Monthly savings budget from exact scheduled occurrences ─── */
 function computeMonthlySavFromWeeks(monthStart,monthEnd){
-  const spp=savingsPerPaycheckBuckets();
-  let ws=getFridayWeekStart(new Date(monthStart+"T12:00:00"));
-  let hh=0,pers=0,guard=0;
-  while(ws<=monthEnd&&guard++<8){
-    const we=fd(new Date(new Date(ws+"T12:00:00").getTime()+6*86400000));
-    const p=budgetData.periods?.["week:"+ws]||{};
-    const pays=(budgetData.incomeWeeks||[]).filter(x=>x.payDate>=ws&&x.payDate<=we).length;
-    const wHH=p.overrideBudgSavHH!=null?p.overrideBudgSavHH
-      :(p.overrideBudgSav!=null&&p.overrideBudgSavPers==null?p.overrideBudgSav:spp.hh*pays);
-    const wPers=p.overrideBudgSavPers!=null?p.overrideBudgSavPers:spp.pers*pays;
-    const oStart=ws>monthStart?ws:monthStart;
-    const oEnd=we<monthEnd?we:monthEnd;
-    const w=(Math.round((new Date(oEnd+"T12:00:00")-new Date(oStart+"T12:00:00"))/86400000)+1)/7;
-    hh+=wHH*w;pers+=wPers*w;
-    ws=fd(new Date(new Date(ws+"T12:00:00").getTime()+7*86400000));
-  }
-  return{hh,pers};
+  return scheduledSavingsBuckets(monthStart,monthEnd);
 }
 
 /* ── THE engine ──────────────────────────────────────────────── */
@@ -6599,9 +6662,8 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   // savings plans surface in their month (same model as variable expenses).
   // Per-period overrides (click the number in the summary) always win.
   // Legacy shim: an old single-total override lands on the household side.
-  const _spp=savingsPerPaycheckBuckets();
   const _isMonthlySav=typeof periodKey==="string"&&periodKey.startsWith("month:");
-  const _savAuto=_isMonthlySav?computeMonthlySavFromWeeks(start,end):{hh:_spp.hh*paychecks.length,pers:_spp.pers*paychecks.length};
+  const _savAuto=_isMonthlySav?computeMonthlySavFromWeeks(start,end):scheduledSavingsBuckets(start,end);
   const budgSavHH=period.overrideBudgSavHH!=null?period.overrideBudgSavHH
     :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_savAuto.hh);
   const budgSavPers=period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_savAuto.pers;
@@ -7486,10 +7548,10 @@ function renderTrackerVariable(){
 
 function renderTrackerSavings(){
   const savExps=[...(budgetData.expenses||[]).filter(e=>e.type==="savings")].sort((a,b)=>b.date.localeCompare(a.date));
-  // Calculate expected from auto-transfers (count received paychecks * transfer amount)
-  const receivedCount=(budgetData.incomeWeeks||[]).filter(w=>w.status==="received").length;
-  const autoTotal=(budgetData.recurring.autoTransfers||[]).reduce((s,at)=>s+at.amount,0);
-  const expected=receivedCount*autoTotal;
+  const today=fd(new Date());
+  const earliest=savingsScheduleEarliestDate();
+  const expectedBuckets=earliest?scheduledSavingsBuckets(earliest,today,true):{hh:0,pers:0};
+  const expected=expectedBuckets.hh+expectedBuckets.pers;
   const actual=savExps.reduce((s,e)=>s+e.amount,0);
   t("ts-expected",$f(expected));t("ts-actual",$f(actual));
 
@@ -7895,7 +7957,7 @@ function renderBudgetSettings(){
   const subsSub=document.getElementById("bs-subs-sub");
   if(subsSub){const s=rec.subscriptions||[];const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
   const savSub=document.getElementById("bs-savings-sub");
-  if(savSub){const b=savingsPerPaycheckBuckets();savSub.textContent=$f(b.hh)+" household + "+$f(b.pers)+" personal per paycheck";}
+  if(savSub){const transfers=rec.savingsTransfers||[];savSub.textContent=transfers.length?transfers.length+" recurring transfer"+(transfers.length!==1?"s":""):"No recurring transfers";}
   const varSub=document.getElementById("bs-var-sub");
   if(varSub){const v=rec.variable||[];varSub.textContent=v.length?v.length+" categor"+(v.length!==1?"ies":"y"):"No categories";}
 
@@ -7903,34 +7965,30 @@ function renderBudgetSettings(){
   renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
   renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
   renderBsVarCards("bs-var-list",rec.variable);
-  // Savings: budgeted-per-paycheck setting + legacy transfers list
+  // Savings transfers can independently follow a paycheck or a fixed cadence.
   const svEl=document.getElementById("bs-savings-list");
   if(svEl){
     ensureBudgetSettings();
-    const _sppS=savingsPerPaycheckBuckets();
-    const savRow=(label,val,bucket)=>'<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
-      +'<div style="flex:1"><div style="font-size:14px;font-weight:500;color:var(--text)">'+label+' savings per paycheck</div></div>'
-      +'<span style="font-size:14px;color:var(--muted)">$</span>'
-      +'<input type="number" min="0" step="1" value="'+val+'" onchange="setSavingsPerPaycheck(\''+bucket+'\',this.value)"'
-      +' style="width:80px;font-family:\'DM Mono\',monospace;font-size:14px;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px;outline:none;text-align:right"/></div>';
-    const savField=savRow("Household",_sppS.hh,"household")+savRow("Personal",_sppS.pers,"personal")
-      +'<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Every view budgets these amounts per paycheck landing in the period. Log actual savings yourself in the tracker.</div>';
     const transfers=rec.savingsTransfers||[];
     if(!transfers.length){
-      svEl.innerHTML=savField+'<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
+      svEl.innerHTML='<div class="empty-msg" style="font-size:13px;padding:8px 0">No recurring transfers yet.</div>';
     } else {
-      svEl.innerHTML=savField+'<div class="bs-item-grid">'+transfers.map(sv=>{
-        const FREQ={weekly:"Weekly",biweekly:"Biweekly",monthly:"Monthly","per-paycheck":"Per paycheck"};
+      svEl.innerHTML='<div class="bs-item-grid">'+transfers.map(sv=>{
+        const FREQ={daily:"Daily",weekly:"Weekly",biweekly:"Every 2 weeks",monthly:"Monthly"};
+        const source=(rec.incomeSources||[]).find(x=>String(x.id)===String(sv.incomeSourceId));
+        const schedule=savingsTransferScheduleType(sv)==="paycheck"
+          ?"Per paycheck · "+(source?.name||"All paychecks")
+          :(FREQ[sv.frequency]||sv.frequency);
         return `<div class="bs-item-card">
           <div class="bs-item-name">${sv.name}</div>
           <div class="bs-item-detail">
             <span class="bs-item-amount">${$f(sv.amount)}</span>
-            <span class="bs-item-freq">${FREQ[sv.frequency]||sv.frequency}</span>
+            <span class="bs-item-freq">${schedule}</span>
           </div>
-          <div class="bs-item-date" style="margin-top:3px;font-size:12px;color:var(--muted)">${sv.bucket==="personal"?"Personal":"Household"}</div>
+          <div class="bs-item-date" style="margin-top:3px;font-size:12px;color:var(--muted)">${sv.bucket==="personal"?"Personal":"Household / work"}${sv.startDate?" · starts "+sv.startDate:""}</div>
           <div class="bs-item-actions">
-            <button class="bs-item-btn" onclick="openEditSavingsTransfer(${sv.id})"><i class="ti ti-pencil"></i></button>
-            <button class="bs-item-btn del" onclick="deleteSavingsTransfer(${sv.id})"><i class="ti ti-x"></i></button>
+            <button class="bs-item-btn" onclick='openEditSavingsTransfer(${JSON.stringify(sv.id)})'><i class="ti ti-pencil"></i></button>
+            <button class="bs-item-btn del" onclick='deleteSavingsTransfer(${JSON.stringify(sv.id)})'><i class="ti ti-x"></i></button>
           </div>
         </div>`;
       }).join("")+'</div>';
@@ -8585,11 +8643,14 @@ function openEditBudgSav(view,bucket){
     :"week of "+budgetCurrentWeekStart;
   const bl=_ebsBucket==="personal"?"personal":"household";
   const cur=_ebsBucket==="personal"?period.overrideBudgSavPers:(period.overrideBudgSavHH??period.overrideBudgSav);
-  const spp=savingsPerPaycheckBuckets();
-  const auto=_ebsBucket==="personal"?spp.pers:spp.hh;
+  const range=view==="monthly"
+    ?{start:budgetCurrentMonth+"-01",end:fd(new Date(parseInt(budgetCurrentMonth.slice(0,4)),parseInt(budgetCurrentMonth.slice(5,7)),0))}
+    :{start:budgetCurrentWeekStart,end:fd(new Date(new Date(budgetCurrentWeekStart+"T12:00:00").getTime()+6*86400000))};
+  const scheduled=scheduledSavingsBuckets(range.start,range.end);
+  const auto=_ebsBucket==="personal"?scheduled.pers:scheduled.hh;
   document.getElementById("ebs-desc").textContent="Override the budgeted "+bl+" savings for "+periodName+".";
   document.getElementById("ebs-amount").value=cur!=null?cur:"";
-  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to auto ("+$f(auto)+" per paycheck).";
+  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to the scheduled amount ("+$f(auto)+").";
   document.getElementById("modal-edit-budg-sav").style.display="block";
   setTimeout(()=>document.getElementById("ebs-amount").focus(),50);
 }
@@ -9045,12 +9106,34 @@ function deleteRecExpense(){
 /* ── SAVINGS TRANSFERS (settings) ─────────────────────────── */
 let _editSavTransferId = null;
 
+function updateSavingsScheduleFields(){
+  const isPaycheck=document.getElementById("st-schedule-type")?.value==="paycheck";
+  const paycheckField=document.getElementById("st-paycheck-field");
+  const frequencyField=document.getElementById("st-frequency-field");
+  if(paycheckField)paycheckField.style.display=isPaycheck?"block":"none";
+  if(frequencyField)frequencyField.style.display=isPaycheck?"none":"block";
+}
+
+function populateSavingsIncomeSources(selectedId){
+  const select=document.getElementById("st-income-source");if(!select)return;
+  const sources=budgetData.recurring.incomeSources||[];
+  select.innerHTML='<option value="">All paychecks</option>'+sources.map(source=>
+    `<option value="${source.id}">${source.name||"Income"}</option>`
+  ).join("");
+  select.value=selectedId==null?"":String(selectedId);
+}
+
 function openAddSavingsTransfer(){
   _editSavTransferId = null;
   document.getElementById("st-name").value="";
   document.getElementById("st-amount").value="";
-  document.getElementById("st-freq").value="biweekly";
+  document.getElementById("st-schedule-type").value="paycheck";
+  document.getElementById("st-freq").value="monthly";
+  document.getElementById("st-startdate").value=fd(new Date());
+  document.getElementById("st-enddate").value="";
   document.getElementById("st-bucket").value="household";
+  populateSavingsIncomeSources(null);
+  updateSavingsScheduleFields();
   document.getElementById("st-delete").style.display="none";
   document.getElementById("st-heading").textContent="Add Savings Transfer";
   document.getElementById("modal-savings-transfer").style.display="block";
@@ -9063,8 +9146,13 @@ function openEditSavingsTransfer(id){
   _editSavTransferId=id;
   document.getElementById("st-name").value=sv.name;
   document.getElementById("st-amount").value=sv.amount;
-  document.getElementById("st-freq").value=sv.frequency||"biweekly";
+  document.getElementById("st-schedule-type").value=savingsTransferScheduleType(sv);
+  document.getElementById("st-freq").value=savingsTransferScheduleType(sv)==="interval"?(sv.frequency||"monthly"):"monthly";
+  document.getElementById("st-startdate").value=sv.startDate||fd(new Date());
+  document.getElementById("st-enddate").value=sv.endDate||"";
   document.getElementById("st-bucket").value=sv.bucket||"household";
+  populateSavingsIncomeSources(sv.incomeSourceId);
+  updateSavingsScheduleFields();
   document.getElementById("st-delete").style.display="flex";
   document.getElementById("st-heading").textContent="Edit Savings Transfer";
   document.getElementById("modal-savings-transfer").style.display="block";
@@ -9073,14 +9161,20 @@ function openEditSavingsTransfer(id){
 function saveSavingsTransfer(){
   const name=document.getElementById("st-name").value.trim();if(!name)return;
   const amount=parseFloat(document.getElementById("st-amount").value)||0;
-  const frequency=document.getElementById("st-freq").value;
+  const scheduleType=document.getElementById("st-schedule-type").value;
+  const frequency=scheduleType==="paycheck"?"per-paycheck":document.getElementById("st-freq").value;
+  const sourceValue=document.getElementById("st-income-source").value;
+  const incomeSourceId=sourceValue===""?null:(budgetData.recurring.incomeSources||[]).find(x=>String(x.id)===sourceValue)?.id??sourceValue;
+  const startDate=document.getElementById("st-startdate").value||fd(new Date());
+  const endDate=document.getElementById("st-enddate").value||null;
   const bucket=document.getElementById("st-bucket").value;
+  const data={name,amount,scheduleType,frequency,incomeSourceId,startDate,endDate,bucket};
   if(!budgetData.recurring.savingsTransfers)budgetData.recurring.savingsTransfers=[];
   if(_editSavTransferId){
     const sv=budgetData.recurring.savingsTransfers.find(x=>x.id===_editSavTransferId);
-    if(sv){sv.name=name;sv.amount=amount;sv.frequency=frequency;sv.bucket=bucket;}
+    if(sv)Object.assign(sv,data);
   } else {
-    budgetData.recurring.savingsTransfers.push({id:budgetNid++,name,amount,frequency,bucket});
+    budgetData.recurring.savingsTransfers.push({id:budgetNid++,...data});
   }
   saveBudgetData();closeModal("modal-savings-transfer");renderBudgetSettings();
 }
