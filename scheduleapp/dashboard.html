@@ -5817,6 +5817,7 @@ saveBudgetData = function(){
 function composeJointBudgetData(britt, christian, existing){
   const sources=[["britt",britt],["christian",christian]].filter(([,d])=>d&&d.recurring);
   const recurring={incomeSources:[],savingsTransfers:[],autoTransfers:[],bills:[],subscriptions:[],variable:[],savings_household:[],savings_personal:[]};
+  const jointRecurringIds=new Map();
   const debtJointIds=new Set((existing?.recurring?.bills||[]).filter(x=>x.isDebt).map(x=>String(x.id)));
   const byName=(items,name)=>items.find(x=>String(x.name||"").trim().toLowerCase()===name);
   const jointVarWeeklyDefault=sources.reduce((total,[,d])=>{
@@ -5841,10 +5842,13 @@ function composeJointBudgetData(britt, christian, existing){
         same.amount=(parseFloat(same.amount)||0)+(parseFloat(x.amount)||0);
         same.sourceProfiles=[...(same.sourceProfiles||[]),owner];
       }
+      jointRecurringIds.set(`${owner}:bill:${x.id}`,(same||recurring.bills[recurring.bills.length-1]).id);
     });
     (r.subscriptions||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
-      if(!byName(recurring.subscriptions,name))recurring.subscriptions.push({...x,id:`joint-sub-${owner}-${x.id}`,sourceProfile:owner});
+      const same=byName(recurring.subscriptions,name);
+      if(!same)recurring.subscriptions.push({...x,id:`joint-sub-${owner}-${x.id}`,sourceProfile:owner});
+      jointRecurringIds.set(`${owner}:subscription:${x.id}`,(same||recurring.subscriptions[recurring.subscriptions.length-1]).id);
     });
     (r.variable||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
@@ -5858,11 +5862,15 @@ function composeJointBudgetData(britt, christian, existing){
   const incomeWeeks=[];
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
   (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
-  const oldExpenses=(existing?.expenses||[]).filter(e=>!debtJointIds.has(String(e.recurringId))&&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
+  const oldExpenses=(existing?.expenses||[]).filter(e=>!debtJointIds.has(String(e.recurringId))
+    &&!(String(e.recKey||"").startsWith("joint-")&&e.owner!=="joint")
+    &&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
   const sourceExpenses=[];
   sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
     if(e.type==="bill"&&(d.recurring.bills||[]).some(b=>b.isDebt&&String(b.id)===String(e.recurringId)))return;
-    sourceExpenses.push({...e,id:`${owner}-exp-${e.id||i}`,owner,sourceProfile:owner,sourceExpenseId:e.id});
+    const recurringId=jointRecurringIds.get(`${owner}:${e.type}:${e.recurringId}`)??e.recurringId;
+    const recKey=e.recKey&&recurringId!==e.recurringId?`${recurringId}:${e.date}`:e.recKey;
+    sourceExpenses.push({...e,id:`${owner}-exp-${e.id||i}`,recurringId,recKey,owner,sourceProfile:owner,sourceExpenseId:e.id});
   }));
   return {
     ...(existing||{}),
@@ -6572,6 +6580,7 @@ function recurringDueDatesIn(item,start,end){
 // tombstones it so it never comes back.
 function materializeRecurring(){
   if(!budgetData||!budgetData.recurring)return;
+  if(activeBudgetProfile==="joint")return;
   ensureBudgetSettings();
   const s=budgetData.settings;
   const today=fd(new Date());
@@ -6784,7 +6793,7 @@ function ta(id,actual,budget,lowerIsBetter){
   // preserve bcompact-a class if present, otherwise use bsum-a
   const isCompact=el.classList.contains("bcompact-a");
   el.className=isCompact?"bcompact-a":"bsum-a";
-  if(budget>0)el.classList.add(lowerIsBetter?actual>budget?"over":"good":actual<budget?"over":"good");
+  el.classList.add(lowerIsBetter?actual>budget?"over":"good":actual<budget?"over":"good");
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -6836,10 +6845,10 @@ function renderBudgetDashboard(){
   const rec=budgetData.recurring;
 
   /* ── Panel 1: Summary donut + big number + spend sparkline ── */
-  const pct=cp.budgExpenses>0?(cp.actualExpenses/cp.budgExpenses)*100:0;
+  const pct=cp.budgExpenses>0?(cp.actualExpenses/cp.budgExpenses)*100:(cp.actualExpenses>0?100:0);
   const shown=Math.min(pct,100);
   const R=52,C=2*Math.PI*R;
-  const ringClr=pct>100?"#e05555":"var(--today-color)";
+  const ringClr=cp.actualExpenses>cp.budgExpenses?"#e05555":"var(--today-color)";
   // Cumulative daily spend sparkline
   const daysIn=new Date(y,m,0).getDate();
   let cum=0;const pts=[];
@@ -6892,7 +6901,7 @@ function renderBudgetDashboard(){
   const progRow=r=>{
     const p=r.b>0?(r.a/r.b)*100:(r.a>0?100:0);
     // Overspending needs/wants is bad (red); hitting savings target is good (green)
-    const barClr=r.invert?(p>=100?"#3db87a":r.clr):(p>100?"#e05555":r.clr);
+    const barClr=r.invert?(p>=100?"#3db87a":r.clr):(r.a>r.b?"#e05555":r.clr);
     return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">
       <i class="ti ${r.icon}" style="font-size:16px;color:${r.clr};width:20px;text-align:center"></i>
       <div style="flex:1;min-width:0">
@@ -6955,7 +6964,7 @@ function renderBudgetDashboard(){
   months.forEach((mo,i)=>{
     const x=i*bw+pad;
     const w=(bw-pad*2)/2;
-    const over=mo.a>mo.b&&mo.b>0;
+    const over=mo.a>mo.b;
     bars+=`<rect x="${x}" y="${ybar(mo.b)}" width="${w}" height="${CH-8-ybar(mo.b)}" fill="var(--tag-bg)" rx="2"/>`;
     if(mo.a>0)bars+=`<rect x="${x+w+1}" y="${ybar(mo.a)}" width="${w}" height="${CH-8-ybar(mo.a)}" fill="${over?"#e05555":"var(--today-color)"}" rx="2"/>
       <text x="${x+w+1+w/2}" y="${ybar(mo.a)-3}" text-anchor="middle" style="font-size:7px;font-family:'DM Mono',monospace" fill="var(--muted)">${(mo.a/1000).toFixed(1)}k</text>`;
@@ -6989,7 +6998,7 @@ function renderBudgetDashboard(){
     <span style="font-size:10.5px;color:var(--text);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.n}</span>
     <div style="position:relative;height:10px">
       <div style="position:absolute;height:100%;width:${(Math.min(c.b,maxCat)/maxCat*100).toFixed(1)}%;background:var(--tag-bg);border-radius:3px"></div>
-      <div style="position:absolute;height:6px;top:2px;width:${(Math.min(c.a,maxCat)/maxCat*100).toFixed(1)}%;background:${c.a>c.b&&c.b>0?"#e05555":"var(--today-color)"};border-radius:3px"></div>
+      <div style="position:absolute;height:6px;top:2px;width:${(Math.min(c.a,maxCat)/maxCat*100).toFixed(1)}%;background:${c.a>c.b?"#e05555":"var(--today-color)"};border-radius:3px"></div>
     </div>
     <span style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--muted);text-align:right">${c.a>0?$f(c.a):""}</span>
   </div>`;
@@ -7176,26 +7185,31 @@ function openBudgetStartBalance(){
 }
 
 /* ── WEEKLY ──────────────────────────────────────────────────── */
-/* Recurring items DUE in this period only: name · due date · budget · actual.
+/* Recurring item rows: name · due date · budget · actual.
    Actuals come from materialized expense records. Click pencil to edit the actual. */
 function renderDueLines(listId,totalId,dueEntries,recExps){
   const el=document.getElementById(listId);if(!el)return;
   let total=0;
-  el.innerHTML=(dueEntries||[]).map(({item,dueDate})=>{
-    const recKey=item.id+":"+dueDate;
-    const exp=(recExps||[]).find(e=>e.recKey===recKey);
-    const act=exp?exp.amount:0;total+=act;
-    const over=act>item.amount;
-    const dd=new Date(dueDate+"T12:00:00");
-    const dueLbl=dd.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  el.innerHTML=(dueEntries||[]).map(({item,dueDate,actualDate})=>{
+    const recKey=item.id+":"+(dueDate||actualDate);
+    const exps=(recExps||[]).filter(e=>e.recKey===recKey);
+    const act=exps.reduce((sum,e)=>sum+e.amount,0);total+=act;
+    const budget=dueDate?item.amount:0;
+    const over=act>budget;
+    const dueLbl=dueDate?new Date(dueDate+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
     return`<div class="bline">
       <span class="bline-name">${item.name}</span>
-      <span class="bline-budget">${$f(item.amount)}<span style="font-size:10px;color:var(--muted);margin-left:4px">due ${dueLbl}</span></span>
-      <span class="bline-actual${over?" over":""}">${exp?$f(act):'<span style="color:var(--muted);font-size:12px">—</span>'}</span>
+      <span class="bline-budget">${dueDate?`${$f(item.amount)}<span style="font-size:10px;color:var(--muted);margin-left:4px">due ${dueLbl}</span>`:""}</span>
+      <span class="bline-actual${over?" over":""}">${exps.length?$f(act):'<span style="color:var(--muted);font-size:12px">—</span>'}</span>
       <button class="bline-edit" onclick="openEditRecActual('${recKey}')" title="Edit actual"><i class="ti ti-pencil"></i></button>
     </div>`;
-  }).join("")||'<div class="empty-msg">Nothing due this period</div>';
+  }).join("")||'<div class="empty-msg">Nothing configured</div>';
   if(totalId)t(totalId,$f(total));
+}
+
+function allWeeklyBillEntries(items,dueEntries,weekStart){
+  const dueById=new Map((dueEntries||[]).map(entry=>[String(entry.item.id),entry]));
+  return(items||[]).map(item=>dueById.get(String(item.id))||{item,dueDate:null,actualDate:weekStart});
 }
 
 function proRateToWeek(rec){
@@ -7299,7 +7313,7 @@ function renderWeeklyView(){
 
   // ── Detail panels ──
   renderBudgetDailyStrip(ws,cp.varExps,"w-daily-strip","w-daily-total");
-  renderDueLines("w-bills-lines","w-bills-total",cp.billsDue,cp.billExps);
+  renderDueLines("w-bills-lines","w-bills-total",allWeeklyBillEntries(rec.bills,cp.billsDue,ws),cp.billExps);
   renderDueLines("w-subs-lines","w-subs-total",cp.subsDue,cp.subExps);
   renderVarLines("w-var-lines","w-var-total",rec.variable,cp.varActuals,"weekly");
   const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
@@ -7422,7 +7436,8 @@ function renderDailyView(){
 
   // Total spent this week so far
   const weekSpentSoFar=weekExp.reduce((s,e)=>s+e.amount,0);
-  const pct=weeklyBudget>0?Math.min(100,(weekSpentSoFar/weeklyBudget)*100):0;
+  const pct=weeklyBudget>0?Math.min(100,(weekSpentSoFar/weeklyBudget)*100):(weekSpentSoFar>0?100:0);
+  const weekOver=weekSpentSoFar>weeklyBudget;
   const leftThisWeek=weeklyBudget-weekSpentSoFar;
 
   // Update UI
@@ -7441,7 +7456,7 @@ function renderDailyView(){
   t("d-days-left",daysRemaining+" day"+(daysRemaining!==1?"s":"")+" left this week");
   t("d-progress-label",$f(weekSpentSoFar)+" / "+$f(weeklyBudget));
   const bar=document.getElementById("d-progress-bar");
-  if(bar){bar.style.width=pct+"%";bar.style.background=pct>100?"#e05555":pct>80?"#e0a040":"var(--today-color)";}
+  if(bar){bar.style.width=pct+"%";bar.style.background=weekOver?"#e05555":pct>80?"#e0a040":"var(--today-color)";}
 
   const el=document.getElementById("d-expenses-list");if(!el)return;
   if(!dayExp.length){el.innerHTML='<div class="empty-msg">No variable expenses logged for this day</div>';return;}
@@ -8172,17 +8187,19 @@ function deleteRecurringItem(type,id){
    creates the expense early (e.g. you paid rent on the 28th) and the
    materializer won't duplicate it. */
 function openEditRecActual(recKey){
-  const exp=(budgetData.expenses||[]).find(e=>e.recKey===recKey);
-  const [ridStr,dueDate]=recKey.split(":");
-  const rid=parseInt(ridStr);
-  const item=[...(budgetData.recurring.bills||[]),...(budgetData.recurring.subscriptions||[])].find(x=>x.id===rid);
-  const v=prompt("Actual amount paid ($):",exp?exp.amount:(item?item.amount:0));
+  const splitAt=recKey.lastIndexOf(":");
+  const rid=recKey.slice(0,splitAt),dueDate=recKey.slice(splitAt+1);
+  const exps=(budgetData.expenses||[]).filter(e=>e.recKey===recKey);
+  const exp=exps[0];
+  const actual=exps.reduce((sum,e)=>sum+e.amount,0);
+  const item=[...(budgetData.recurring.bills||[]),...(budgetData.recurring.subscriptions||[])].find(x=>String(x.id)===rid);
+  const v=prompt("Actual amount paid ($):",exps.length?actual:(item?item.amount:0));
   if(v===null)return;
   const amt=parseFloat(v)||0;
-  if(exp){exp.amount=amt;}
+  if(exp){exp.amount=amt-exps.slice(1).reduce((sum,e)=>sum+e.amount,0);}
   else if(item){
-    const type=(budgetData.recurring.bills||[]).some(b=>b.id===rid)?"bill":"subscription";
-    budgetData.expenses.push({id:budgetNid++,date:dueDate,type,category:item.name,amount:amt,recKey,recurringId:rid,note:"paid early"});
+    const type=(budgetData.recurring.bills||[]).some(b=>String(b.id)===rid)?"bill":"subscription";
+    budgetData.expenses.push({id:budgetNid++,date:dueDate,type,category:item.name,amount:amt,recKey,recurringId:item.id,owner:activeBudgetProfile==="joint"?"joint":undefined,note:""});
   }
   saveBudgetData();renderBudgetOverview();
 }
@@ -8206,7 +8223,7 @@ function renderVarLines(listId,totalId,items,actuals,view){
   </div>`+items.map(v=>{
     const act=actuals[v.id]||0;totalAct+=act;
     const budg=v._weeklyBudget!==undefined?v._weeklyBudget:0;totalBudg+=budg; // set by computePeriodCore for the current period
-    const left=budg-act;const over=budg>0&&act>budg;
+    const left=budg-act;const over=act>budg;
     return`<div class="bvar-row">
       <span class="bvar-name">${v.name}</span>
       ${budg>0?`<span class="bvar-col bvar-budget">${$f(budg)}</span>`:`<span class="bvar-col"></span>`}
@@ -8836,7 +8853,7 @@ function renderMobileBudget(){
     const daysLeft=Math.max(1,7-todayIdx);
     const dailyAllowance=(bVar-spentBefore)/daysLeft;
     const weekRemaining=bVar-weekSpent;
-    const weekPct=bVar>0?Math.min(110,(weekSpent/bVar)*100):0;
+    const weekPct=bVar>0?Math.min(110,(weekSpent/bVar)*100):(weekSpent>0?110:0);
     periodLabel=new Date(ds+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"});
     budgetSb=0; actualSb=0; budgIncome=0; actualIncome=0;
 
@@ -8993,7 +9010,7 @@ function renderMbSection(){
   } else if(_mbSection==="bills"){
     el.innerHTML='<div class="bcompact-title">BILLS & DEBT</div><div id="mb-bills-lines"></div>';
     const _cpB=window._mbCtx?.cp;
-    if(_cpB)renderDueLines("mb-bills-lines",null,_cpB.billsDue,_cpB.billExps);
+    if(_cpB)renderDueLines("mb-bills-lines",null,_mbView==="weekly"?allWeeklyBillEntries(rec.bills,_cpB.billsDue,window._mbCtx.startDate):_cpB.billsDue,_cpB.billExps);
   } else if(_mbSection==="subs"){
     el.innerHTML='<div class="bcompact-title">SUBSCRIPTIONS</div><div id="mb-subs-lines"></div>';
     const _cpS=window._mbCtx?.cp;
