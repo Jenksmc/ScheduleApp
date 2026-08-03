@@ -1253,6 +1253,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <option value="monthly" selected>Monthly</option>
           <option value="yearly">Yearly</option>
         </select>
+        <select id="tv-person-filter" onchange="setTvPersonFilter(this.value)" style="display:none;background:var(--tag-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:14px">
+          <option value="all">All people</option>
+          <option value="britt">Brittni</option>
+          <option value="christian">Christian</option>
+        </select>
         <button class="cnav-btn" onclick="tvNav(-1)" aria-label="Previous expense period"><i class="ti ti-chevron-left"></i></button>
         <div class="period-label" id="tv-period-label" style="font-size:15px;flex:1;text-align:center;min-width:160px"></div>
         <button class="cnav-btn" onclick="tvNav(1)" aria-label="Next expense period"><i class="ti ti-chevron-right"></i></button>
@@ -5875,7 +5880,8 @@ function composeJointBudgetData(britt, christian, existing){
   const incomeWeeks=[];
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
   (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
-  const oldExpenses=(existing?.expenses||[]).filter(e=>!(e.type==="savings"&&e.savingsBucket==="personal")
+  const oldExpenses=(existing?.expenses||[]).filter(e=>e.type!=="variable"
+    &&!(e.type==="savings"&&e.savingsBucket==="personal")
     &&!debtJointIds.has(String(e.recurringId))
     &&!(String(e.recKey||"").startsWith("joint-")&&e.owner!=="joint")
     &&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
@@ -7506,6 +7512,10 @@ function setTrackerView(v){
 }
 
 function openTrackerAdd(){
+  if(trackerView==="variable"&&activeBudgetProfile==="joint"){
+    alert("Add variable expenses from Brittni or Christian's individual tracker.");
+    return;
+  }
   if(trackerView==="income"){
     document.getElementById("oti-name").value="";
     document.getElementById("oti-amount").value="";
@@ -7543,12 +7553,18 @@ function renderTrackerView(){
 }
 
 let _tvFilter="all";
+let _tvPersonFilter="all";
 let _tvPeriodView="monthly";
 let _tvPeriodDate=null;
 
 function setTvFilter(cat,btn){
   _tvFilter=cat;
   document.querySelectorAll("#tv-filter-bar .filter-btn").forEach(b=>b.classList.toggle("active",b.dataset.cat===cat));
+  renderTrackerVariable();
+}
+
+function setTvPersonFilter(person){
+  _tvPersonFilter=person;
   renderTrackerVariable();
 }
 
@@ -7601,9 +7617,15 @@ function buildTvFilterBar(){
 function renderTrackerVariable(){
   const period=getTvPeriod();
   const periodSelect=document.getElementById("tv-period-view");if(periodSelect)periodSelect.value=_tvPeriodView;
+  const personSelect=document.getElementById("tv-person-filter");
+  if(personSelect){
+    personSelect.style.display=activeBudgetProfile==="joint"?"block":"none";
+    personSelect.value=_tvPersonFilter;
+  }
   t("tv-period-label",period.label);
   buildTvFilterBar();
   let exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable"&&e.date>=period.start&&e.date<=period.end)];
+  if(activeBudgetProfile==="joint"&&_tvPersonFilter!=="all")exps=exps.filter(e=>e.owner===_tvPersonFilter);
   if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
   exps.sort((a,b)=>b.date.localeCompare(a.date));
   const total=exps.reduce((s,e)=>s+e.amount,0);
@@ -7637,7 +7659,7 @@ function renderTrackerVariable(){
       +'</div>'
       +(hasNotes?'<div style="font-size:12px;color:var(--muted);max-width:180px;text-align:right;line-height:1.4;padding-left:8px;flex-shrink:0">'+e.note+'</div>':"")
       +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
-      +'<button class="bs-item-btn" style="flex-shrink:0" onclick="openEditExpense('+e.id+')" title="Edit"><i class="ti ti-pencil"></i></button>'
+      +(activeBudgetProfile==="joint"?"":'<button class="bs-item-btn" style="flex-shrink:0" onclick="openEditExpense('+e.id+')" title="Edit"><i class="ti ti-pencil"></i></button>')
     +'</div>';
     }).join("");
     return '<div class="tv-month-group">'
