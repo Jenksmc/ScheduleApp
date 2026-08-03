@@ -5863,7 +5863,7 @@ function composeJointBudgetData(britt, christian, existing){
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
   (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
   const oldExpenses=(existing?.expenses||[]).filter(e=>!debtJointIds.has(String(e.recurringId))
-    &&!String(e.recKey||"").startsWith("joint-")
+    &&!(String(e.recKey||"").startsWith("joint-")&&e.owner!=="joint")
     &&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
   const sourceExpenses=[];
   sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
