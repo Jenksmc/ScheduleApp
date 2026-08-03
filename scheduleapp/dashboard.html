@@ -1757,12 +1757,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3>Edit Income Payment</h3><button class="close-x" onclick="closeModal('modal-edit-income-week')"><i class="ti ti-x"></i></button></div>
 <div class="modal-body">
       <div style="font-size:14px;color:var(--muted);margin-bottom:12px" id="eiw-label"></div>
+      <div class="field" id="eiw-name-field" style="display:none"><label>Name</label><input type="text" id="eiw-name"/></div>
+      <div class="field" id="eiw-date-field" style="display:none"><label>Payment date</label><input type="date" id="eiw-date"/></div>
       <div class="field"><label id="eiw-value-label">Hours worked</label><input type="number" step="0.5" id="eiw-hours" placeholder="40"/></div>
       <div style="font-size:15px;color:var(--muted);margin-top:4px">Calculated pay: <strong id="eiw-calc">$0.00</strong></div>
       </div>
 <div class="mfooter">
-        <button class="btn-cancel" onclick="closeModal('modal-edit-income-week')">Cancel</button>
-        <button class="btn-save" onclick="saveIncomeWeek()">Save</button>
+      <button class="btn-danger" id="eiw-delete" style="display:none" onclick="deleteIncomeWeek()"><i class="ti ti-trash"></i> Delete</button>
+      <button class="btn-cancel" onclick="closeModal('modal-edit-income-week')">Cancel</button>
+      <button class="btn-save" onclick="saveIncomeWeek()">Save</button>
       </div>
     </div>
   </div>
@@ -5800,11 +5803,13 @@ saveBudgetData = function(){
 function composeJointBudgetData(britt, christian, existing){
   const sources=[["britt",britt],["christian",christian]].filter(([,d])=>d&&d.recurring);
   const recurring={incomeSources:[],savingsTransfers:[],autoTransfers:[],bills:[],subscriptions:[],variable:[],savings_household:[],savings_personal:[]};
+  const debtJointIds=new Set((existing?.recurring?.bills||[]).filter(x=>x.isDebt).map(x=>String(x.id)));
   const byName=(items,name)=>items.find(x=>String(x.name||"").trim().toLowerCase()===name);
   sources.forEach(([owner,d])=>{
     const r=d.recurring;
     (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
     (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({...x,id:`${owner}-sav-${x.id}`,sourceProfile:owner}));
+    (r.bills||[]).filter(x=>x.isDebt).forEach(x=>debtJointIds.add(`joint-bill-${owner}-${x.id}`));
     (r.bills||[]).filter(x=>!x.isDebt).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
       const same=byName(recurring.bills,name);
@@ -5826,7 +5831,8 @@ function composeJointBudgetData(britt, christian, existing){
   });
   const incomeWeeks=[];
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
-  const oldExpenses=(existing?.expenses||[]).filter(e=>e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId));
+  (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
+  const oldExpenses=(existing?.expenses||[]).filter(e=>!debtJointIds.has(String(e.recurringId))&&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
   const sourceExpenses=[];
   sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
     if(e.type==="bill"&&(d.recurring.bills||[]).some(b=>b.isDebt&&String(b.id)===String(e.recurringId)))return;
@@ -7407,8 +7413,9 @@ function saveOneTimeIncome(){
   if(!payDate){alert("Payment date required");return;}
   if(!budgetData.incomeWeeks)budgetData.incomeWeeks=[];
   budgetData.incomeWeeks.push({
-    id:budgetNid++,weekStartDate:payDate,payDate,status:"received",
-    sourceId:null,sourceName:name,incomeType:"lump-sum",amount,isOneTime:true
+    id:budgetNid++,weekStartDate:payDate,payDate,status:payDate<=fd(new Date())?"received":"scheduled",
+    sourceId:null,sourceName:name,sourceProfile:activeBudgetProfile||null,
+    incomeType:"lump-sum",amount,isOneTime:true
   });
   saveBudgetData();
   closeModal("modal-one-time-income");
@@ -7553,7 +7560,12 @@ function renderTrackerIncome(){
 function openEditIncomeWeek(id){
   const w=(budgetData.incomeWeeks||[]).find(x=>x.id===id);if(!w)return;
   _editIWid=id;
-  t("eiw-label","Week of "+w.weekStartDate+" · "+w.sourceName);
+  t("eiw-label",(w.isOneTime?"One-time income · ":"Week of "+w.weekStartDate+" · ")+w.sourceName);
+  document.getElementById("eiw-name-field").style.display=w.isOneTime?"block":"none";
+  document.getElementById("eiw-date-field").style.display=w.isOneTime?"block":"none";
+  document.getElementById("eiw-delete").style.display=w.isOneTime?"flex":"none";
+  document.getElementById("eiw-name").value=w.sourceName||"";
+  document.getElementById("eiw-date").value=w.payDate||w.weekStartDate;
   const isLumpSum=(w.incomeType||"hourly")==="lump-sum";
   t("eiw-value-label",isLumpSum?"Amount received ($)":"Hours worked");
   document.getElementById("eiw-hours").step=isLumpSum?"0.01":"0.5";
@@ -7573,7 +7585,22 @@ function saveIncomeWeek(){
     if(!isNaN(value))w.hours=value;
     w.hoursOverridden=true;
   }
+  if(w.isOneTime){
+    const name=document.getElementById("eiw-name").value.trim();
+    const payDate=document.getElementById("eiw-date").value;
+    if(!name||!payDate)return;
+    w.sourceName=name;
+    w.weekStartDate=payDate;
+    w.payDate=payDate;
+    w.status=payDate<=fd(new Date())?"received":"scheduled";
+  }
   saveBudgetData();closeModal("modal-edit-income-week");renderTrackerIncome();
+}
+function deleteIncomeWeek(){
+  const w=(budgetData.incomeWeeks||[]).find(x=>x.id===_editIWid);if(!w?.isOneTime)return;
+  if(!confirm("Remove this one-time income?"))return;
+  budgetData.incomeWeeks=budgetData.incomeWeeks.filter(x=>x.id!==_editIWid);
+  saveBudgetData();closeModal("modal-edit-income-week");renderTrackerIncome();renderBudgetOverview();
 }
 
 /* ── ADD EXPENSE MODAL ───────────────────────────────────────── */
