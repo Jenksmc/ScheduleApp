@@ -507,6 +507,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .jps-value{font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text);white-space:nowrap}
 .jps-total-value{font-weight:600}
 .jps-household-value{text-align:center}
+.jps-start-value{cursor:pointer;text-align:center}
+.jps-start-value:hover{color:var(--today-color)}
 .jps-empty{color:var(--muted)}
 .jps-balance-row td{padding-top:9px;border-top:2px solid var(--border);border-bottom:0;font-weight:700;font-size:14px}
 .jps-balance-label{text-align:left}
@@ -6985,6 +6987,7 @@ function jointPeriodBreakdown(start,end,periodKey){
 
 function renderJointPersonSummary(containerId,breakdown,totals){
   const el=document.getElementById(containerId);if(!el)return;
+  const view=containerId.startsWith("monthly")?"monthly":"weekly";
   const value=v=>v?$f(v):'<span class="jps-empty">—</span>';
   const expanded={budget:el.dataset.budgetExpanded!=="false",actual:el.dataset.actualExpanded!=="false"};
   const span=kind=>expanded[kind]?2:1;
@@ -6996,11 +6999,13 @@ function renderJointPersonSummary(containerId,breakdown,totals){
     return`<td class="jps-value">${value(breakdown[category].christian[field])}</td><td class="jps-value">${value(breakdown[category].britt[field])}</td>`;
   };
   const household=kind=>`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(kind==="budget"?totals.hhBudget:totals.hhActual)}</td>`;
+  const start=kind=>`<td colspan="${span(kind)}" class="jps-value jps-start-value" onclick="openOneSb('${kind}','${view}')" title="Edit ${kind} start balance">${$f(kind==="budget"?totals.startBudget:totals.startActual)} <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></td>`;
   const balance=kind=>`<td colspan="${span(kind)}" class="jps-value">${$f(kind==="budget"?totals.endBudget:totals.endActual)}</td>`;
   el.innerHTML=`<table class="jps-table">
     <thead><tr><th class="jps-label"></th>${groupHead("budget")}${groupHead("actual")}</tr>
       <tr><th class="jps-label"></th>${personHeads("budget")}${personHeads("actual")}</tr></thead>
     <tbody>
+      <tr><th class="jps-label">Start Balance</th>${start("budget")}${start("actual")}</tr>
       <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
       <tr><th class="jps-label">Expenses</th>${cells("expenses","budget")}${cells("expenses","actual")}</tr>
       <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
@@ -7467,10 +7472,8 @@ function renderBudgetOverview(){
 
 
 function openBudgetStartBalance(){
-  const key=budgetView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
-  const period=getPeriod(key);
-  const v=prompt("Start balance ($):",period.startBalance||0);if(v===null)return;
-  period.startBalance=parseFloat(v)||0;saveBudgetData();renderBudgetOverview();
+  const view=budgetView==="monthly"?"monthly":"weekly";
+  openOneSb("budget",view);
 }
 
 /* ── WEEKLY ──────────────────────────────────────────────────── */
@@ -7571,6 +7574,7 @@ function renderWeeklyView(){
     t("ws-christian-income",$f(jb.income.christian.budget));t("wa-christian-income",$f(jb.income.christian.actual));
     t("ws-personal-transfers",$f(jb.personalBudget));t("wa-personal-transfers",$f(jb.personalActual));
     renderJointPersonSummary("weekly-joint-person-summary",jb,{
+      startBudget:budgetSb,startActual:actualSb,
       incomeBudget:cp.budgIncome,incomeActual:cp.actualIncome,
       expensesBudget:cp.budgExpenses,expensesActual:cp.actualExpenses,
       hhBudget:cp.budgSavHH,hhActual:cp.actualSavHH,
@@ -7667,6 +7671,7 @@ function renderMonthlyView(){
     t("ms-christian-income",$f(jb.income.christian.budget));t("ma-christian-income",$f(jb.income.christian.actual));
     t("ms-personal-transfers",$f(jb.personalBudget));t("ma-personal-transfers",$f(jb.personalActual));
     renderJointPersonSummary("monthly-joint-person-summary",jb,{
+      startBudget:budgetSb,startActual:actualSb,
       incomeBudget:cp.budgIncome,incomeActual:cp.actualIncome,
       expensesBudget:cp.budgExpenses,expensesActual:cp.actualExpenses,
       hhBudget:cp.budgSavHH,hhActual:cp.actualSavHH,
