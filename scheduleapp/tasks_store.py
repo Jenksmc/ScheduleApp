@@ -11,19 +11,20 @@ BACKUP_KEEP = 72             # keep the newest 72 snapshots
 _lock = threading.Lock()
 _last_backup = [0]
 
-def _snapshot_before_write():
+def _snapshot_before_write(force=False, label=""):
     """Copy the current data file into backups/ before it gets overwritten.
     Rate-limited and rotated, so no client (buggy, stale, or otherwise) can
     permanently destroy data — there is always recent history to restore."""
     try:
         if not os.path.exists(STORE_PATH):
-            return
+            return True
         now = time.time()
-        if now - _last_backup[0] < BACKUP_MIN_INTERVAL:
-            return
+        if not force and now - _last_backup[0] < BACKUP_MIN_INTERVAL:
+            return True
         os.makedirs(BACKUP_DIR, exist_ok=True)
         stamp = time.strftime('%Y%m%d-%H%M%S') + f'-{int((now % 1) * 1000):03d}'
-        dest = os.path.join(BACKUP_DIR, f'tasks_data-{stamp}.json')
+        safe_label = "-" + "".join(c for c in label if c.isalnum() or c in "-_") if label else ""
+        dest = os.path.join(BACKUP_DIR, f'tasks_data-{stamp}{safe_label}.json')
         with open(STORE_PATH, 'rb') as s, open(dest, 'wb') as d:
             d.write(s.read())
         _last_backup[0] = now
@@ -31,8 +32,15 @@ def _snapshot_before_write():
         snaps = sorted(f for f in os.listdir(BACKUP_DIR) if f.startswith('tasks_data-'))
         for old_snap in snaps[:-BACKUP_KEEP]:
             os.remove(os.path.join(BACKUP_DIR, old_snap))
+        return True
     except Exception as e:
-        print(f"[backup] snapshot failed (continuing with save): {e}")
+        print(f"[backup] snapshot failed: {e}")
+        return False
+
+def snapshot_now(label="manual"):
+    """Force a rollback snapshot before a versioned data migration."""
+    with _lock:
+        return _snapshot_before_write(force=True, label=label)
 
 DEFAULT_DATA = {
     "tasks": [],

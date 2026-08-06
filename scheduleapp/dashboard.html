@@ -1034,10 +1034,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <span class="bcompact-b" id="ws-start" onclick="openOneSb('budget','weekly')" style="cursor:pointer" title="Edit budget start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
             <span class="bcompact-a" id="wa-start" onclick="openOneSb('actual','weekly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
-          <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Household income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Brittni income</span><span class="bcompact-b" id="ws-income-britt">$0</span><span class="bcompact-a" id="wa-income-britt">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Christian income</span><span class="bcompact-b" id="ws-income-christian">$0</span><span class="bcompact-a" id="wa-income-christian">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ws-sav-hh" onclick="openEditBudgSav('weekly','household')" style="cursor:pointer" title="Edit budgeted household savings for this week">$0</span><span class="bcompact-a" id="wa-sav-hh">$0</span></div>
           <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ws-sav-pers" onclick="openEditBudgSav('weekly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this week">$0</span><span class="bcompact-a" id="wa-sav-pers">$0</span></div>
+          <div class="bcompact-row joint-only-summary"><span class="bcompact-lbl">- Personal savings transferred</span><span class="bcompact-b" id="ws-personal-savings">$0</span><span class="bcompact-a" id="wa-personal-savings">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ws-end">$0</span><span class="bcompact-a" id="wa-end">$0</span></div>
           <!-- hidden fields still needed for JS -->
           <span id="ws-subs" style="display:none"></span><span id="wa-subs" style="display:none"></span>
@@ -1139,10 +1142,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <span class="bcompact-b" id="ms-start" onclick="openOneSb('budget','monthly')" style="cursor:pointer" title="Edit budget start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
             <span class="bcompact-a" id="ma-start" onclick="openOneSb('actual','monthly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
-          <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Household income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Brittni income</span><span class="bcompact-b" id="ms-income-britt">$0</span><span class="bcompact-a" id="ma-income-britt">$0</span></div>
+          <div class="bcompact-row"><span class="bcompact-lbl">+ Christian income</span><span class="bcompact-b" id="ms-income-christian">$0</span><span class="bcompact-a" id="ma-income-christian">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ms-sav-hh" onclick="openEditBudgSav('monthly','household')" style="cursor:pointer" title="Edit budgeted household savings for this month">$0</span><span class="bcompact-a" id="ma-sav-hh">$0</span></div>
           <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ms-sav-pers" onclick="openEditBudgSav('monthly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this month">$0</span><span class="bcompact-a" id="ma-sav-pers">$0</span></div>
+          <div class="bcompact-row joint-only-summary"><span class="bcompact-lbl">- Personal savings transferred</span><span class="bcompact-b" id="ms-personal-savings">$0</span><span class="bcompact-a" id="ma-personal-savings">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ms-end">$0</span><span class="bcompact-a" id="ma-end">$0</span></div>
         </div>
         <div class="budget-card bcompact-card">
@@ -1681,13 +1687,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <select id="exp-owner">
             <option value="britt">Brittni</option>
             <option value="christian">Christian</option>
-            <option value="joint">Both</option>
           </select>
         </div>
+        <div class="field"><label>Spending type</label><select id="exp-scope"><option value="household">Household</option><option value="personal">Personal</option></select></div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
           <div class="badges">
             <button class="badge active" data-v="household" onclick="pickSavBucket('household',this)">Household</button>
-            <button class="badge personal-savings-only" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+            <button class="badge" data-v="personal" onclick="pickSavBucket('personal',this)">Personal</button>
+            <button class="badge" data-v="personal_pool" onclick="pickSavBucket('personal_pool',this)">Personal pool</button>
           </div>
         </div>
         <div class="field"><label>Notes <span class="opt-label">(optional)</span></label>
@@ -1723,6 +1730,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3 id="mis-heading">Add Income Source</h3><button class="close-x" onclick="closeModal('modal-income-source')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
+        <div class="field"><label>Earned by</label><select id="mis-owner"><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
         <div class="field"><label>Income type</label>
           <select id="mis-income-type" onchange="updateIncomeTypeFields()">
             <option value="hourly">Hourly</option>
@@ -1831,6 +1839,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3>Add One-Time Income</h3><button class="close-x" onclick="closeModal('modal-one-time-income')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="oti-name" placeholder="e.g. Bonus, refund, side job"/></div>
+        <div class="field"><label>Earned by</label><select id="oti-owner"><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
         <div class="field"><label>Amount ($)</label><input type="number" min="0" step="0.01" id="oti-amount" placeholder="0.00"/></div>
         <div class="field"><label>Payment date</label><input type="date" id="oti-date"/></div>
       </div>
@@ -1909,6 +1918,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="re-name" placeholder="e.g. Rent"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="re-amount" placeholder="0.00"/></div>
+        <div class="two-col"><div class="field"><label>Assigned to</label><select id="re-owner"><option value="britt">Brittni</option><option value="christian">Christian</option></select></div><div class="field"><label>Spending type</label><select id="re-scope"><option value="household">Household</option><option value="personal">Personal</option></select></div></div>
         <div class="field" id="re-bill-type-field"><label>Type</label>
           <select id="re-bill-type">
             <option value="bill">Bill</option>
@@ -1970,6 +1980,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="st-name" placeholder="e.g. Emergency Fund"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="st-amount" placeholder="557"/></div>
+        <div class="field"><label>For</label><select id="st-owner"><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
         <div class="field"><label>Schedule</label>
           <select id="st-schedule-type" onchange="updateSavingsScheduleFields()">
             <option value="paycheck">Per paycheck</option>
@@ -1994,7 +2005,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Bucket</label>
           <select id="st-bucket">
             <option value="household">Household / work</option>
-            <option class="personal-savings-only" value="personal">Personal</option>
+            <option value="personal">Personal</option>
+            <option value="personal_pool">Personal spending pool</option>
           </select>
         </div>
       </div>
@@ -5602,7 +5614,8 @@ function shopExpenseSync(item,list){
     }
     const cat=list.budgetCategory||"Groceries";
     const exp={id:budgetNid++,date:fd(new Date()),type:"variable",category:cat,effectiveCategory:cat,
-      title:item.name,amount:parseFloat(item.price)||0,nw:item.nw||"need",note:"Shopping: "+list.name};
+      title:item.name,amount:parseFloat(item.price)||0,nw:item.nw||"need",note:"Shopping: "+list.name,
+      owner:target,scope:"household"};
     budgetData.expenses.push(exp);
     item.expId=exp.id;
     saveBudgetData();
@@ -5783,6 +5796,7 @@ async function pushPinsToServer(){
     if(!r.ok)return;
     const d = await r.json();
     d.budgetPins = budgetPins;
+    d.baseUpdated = d.updated||0;
     await fetch(API_BASE+"/api/data",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -6560,7 +6574,7 @@ function intervalOccurrenceCount(transfer,start,end){
 
 function scheduledSavingsBuckets(start,end,receivedOnly=false){
   const transfers=budgetData.recurring?.savingsTransfers||[];
-  const totals={hh:0,pers:0};
+  const totals={hh:0,pers:0,pool:0};
   transfers.forEach(transfer=>{
     let count=0;
     if(savingsTransferScheduleType(transfer)==="paycheck"){
@@ -6574,7 +6588,8 @@ function scheduledSavingsBuckets(start,end,receivedOnly=false){
     }else{
       count=intervalOccurrenceCount(transfer,start,end);
     }
-    totals[transfer.bucket==="personal"?"pers":"hh"]+=(parseFloat(transfer.amount)||0)*count;
+    const target=transfer.bucket==="personal"?"pers":transfer.bucket==="personal_pool"?"pool":"hh";
+    totals[target]+=(parseFloat(transfer.amount)||0)*count;
   });
   return totals;
 }
@@ -6652,7 +6667,8 @@ function materializeRecurring(){
       recurringDueDatesIn(item,s.materializeSince,today).forEach(ds=>{
         const recKey=item.id+":"+ds;
         if(existing.has(recKey)||dismissed.has(recKey))return;
-        budgetData.expenses.push({id:budgetNid++,date:ds,type,category:item.name,amount:item.amount,recKey,recurringId:item.id,note:""});
+        budgetData.expenses.push({id:budgetNid++,date:ds,type,category:item.name,amount:item.amount,recKey,recurringId:item.id,
+          owner:item.owner||activeBudgetProfile,scope:item.scope||(activeBudgetProfile==="joint"?"household":"personal"),note:""});
         existing.add(recKey);changed=true;
       });
     });
@@ -6735,12 +6751,12 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const _savAuto=_isMonthlySav?computeMonthlySavFromWeeks(start,end):scheduledSavingsBuckets(start,end);
   const budgSavHH=period.overrideBudgSavHH!=null?period.overrideBudgSavHH
     :(period.overrideBudgSav!=null&&period.overrideBudgSavPers==null?period.overrideBudgSav:_savAuto.hh);
-  const budgSavPers=activeBudgetProfile==="joint"?0
+  const budgSavPers=activeBudgetProfile==="joint"?_savAuto.pool
     :(period.overrideBudgSavPers!=null?period.overrideBudgSavPers:_savAuto.pers);
   const budgSav=budgSavHH+budgSavPers;
   const savExps=getExpensesFor(start,end,"savings");
   const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
-  const actualSavPers=activeBudgetProfile==="joint"?0:savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
+  const actualSavPers=savExps.filter(e=>e.savingsBucket===(activeBudgetProfile==="joint"?"personal_pool":"personal")).reduce((s,e)=>s+e.amount,0);
   const actualSav=actualSavHH+actualSavPers;
 
   // Variable budget default: a flat weekly amount from settings ($350 unless
@@ -8422,7 +8438,8 @@ function openEditRecActual(recKey){
   if(exp){exp.amount=amt-exps.slice(1).reduce((sum,e)=>sum+e.amount,0);}
   else if(item){
     const type=(budgetData.recurring.bills||[]).some(b=>String(b.id)===rid)?"bill":"subscription";
-    budgetData.expenses.push({id:budgetNid++,date:dueDate,type,category:item.name,amount:amt,recKey,recurringId:item.id,owner:activeBudgetProfile==="joint"?"joint":undefined,note:""});
+    budgetData.expenses.push({id:budgetNid++,date:dueDate,type,category:item.name,amount:amt,recKey,recurringId:item.id,
+      owner:item.owner||activeBudgetProfile,scope:item.scope||(activeBudgetProfile==="joint"?"household":"personal"),note:""});
   }
   saveBudgetData();renderBudgetOverview();
 }
@@ -9666,6 +9683,9 @@ function toggleHabit(ds,key){
 }
 
 
+</script>
+<script src="/budget-master.js"></script>
+<script>
 /* ── BOOT SEQUENCE (ORDER MATTERS) ───────────────────────────
    Previously renderHome() ran synchronously right after calling
    the async pullFromServer(), so the catch-all sync patch above
