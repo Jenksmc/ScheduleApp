@@ -496,22 +496,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .bcompact-a{font-family:"DM Mono",monospace;font-size:13px;font-weight:600;min-width:72px;text-align:right}
 .bcompact-a.over{color:#e05555}.bcompact-a.good{color:#3db87a}
 .joint-person-summary{display:none}
-.jps-groups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
-.jps-section{border:1px solid var(--border);border-radius:10px;padding:0 9px;min-width:0}
-.jps-section summary{list-style:none;display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:8px 0;cursor:pointer;user-select:none}
-.jps-section summary::-webkit-details-marker{display:none}
-.jps-section summary::before{content:"\25B8";font-size:11px;color:var(--muted);margin-right:4px}
-.jps-section[open] summary::before{content:"\25BE"}
-.jps-category{font-size:13px;color:var(--text);font-weight:600}
-.jps-total{font-family:"DM Mono",monospace;font-size:12px;color:var(--muted);min-width:70px;text-align:right}
-.jps-grid{display:grid;grid-template-columns:minmax(54px,1fr) minmax(58px,auto) minmax(58px,auto);gap:4px;padding:0 0 8px;align-items:center}
-.jps-head{font-family:"DM Mono",monospace;font-size:10px;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.4px}
-.jps-row-label{font-size:12px;color:var(--muted)}
-.jps-value{font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text)}
-.jps-household-value{grid-column:2 / 4;font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text)}
+.jps-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.jps-table th,.jps-table td{padding:6px 5px;border-bottom:1px solid var(--border)}
+.jps-table th{font-family:"DM Mono",monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:right}
+.jps-table .jps-label{width:25%;padding-left:0;text-align:left;font-family:inherit;font-size:13px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500}
+.jps-toggle{appearance:none;border:0;background:transparent;color:var(--text);font:600 13px inherit;cursor:pointer;padding:0}
+.jps-toggle::before{content:"\25B8";display:inline-block;margin-right:5px;font-size:10px;color:var(--muted)}
+.jps-toggle[aria-expanded="true"]::before{content:"\25BE"}
+.jps-person-head{text-align:right!important}
+.jps-value{font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text);white-space:nowrap}
+.jps-total-value{font-weight:600}
+.jps-household-value{text-align:center}
 .jps-empty{color:var(--muted)}
-.jps-balance{display:grid;grid-template-columns:1fr auto auto;gap:4px;padding:8px 0 0;margin-top:2px;border-top:2px solid var(--border);font-weight:700;font-size:14px}
-@media(max-width:700px){.jps-groups{grid-template-columns:1fr}.jps-grid{grid-template-columns:minmax(70px,1fr) 72px 72px}}
+.jps-balance-row td{padding-top:9px;border-top:2px solid var(--border);border-bottom:0;font-weight:700;font-size:14px}
+.jps-balance-label{text-align:left}
+@media(max-width:700px){.jps-table th,.jps-table td{padding-left:3px;padding-right:3px}.jps-table .jps-label{width:22%;font-size:12px}.jps-value{font-size:11px}.jps-toggle{font-size:12px}}
 /* Daily spending as horizontal bar rows */
 .bday-bar-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
 .bday-bar-label{color:var(--muted);width:36px;flex-shrink:0;font-family:"DM Mono",monospace;font-size:11px}
@@ -6981,24 +6980,33 @@ function jointPeriodBreakdown(start,end,periodKey){
 function renderJointPersonSummary(containerId,breakdown,totals){
   const el=document.getElementById(containerId);if(!el)return;
   const value=v=>v?$f(v):'<span class="jps-empty">—</span>';
-  const group=(kind,label,total,open=false)=>{
-    const field=kind.toLowerCase();
-    return`<details class="jps-section"${open?' open':''}>
-      <summary><span class="jps-category">${label}</span><span class="jps-total">${$f(total)}</span></summary>
-      <div class="jps-grid">
-        <span></span><span class="jps-head">Brittni</span><span class="jps-head">Christian</span>
-        <span class="jps-row-label">Income</span><span class="jps-value">${value(breakdown.income.britt[field])}</span><span class="jps-value">${value(breakdown.income.christian[field])}</span>
-        <span class="jps-row-label">Expenses</span><span class="jps-value">${value(breakdown.expenses.britt[field])}</span><span class="jps-value">${value(breakdown.expenses.christian[field])}</span>
-        <span class="jps-row-label">Personal</span><span class="jps-value">${value(breakdown.personal.britt[field])}</span><span class="jps-value">${value(breakdown.personal.christian[field])}</span>
-        <span class="jps-row-label">HH Savings</span><span class="jps-household-value">${value(kind==="Budget"?totals.hhBudget:totals.hhActual)}</span>
-      </div>
-    </details>`;
+  const expanded={budget:el.dataset.budgetExpanded!=="false",actual:el.dataset.actualExpanded!=="false"};
+  const span=kind=>expanded[kind]?2:1;
+  const groupHead=kind=>`<th colspan="${span(kind)}"><button type="button" class="jps-toggle" aria-expanded="${expanded[kind]}" onclick="toggleJointSummaryGroup('${containerId}','${kind}')">${kind[0].toUpperCase()+kind.slice(1)}</button></th>`;
+  const personHeads=kind=>expanded[kind]?'<th class="jps-person-head">Christian</th><th class="jps-person-head">Brittni</th>':`<th class="jps-person-head">Total</th>`;
+  const cells=(category,kind)=>{
+    const field=kind;
+    if(!expanded[kind])return`<td class="jps-value jps-total-value">${value(breakdown[category].christian[field]+breakdown[category].britt[field])}</td>`;
+    return`<td class="jps-value">${value(breakdown[category].christian[field])}</td><td class="jps-value">${value(breakdown[category].britt[field])}</td>`;
   };
-  el.innerHTML=`<div class="jps-groups">
-      ${group('Budget','Budget',totals.endBudget,true)}
-      ${group('Actual','Actual',totals.endActual,true)}
-    </div>
-    <div class="jps-balance"><span>END BALANCE</span><span class="bcompact-b">${$f(totals.endBudget)}</span><span class="bcompact-a">${$f(totals.endActual)}</span></div>`;
+  const household=kind=>`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(kind==="budget"?totals.hhBudget:totals.hhActual)}</td>`;
+  const balance=kind=>`<td colspan="${span(kind)}" class="jps-value">${$f(kind==="budget"?totals.endBudget:totals.endActual)}</td>`;
+  el.innerHTML=`<table class="jps-table">
+    <thead><tr><th class="jps-label"></th>${groupHead("budget")}${groupHead("actual")}</tr>
+      <tr><th class="jps-label"></th>${personHeads("budget")}${personHeads("actual")}</tr></thead>
+    <tbody>
+      <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
+      <tr><th class="jps-label">Expenses</th>${cells("expenses","budget")}${cells("expenses","actual")}</tr>
+      <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
+      <tr><th class="jps-label">Personal</th>${cells("personal","budget")}${cells("personal","actual")}</tr>
+      <tr class="jps-balance-row"><td class="jps-balance-label">END BALANCE</td>${balance("budget")}${balance("actual")}</tr>
+    </tbody></table>`;
+}
+
+function toggleJointSummaryGroup(containerId,kind){
+  const el=document.getElementById(containerId);if(!el)return;
+  el.dataset[kind+"Expanded"]=el.dataset[kind+"Expanded"]==="false"?"true":"false";
+  if(containerId.startsWith("weekly"))renderWeeklyView();else renderMonthlyView();
 }
 
 /* ── Deterministic start-balance chaining ────────────────────── */
