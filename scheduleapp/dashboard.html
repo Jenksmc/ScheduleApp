@@ -496,21 +496,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .bcompact-a{font-family:"DM Mono",monospace;font-size:13px;font-weight:600;min-width:72px;text-align:right}
 .bcompact-a.over{color:#e05555}.bcompact-a.good{color:#3db87a}
 .joint-person-summary{display:none}
-.jps-section{border-bottom:1px solid var(--border)}
-.jps-section:last-of-type{border-bottom:none}
-.jps-section summary{list-style:none;display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;cursor:pointer;user-select:none}
+.jps-groups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.jps-section{border:1px solid var(--border);border-radius:10px;padding:0 9px;min-width:0}
+.jps-section summary{list-style:none;display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:8px 0;cursor:pointer;user-select:none}
 .jps-section summary::-webkit-details-marker{display:none}
 .jps-section summary::before{content:"\25B8";font-size:11px;color:var(--muted);margin-right:4px}
 .jps-section[open] summary::before{content:"\25BE"}
-.jps-section summary{grid-template-columns:auto 1fr auto auto}
 .jps-category{font-size:13px;color:var(--text);font-weight:600}
 .jps-total{font-family:"DM Mono",monospace;font-size:12px;color:var(--muted);min-width:70px;text-align:right}
-.jps-grid{display:grid;grid-template-columns:minmax(54px,1fr) 72px 72px;gap:4px;padding:0 0 8px 18px;align-items:center}
+.jps-grid{display:grid;grid-template-columns:minmax(54px,1fr) minmax(58px,auto) minmax(58px,auto);gap:4px;padding:0 0 8px;align-items:center}
 .jps-head{font-family:"DM Mono",monospace;font-size:10px;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.4px}
 .jps-row-label{font-size:12px;color:var(--muted)}
 .jps-value{font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text)}
+.jps-household-value{grid-column:2 / 4;font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--text)}
 .jps-empty{color:var(--muted)}
 .jps-balance{display:grid;grid-template-columns:1fr auto auto;gap:4px;padding:8px 0 0;margin-top:2px;border-top:2px solid var(--border);font-weight:700;font-size:14px}
+@media(max-width:700px){.jps-groups{grid-template-columns:1fr}.jps-grid{grid-template-columns:minmax(70px,1fr) 72px 72px}}
 /* Daily spending as horizontal bar rows */
 .bday-bar-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
 .bday-bar-label{color:var(--muted);width:36px;flex-shrink:0;font-family:"DM Mono",monospace;font-size:11px}
@@ -5955,7 +5956,12 @@ function normalizeJointMaster(master){
   master.expenses=master.expenses||[];master.incomeWeeks=master.incomeWeeks||[];master.personalPoolTransfers=master.personalPoolTransfers||[];master.periods=master.periods||{};master.settings=master.settings||{};
   master.personalPools=master.personalPools||{britt:{balance:0},christian:{balance:0}};
   master.recurring.incomeSources.forEach(x=>{x.owner=x.owner||x.sourceProfile||"britt";});
-  master.incomeWeeks.forEach(x=>{x.owner=x.owner||x.sourceProfile||"britt";x.sourceProfile=x.owner;});
+  const incomeOwnerBySource=new Map(master.recurring.incomeSources.map(x=>[String(x.id),x.owner]));
+  master.incomeWeeks.forEach(x=>{
+    const sourceOwner=x.sourceId!=null?incomeOwnerBySource.get(String(x.sourceId)):null;
+    x.owner=sourceOwner||x.owner||x.sourceProfile||"britt";
+    x.sourceProfile=x.owner;
+  });
   ["bills","subscriptions"].forEach(k=>master.recurring[k].forEach(x=>{
     x.owner=x.owner||x.sourceProfile||(x.sourceProfiles?.length===1?x.sourceProfiles[0]:"household");
     x.scope=x.scope||(x.isDebt&&x.owner!=="household"?"personal":"household");
@@ -6530,6 +6536,8 @@ function generateIncomeWeeks(){
         const payDateStr=fd(payD);
         const existingWeek=existing.get(key);
         if(existingWeek){
+          existingWeek.owner=src.owner||src.sourceProfile||existingWeek.owner||existingWeek.sourceProfile||"britt";
+          existingWeek.sourceProfile=existingWeek.owner;
           existingWeek.incomeType=src.incomeType||"hourly";
           if(existingWeek.incomeType==="lump-sum"){
             if(!existingWeek.amountOverridden)existingWeek.amount=parseFloat(src.amount)||0;
@@ -6556,6 +6564,8 @@ function generateIncomeWeeks(){
           payDate:payDateStr,
           sourceId:src.id,
           sourceName:src.name,
+          owner:src.owner||src.sourceProfile||"britt",
+          sourceProfile:src.owner||src.sourceProfile||"britt",
           frequency,
           incomeType:src.incomeType||"hourly",
           amount:src.incomeType==="lump-sum"?(parseFloat(src.amount)||0):undefined,
@@ -6971,22 +6981,23 @@ function jointPeriodBreakdown(start,end,periodKey){
 function renderJointPersonSummary(containerId,breakdown,totals){
   const el=document.getElementById(containerId);if(!el)return;
   const value=v=>v?$f(v):'<span class="jps-empty">—</span>';
-  const section=(label,key,totalBudget,totalActual,open=false)=>{
-    const data=breakdown[key];
+  const group=(kind,label,total,open=false)=>{
+    const field=kind.toLowerCase();
     return`<details class="jps-section"${open?' open':''}>
-      <summary><span class="jps-category">${label}</span><span class="jps-total">${$f(totalBudget)}</span><span class="jps-total">${$f(totalActual)}</span></summary>
+      <summary><span class="jps-category">${label}</span><span class="jps-total">${$f(total)}</span></summary>
       <div class="jps-grid">
         <span></span><span class="jps-head">Brittni</span><span class="jps-head">Christian</span>
-        <span class="jps-row-label">Budget</span><span class="jps-value">${value(data.britt.budget)}</span><span class="jps-value">${value(data.christian.budget)}</span>
-        <span class="jps-row-label">Actual</span><span class="jps-value">${value(data.britt.actual)}</span><span class="jps-value">${value(data.christian.actual)}</span>
+        <span class="jps-row-label">Income</span><span class="jps-value">${value(breakdown.income.britt[field])}</span><span class="jps-value">${value(breakdown.income.christian[field])}</span>
+        <span class="jps-row-label">Expenses</span><span class="jps-value">${value(breakdown.expenses.britt[field])}</span><span class="jps-value">${value(breakdown.expenses.christian[field])}</span>
+        <span class="jps-row-label">Personal</span><span class="jps-value">${value(breakdown.personal.britt[field])}</span><span class="jps-value">${value(breakdown.personal.christian[field])}</span>
+        <span class="jps-row-label">HH Savings</span><span class="jps-household-value">${value(kind==="Budget"?totals.hhBudget:totals.hhActual)}</span>
       </div>
     </details>`;
   };
-  el.innerHTML=`<div class="bcompact-header-row"><span></span><span class="bcompact-col-hdr">BUDGET</span><span class="bcompact-col-hdr">ACTUAL</span></div>
-    ${section('+ Income','income',totals.incomeBudget,totals.incomeActual,true)}
-    ${section('- Expenses','expenses',totals.expensesBudget,totals.expensesActual)}
-    ${section('- HH Savings','householdSavings',totals.hhBudget,totals.hhActual)}
-    ${section('- Personal','personal',totals.personalBudget,totals.personalActual)}
+  el.innerHTML=`<div class="jps-groups">
+      ${group('Budget','Budget',totals.endBudget,true)}
+      ${group('Actual','Actual',totals.endActual,true)}
+    </div>
     <div class="jps-balance"><span>END BALANCE</span><span class="bcompact-b">${$f(totals.endBudget)}</span><span class="bcompact-a">${$f(totals.endActual)}</span></div>`;
 }
 
@@ -7405,13 +7416,13 @@ function renderBudgetPage(){
 
 function renderBudgetOverview(){
   const jointSavings=activeBudgetProfile==="joint";
-  document.querySelectorAll(".personal-savings-only").forEach(el=>el.style.display="");
+  document.querySelectorAll(".personal-savings-only").forEach(el=>el.style.display=jointSavings?"none":"");
   document.querySelectorAll(".joint-summary-only").forEach(el=>el.style.display=jointSavings?"grid":"none");
   document.querySelectorAll(".joint-person-summary").forEach(el=>el.style.display=jointSavings?"block":"none");
   document.querySelectorAll(".personal-profile-summary").forEach(el=>el.style.display=jointSavings?"none":"block");
   ["w-savings-grid","m-savings-grid","tracker-savings-grid"].forEach(id=>{
     const el=document.getElementById(id);
-    if(el)el.style.gridTemplateColumns="1fr 1fr";
+    if(el)el.style.gridTemplateColumns=jointSavings?"1fr":"1fr 1fr";
   });
   const mbContainer = document.getElementById("mb-container");
   const isMobile = document.body.classList.contains("mobile-mode");
