@@ -1867,6 +1867,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3>Add One-Time Income</h3><button class="close-x" onclick="closeModal('modal-one-time-income')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="oti-name" placeholder="e.g. Bonus, refund, side job"/></div>
+        <div class="field" id="oti-owner-field"><label>Earned by</label>
+          <select id="oti-owner">
+            <option value="britt">Brittni</option>
+            <option value="christian">Christian</option>
+          </select>
+        </div>
         <div class="field"><label>Amount ($)</label><input type="number" min="0" step="0.01" id="oti-amount" placeholder="0.00"/></div>
         <div class="field"><label>Payment date</label><input type="date" id="oti-date"/></div>
       </div>
@@ -7795,14 +7801,14 @@ function setTrackerView(v){
 }
 
 function openTrackerAdd(){
-  if(trackerView==="variable"&&activeBudgetProfile==="joint"){
-    alert("Add variable expenses from Brittni or Christian's individual tracker.");
-    return;
-  }
   if(trackerView==="income"){
     document.getElementById("oti-name").value="";
     document.getElementById("oti-amount").value="";
     document.getElementById("oti-date").value=fd(new Date());
+    const owner=document.getElementById("oti-owner");
+    if(owner)owner.value=activeBudgetProfile==="christian"?"christian":"britt";
+    const ownerField=document.getElementById("oti-owner-field");
+    if(ownerField)ownerField.style.display=activeBudgetProfile==="joint"?"block":"none";
     document.getElementById("modal-one-time-income").style.display="block";
     setTimeout(()=>document.getElementById("oti-name").focus(),50);
     return;
@@ -7817,10 +7823,13 @@ function saveOneTimeIncome(){
   if(!name){alert("Name required");return;}
   if(!(amount>0)){alert("Amount must be greater than zero");return;}
   if(!payDate){alert("Payment date required");return;}
+  const owner=activeBudgetProfile==="joint"
+    ?(document.getElementById("oti-owner")?.value||"britt")
+    :(activeBudgetProfile==="christian"?"christian":"britt");
   if(!budgetData.incomeWeeks)budgetData.incomeWeeks=[];
   budgetData.incomeWeeks.push({
     id:budgetNid++,weekStartDate:payDate,payDate,status:payDate<=fd(new Date())?"received":"scheduled",
-    sourceId:null,sourceName:name,sourceProfile:activeBudgetProfile||null,
+    sourceId:null,sourceName:name,owner,sourceProfile:owner,
     incomeType:"lump-sum",amount,isOneTime:true
   });
   saveBudgetData();
