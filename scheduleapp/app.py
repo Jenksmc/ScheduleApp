@@ -1,6 +1,11 @@
 from flask import Flask, send_file, request, jsonify
 from flask_cors import CORS
-import tasks_store, os, time
+import os, time
+
+try:
+    from . import tasks_store
+except ImportError:  # Running directly from the scheduleapp directory.
+    import tasks_store
 
 app = Flask(__name__)
 CORS(app)
@@ -47,6 +52,10 @@ def mobile_christian():
 def mobile_home():
     return send_file('mobile.html')
 
+@app.route('/budget-master.js')
+def budget_master_script():
+    return send_file('budget_master.js')
+
 @app.route('/api/data', methods=['GET'])
 def get_data():
     return jsonify(tasks_store.get_all())
@@ -80,6 +89,20 @@ def save_data():
     # DELETED that key from disk. Now we merge posted keys into the
     # existing file: keys a client doesn't send are always preserved.
     current_data = tasks_store.get_all()
+
+    # Force a rollback point before the one-time transition from separate
+    # personal stores to the shared v5 budget master. Once v5 exists, an
+    # older browser is never allowed to downgrade it.
+    incoming_master = data.get("budgetData_joint")
+    existing_master = current_data.get("budgetData_joint")
+    incoming_schema = incoming_master.get("schemaVersion", 0) if isinstance(incoming_master, dict) else 0
+    existing_schema = existing_master.get("schemaVersion", 0) if isinstance(existing_master, dict) else 0
+    if incoming_schema >= 5 and existing_schema < 5:
+        if not tasks_store.snapshot_now("before-budget-v5"):
+            return jsonify({"error": "budget migration backup failed"}), 500
+    elif existing_schema >= 5 and incoming_master is not None and incoming_schema < existing_schema:
+        print(f"[budget guard] Rejected schema downgrade {incoming_schema} < {existing_schema}")
+        del data["budgetData_joint"]
 
     # ── BUDGET FRESHNESS GUARD ────────────────────────────────
     # budgetData* objects carry a _ts stamp (set client-side on every
