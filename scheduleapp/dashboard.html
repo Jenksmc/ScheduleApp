@@ -6993,12 +6993,21 @@ function renderJointPersonSummary(containerId,breakdown,totals){
   const span=kind=>expanded[kind]?2:1;
   const groupHead=kind=>`<th colspan="${span(kind)}"><button type="button" class="jps-toggle" aria-expanded="${expanded[kind]}" onclick="toggleJointSummaryGroup('${containerId}','${kind}')">${kind[0].toUpperCase()+kind.slice(1)}</button></th>`;
   const personHeads=kind=>expanded[kind]?'<th class="jps-person-head">Christian</th><th class="jps-person-head">Brittni</th>':`<th class="jps-person-head">Total</th>`;
-  const cells=(category,kind)=>{
+  const cells=(category,kind,totalOverride)=>{
     const field=kind;
-    if(!expanded[kind])return`<td class="jps-value jps-total-value">${value(breakdown[category].christian[field]+breakdown[category].britt[field])}</td>`;
+    if(!expanded[kind]){
+      const total=totalOverride!=null?totalOverride:breakdown[category].christian[field]+breakdown[category].britt[field];
+      return`<td class="jps-value jps-total-value">${value(total)}</td>`;
+    }
     return`<td class="jps-value">${value(breakdown[category].christian[field])}</td><td class="jps-value">${value(breakdown[category].britt[field])}</td>`;
   };
   const household=kind=>`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(kind==="budget"?totals.hhBudget:totals.hhActual)}</td>`;
+  // Variable-expense budgets are household pools, so they cannot be assigned
+  // truthfully to either person. Show the complete budget total across the
+  // Budget group; Actual expenses remain split by the selected spender.
+  const expenses=kind=>kind==="budget"
+    ?`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(totals.expensesBudget)}</td>`
+    :cells("expenses",kind,totals.expensesActual);
   const start=kind=>`<td colspan="${span(kind)}" class="jps-value jps-start-value" onclick="openOneSb('${kind}','${view}')" title="Edit ${kind} start balance">${$f(kind==="budget"?totals.startBudget:totals.startActual)} <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></td>`;
   const balance=kind=>`<td colspan="${span(kind)}" class="jps-value">${$f(kind==="budget"?totals.endBudget:totals.endActual)}</td>`;
   el.innerHTML=`<table class="jps-table">
@@ -7007,7 +7016,7 @@ function renderJointPersonSummary(containerId,breakdown,totals){
     <tbody>
       <tr><th class="jps-label">Start Balance</th>${start("budget")}${start("actual")}</tr>
       <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
-      <tr><th class="jps-label">Expenses</th>${cells("expenses","budget")}${cells("expenses","actual")}</tr>
+      <tr><th class="jps-label">Expenses</th>${expenses("budget")}${expenses("actual")}</tr>
       <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
       <tr><th class="jps-label">Personal</th>${cells("personal","budget")}${cells("personal","actual")}</tr>
       <tr class="jps-balance-row"><td class="jps-balance-label">END BALANCE</td>${balance("budget")}${balance("actual")}</tr>
@@ -9621,6 +9630,7 @@ function saveRecExpense(){
   saveBudgetData();
   closeModal("modal-rec-expense");
   renderBudgetSettings();
+  renderBudgetOverview();
 }
 
 function deleteRecExpense(){
