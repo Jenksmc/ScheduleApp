@@ -318,6 +318,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 .budget-period-nav{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .budget-period-label{font-size:18px;font-weight:500;color:var(--text);flex:1}
 .budget-summary-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+.joint-summary-only{display:none}
 .budget-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
 .bsum-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:16px}
 .bsum-row:last-child{border-bottom:none}
@@ -1035,9 +1036,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <span class="bcompact-a" id="wa-start" onclick="openOneSb('actual','weekly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ws-income">$0</span><span class="bcompact-a" id="wa-income">$0</span></div>
+          <div class="bcompact-row joint-summary-only"><span class="bcompact-lbl">Brittni Income</span><span class="bcompact-b" id="ws-britt-income">$0</span><span class="bcompact-a" id="wa-britt-income">$0</span></div>
+          <div class="bcompact-row joint-summary-only"><span class="bcompact-lbl">Christian Income</span><span class="bcompact-b" id="ws-christian-income">$0</span><span class="bcompact-a" id="wa-christian-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ws-fixed">$0</span><span class="bcompact-a bca-exp" id="wa-fixed">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ws-sav-hh" onclick="openEditBudgSav('weekly','household')" style="cursor:pointer" title="Edit budgeted household savings for this week">$0</span><span class="bcompact-a" id="wa-sav-hh">$0</span></div>
           <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ws-sav-pers" onclick="openEditBudgSav('weekly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this week">$0</span><span class="bcompact-a" id="wa-sav-pers">$0</span></div>
+          <div class="bcompact-row neg joint-summary-only"><span class="bcompact-lbl">- Personal transfers</span><span class="bcompact-b" id="ws-personal-transfers">$0</span><span class="bcompact-a" id="wa-personal-transfers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ws-end">$0</span><span class="bcompact-a" id="wa-end">$0</span></div>
           <!-- hidden fields still needed for JS -->
           <span id="ws-subs" style="display:none"></span><span id="wa-subs" style="display:none"></span>
@@ -1140,9 +1144,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
             <span class="bcompact-a" id="ma-start" onclick="openOneSb('actual','monthly')" style="cursor:pointer;font-weight:700" title="Edit actual start">$0 <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></span>
           </div>
           <div class="bcompact-row"><span class="bcompact-lbl">+ Income</span><span class="bcompact-b" id="ms-income">$0</span><span class="bcompact-a" id="ma-income">$0</span></div>
+          <div class="bcompact-row joint-summary-only"><span class="bcompact-lbl">Brittni Income</span><span class="bcompact-b" id="ms-britt-income">$0</span><span class="bcompact-a" id="ma-britt-income">$0</span></div>
+          <div class="bcompact-row joint-summary-only"><span class="bcompact-lbl">Christian Income</span><span class="bcompact-b" id="ms-christian-income">$0</span><span class="bcompact-a" id="ma-christian-income">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- Expenses</span><span class="bcompact-b" id="ms-exp">$0</span><span class="bcompact-a" id="ma-exp">$0</span></div>
           <div class="bcompact-row neg"><span class="bcompact-lbl">- HH Savings</span><span class="bcompact-b" id="ms-sav-hh" onclick="openEditBudgSav('monthly','household')" style="cursor:pointer" title="Edit budgeted household savings for this month">$0</span><span class="bcompact-a" id="ma-sav-hh">$0</span></div>
           <div class="bcompact-row neg personal-savings-only"><span class="bcompact-lbl">- Pers. Savings</span><span class="bcompact-b" id="ms-sav-pers" onclick="openEditBudgSav('monthly','personal')" style="cursor:pointer" title="Edit budgeted personal savings for this month">$0</span><span class="bcompact-a" id="ma-sav-pers">$0</span></div>
+          <div class="bcompact-row neg joint-summary-only"><span class="bcompact-lbl">- Personal transfers</span><span class="bcompact-b" id="ms-personal-transfers">$0</span><span class="bcompact-a" id="ma-personal-transfers">$0</span></div>
           <div class="bcompact-row total-crow"><span class="bcompact-lbl">END BALANCE</span><span class="bcompact-b" id="ms-end">$0</span><span class="bcompact-a" id="ma-end">$0</span></div>
         </div>
         <div class="budget-card bcompact-card">
@@ -1381,6 +1388,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div style="padding:14px 16px">
           <div style="font-size:14px;color:var(--muted);margin-bottom:10px" id="bs-profile-info"></div>
           <button class="btn" onclick="openChangePinModal(activeBudgetProfile)"><i class="ti ti-key"></i> Change PIN</button>
+          <div id="bs-personal-pools" style="margin-top:12px"></div>
         </div>
       </div>
 
@@ -1681,7 +1689,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <select id="exp-owner">
             <option value="britt">Brittni</option>
             <option value="christian">Christian</option>
-            <option value="joint">Both</option>
+          </select>
+        </div>
+        <div class="field" id="exp-scope-field"><label>Spending type</label>
+          <select id="exp-scope">
+            <option value="household">Household</option>
+            <option value="personal">Personal</option>
           </select>
         </div>
         <div class="field" id="exp-sav-field" style="display:none"><label>Savings bucket</label>
@@ -1723,6 +1736,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-hdr"><h3 id="mis-heading">Add Income Source</h3><button class="close-x" onclick="closeModal('modal-income-source')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="mis-name" placeholder="e.g. Microsoft/Accenture"/></div>
+        <div class="field" id="mis-owner-field"><label>Earned by</label><select id="mis-owner"><option value="britt">Brittni</option><option value="christian">Christian</option></select></div>
         <div class="field"><label>Income type</label>
           <select id="mis-income-type" onchange="updateIncomeTypeFields()">
             <option value="hourly">Hourly</option>
@@ -1909,6 +1923,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
       <div class="modal-body">
         <div class="field"><label>Name</label><input type="text" id="re-name" placeholder="e.g. Rent"/></div>
         <div class="field"><label>Amount ($)</label><input type="number" step="0.01" id="re-amount" placeholder="0.00"/></div>
+        <div class="two-col">
+          <div class="field"><label>Assigned to</label><select id="re-owner"><option value="britt">Brittni</option><option value="christian">Christian</option><option value="household">Household</option></select></div>
+          <div class="field"><label>Spending type</label><select id="re-scope"><option value="household">Household</option><option value="personal">Personal</option></select></div>
+        </div>
         <div class="field" id="re-bill-type-field"><label>Type</label>
           <select id="re-bill-type">
             <option value="bill">Bill</option>
@@ -1995,8 +2013,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
           <select id="st-bucket">
             <option value="household">Household / work</option>
             <option class="personal-savings-only" value="personal">Personal</option>
+            <option value="personal-pool">Personal pool funding</option>
           </select>
         </div>
+        <div class="field" id="st-owner-field"><label>For</label><select id="st-owner"><option value="britt">Brittni</option><option value="christian">Christian</option><option value="household">Household</option></select></div>
       </div>
       <div class="mfooter">
         <button class="btn-danger" id="st-delete" style="display:none" onclick="deleteSavingsTransfer(_editSavTransferId)"><i class="ti ti-trash"></i></button>
@@ -2744,6 +2764,12 @@ async function pushToServer(){
     if(activeBudgetProfile){
       payload["budgetData_"+activeBudgetProfile]=budgetData;
       payload["budgetNid_"+activeBudgetProfile]=budgetNid;
+      if(activeBudgetProfile!=="joint"){
+        try{
+          const jointMaster=JSON.parse(localStorage.getItem("budgetData_joint")||"null");
+          if(jointMaster){payload.budgetData_joint=jointMaster;payload.budgetNid_joint=parseInt(localStorage.getItem("budgetNid_joint")||String(budgetNid));}
+        }catch(e){}
+      }
     }
     const r=await fetch(API_BASE+"/api/data",{
       method:"POST",
@@ -2791,7 +2817,13 @@ async function pullFromServer(){
     if(activeBudgetProfile){
       const profileKey="budgetData_"+activeBudgetProfile;
       const profileNidKey="budgetNid_"+activeBudgetProfile;
-      if(_newerBudget(d[profileKey])){
+      const incomingMaster=d.budgetData_joint;
+      if(activeBudgetProfile!=="joint"&&incomingMaster?.schemaVersion>=4&&_newerBudget(incomingMaster)){
+        localStorage.setItem(getDataKey("joint"),JSON.stringify(incomingMaster));
+        budgetData=filterJointBudgetForPerson(incomingMaster,activeBudgetProfile);
+        _personalMasterSnapshot=capturePersonalMasterIds(budgetData);
+        if(d.budgetNid_joint)budgetNid=d.budgetNid_joint;
+      }else if(_newerBudget(d[profileKey])){
         budgetData=d[profileKey];
         if(d[profileNidKey])budgetNid=d[profileNidKey];
       }
@@ -5754,6 +5786,7 @@ const BUDGET_PROFILES = [
 ];
 
 let activeBudgetProfile = null; // set on unlock
+let _personalMasterSnapshot = null;
 let _pinBuffer = [];
 let _pinTarget = null;
 let _pinSetupPhase = 1; // 1=choose, 2=confirm
@@ -5804,6 +5837,15 @@ async function loadProfileBudgetData(){
     await loadJointBudgetData();
     return;
   }
+  // V4: Joint is authoritative. Personal budgets are editable filtered views.
+  // loadJointBudgetData performs the one-time additive migration when needed.
+  const personalId=activeBudgetProfile;
+  await loadJointBudgetData();
+  budgetData=filterJointBudgetForPerson(budgetData,personalId);
+  _personalMasterSnapshot=capturePersonalMasterIds(budgetData);
+  ensureBudgetSettings();
+  return;
+  /* legacy profile loader retained below for old deployments; V4 returns above */
   const key=getDataKey(activeBudgetProfile);
   const nidKey=getNidKey(activeBudgetProfile);
 
@@ -5851,6 +5893,17 @@ async function loadProfileBudgetData(){
 function saveProfileBudgetData(){
   if(!activeBudgetProfile)return;
   if(budgetData&&!budgetData._ts)budgetData._ts=Date.now();
+  if(activeBudgetProfile!=="joint"&&budgetData?.schemaVersion>=4){
+    const masterKey=getDataKey("joint");
+    let master=null;try{master=JSON.parse(localStorage.getItem(masterKey)||"null");}catch(e){}
+    if(master){
+      master=mergePersonalViewIntoJoint(master,budgetData,activeBudgetProfile,_personalMasterSnapshot);
+      master._ts=Date.now();
+      localStorage.setItem(masterKey,JSON.stringify(master));
+      localStorage.setItem(getNidKey("joint"),String(Math.max(parseInt(localStorage.getItem(getNidKey("joint"))||"1000"),budgetNid)));
+      _personalMasterSnapshot=capturePersonalMasterIds(budgetData);
+    }
+  }
   localStorage.setItem(getDataKey(activeBudgetProfile), JSON.stringify(budgetData));
   localStorage.setItem(getNidKey(activeBudgetProfile), String(budgetNid));
   // Server push removed from here. The old standalone fetch sent no
@@ -5863,15 +5916,85 @@ function saveProfileBudgetData(){
 /* Override saveBudgetData to also save to profile key */
 const _origSaveBudgetData = saveBudgetData;
 saveBudgetData = function(){
-  _origSaveBudgetData();
+  bvCacheClear();
+  if(budgetData)budgetData._ts=Date.now();
+  localStorage.setItem("budgetData",JSON.stringify(budgetData));
+  localStorage.setItem("budgetNid",String(budgetNid));
   if(activeBudgetProfile) saveProfileBudgetData();
+  if(typeof _bootComplete!=="undefined"&&_bootComplete&&typeof pushToServer==="function")pushToServer();
 };
 
+function normalizeJointMaster(master){
+  master.schemaVersion=4;
+  master.recurring=master.recurring||{};
+  ["incomeSources","savingsTransfers","autoTransfers","bills","subscriptions","variable","savings_household","savings_personal"].forEach(k=>{
+    if(!Array.isArray(master.recurring[k]))master.recurring[k]=[];
+  });
+  master.expenses=master.expenses||[];master.incomeWeeks=master.incomeWeeks||[];master.personalPoolTransfers=master.personalPoolTransfers||[];master.periods=master.periods||{};master.settings=master.settings||{};
+  master.personalPools=master.personalPools||{britt:{balance:0},christian:{balance:0}};
+  master.recurring.incomeSources.forEach(x=>{x.owner=x.owner||x.sourceProfile||"britt";});
+  master.incomeWeeks.forEach(x=>{x.owner=x.owner||x.sourceProfile||"britt";x.sourceProfile=x.owner;});
+  ["bills","subscriptions"].forEach(k=>master.recurring[k].forEach(x=>{
+    x.owner=x.owner||x.sourceProfile||(x.sourceProfiles?.length===1?x.sourceProfiles[0]:"household");
+    x.scope=x.scope||(x.isDebt&&x.owner!=="household"?"personal":"household");
+  }));
+  master.recurring.savingsTransfers.forEach(x=>{x.owner=x.owner||(x.bucket==="personal"?(x.sourceProfile||"britt"):"household");});
+  master.expenses.forEach(e=>{
+    e.owner=e.owner&&e.owner!=="joint"?e.owner:(e.sourceProfile||"britt");
+    e.scope=e.scope||((e.type==="savings"&&e.savingsBucket==="personal")?"personal":"household");
+  });
+  return master;
+}
+
+function personalItemVisible(item,person){return item?.scope==="household"||item?.owner==="household"||item?.owner===person;}
+function filterJointBudgetForPerson(master,person){
+  master=normalizeJointMaster(structuredClone(master));
+  const r=master.recurring;
+  r.incomeSources=r.incomeSources.filter(x=>x.owner===person);
+  r.bills=r.bills.filter(x=>personalItemVisible(x,person));
+  r.subscriptions=r.subscriptions.filter(x=>personalItemVisible(x,person));
+  r.savingsTransfers=r.savingsTransfers.filter(x=>x.owner==="household"||x.owner===person);
+  r.savings_personal=r.savings_personal.filter(x=>!x.owner||x.owner===person);
+  master.incomeWeeks=master.incomeWeeks.filter(x=>(x.owner||x.sourceProfile)===person);
+  master.expenses=master.expenses.filter(x=>personalItemVisible(x,person));
+  master.personalPoolTransfers=master.personalPoolTransfers.filter(x=>x.owner===person);
+  master.activePersonalPool=master.personalPools?.[person]||{balance:0};
+  return master;
+}
+
+function capturePersonalMasterIds(view){
+  const ids=a=>new Set((a||[]).map(x=>String(x.id)));
+  return {incomeSources:ids(view.recurring?.incomeSources),bills:ids(view.recurring?.bills),subscriptions:ids(view.recurring?.subscriptions),savingsTransfers:ids(view.recurring?.savingsTransfers),incomeWeeks:ids(view.incomeWeeks),expenses:ids(view.expenses),personalPoolTransfers:ids(view.personalPoolTransfers)};
+}
+
+function mergePersonalViewIntoJoint(master,view,person,snapshot){
+  master=normalizeJointMaster(master);snapshot=snapshot||capturePersonalMasterIds(view);
+  const merge=(target,current,oldIds)=>{
+    oldIds=oldIds||new Set();
+    const kept=(target||[]).filter(x=>!oldIds.has(String(x.id)));
+    const seen=new Set(kept.map(x=>String(x.id)));
+    (current||[]).forEach(x=>{if(!seen.has(String(x.id))){kept.push(structuredClone(x));seen.add(String(x.id));}});
+    return kept;
+  };
+  master.recurring.incomeSources=merge(master.recurring.incomeSources,view.recurring.incomeSources,snapshot.incomeSources);
+  master.recurring.bills=merge(master.recurring.bills,view.recurring.bills,snapshot.bills);
+  master.recurring.subscriptions=merge(master.recurring.subscriptions,view.recurring.subscriptions,snapshot.subscriptions);
+  master.recurring.savingsTransfers=merge(master.recurring.savingsTransfers,view.recurring.savingsTransfers,snapshot.savingsTransfers);
+  master.incomeWeeks=merge(master.incomeWeeks,view.incomeWeeks,snapshot.incomeWeeks);
+  master.expenses=merge(master.expenses,view.expenses,snapshot.expenses);
+  master.personalPoolTransfers=merge(master.personalPoolTransfers,view.personalPoolTransfers,snapshot.personalPoolTransfers);
+  master.recurring.variable=structuredClone(view.recurring.variable||master.recurring.variable);
+  master.recurring.savings_household=structuredClone(view.recurring.savings_household||master.recurring.savings_household);
+  master.settings={...master.settings,...view.settings};master.periods={...master.periods,...view.periods};
+  master.personalPools=master.personalPools||{};master.personalPools[person]=structuredClone(view.activePersonalPool||master.personalPools[person]||{balance:0});
+  return normalizeJointMaster(master);
+}
+
 function composeJointBudgetData(britt, christian, existing){
+  if(existing?.schemaVersion>=4)return normalizeJointMaster(existing);
   const sources=[["britt",britt],["christian",christian]].filter(([,d])=>d&&d.recurring);
   const recurring={incomeSources:[],savingsTransfers:[],autoTransfers:[],bills:[],subscriptions:[],variable:[],savings_household:[],savings_personal:[]};
   const jointRecurringIds=new Map();
-  const debtJointIds=new Set((existing?.recurring?.bills||[]).filter(x=>x.isDebt).map(x=>String(x.id)));
   const byName=(items,name)=>items.find(x=>String(x.name||"").trim().toLowerCase()===name);
   const jointVarWeeklyDefault=sources.reduce((total,[,d])=>{
     const value=parseFloat(d.settings?.varWeeklyDefault);
@@ -5879,29 +6002,29 @@ function composeJointBudgetData(britt, christian, existing){
   },0);
   sources.forEach(([owner,d])=>{
     const r=d.recurring;
-    (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
-    (r.savingsTransfers||r.autoTransfers||[]).filter(x=>x.bucket!=="personal").forEach(x=>recurring.savingsTransfers.push({
+    (r.incomeSources||[]).forEach(x=>recurring.incomeSources.push({...x,id:`${owner}-${x.id}`,owner,sourceProfile:owner,sourceName:`${x.name||"Income"} (${owner==="britt"?"Brittni":"Christian"})`}));
+    (r.savingsTransfers||r.autoTransfers||[]).forEach(x=>recurring.savingsTransfers.push({
       ...x,
       id:`${owner}-sav-${x.id}`,
       incomeSourceId:x.incomeSourceId==null?null:`${owner}-${x.incomeSourceId}`,
-      sourceProfile:owner
+      owner:x.bucket==="personal"?owner:"household",sourceProfile:owner
     }));
-    (r.bills||[]).filter(x=>x.isDebt).forEach(x=>debtJointIds.add(`joint-bill-${owner}-${x.id}`));
-    (r.bills||[]).filter(x=>!x.isDebt).forEach(x=>{
+    (r.bills||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
       const same=byName(recurring.bills,name);
-      if(!same)recurring.bills.push({...x,id:`joint-bill-${owner}-${x.id}`,sourceProfiles:[owner]});
-      else{
-        same.amount=(parseFloat(same.amount)||0)+(parseFloat(x.amount)||0);
-        same.sourceProfiles=[...(same.sourceProfiles||[]),owner];
-      }
-      jointRecurringIds.set(`${owner}:bill:${x.id}`,(same||recurring.bills[recurring.bills.length-1]).id);
+      const scope=x.scope||(x.isDebt?"personal":"household");
+      const migrated={...x,id:`joint-bill-${owner}-${x.id}`,owner,scope,sourceProfiles:[owner],possibleDuplicate:!!same};
+      if(same)same.possibleDuplicate=true;
+      recurring.bills.push(migrated);
+      jointRecurringIds.set(`${owner}:bill:${x.id}`,migrated.id);
     });
     (r.subscriptions||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
       const same=byName(recurring.subscriptions,name);
-      if(!same)recurring.subscriptions.push({...x,id:`joint-sub-${owner}-${x.id}`,sourceProfile:owner});
-      jointRecurringIds.set(`${owner}:subscription:${x.id}`,(same||recurring.subscriptions[recurring.subscriptions.length-1]).id);
+      const migrated={...x,id:`joint-sub-${owner}-${x.id}`,owner,scope:x.scope||"household",sourceProfile:owner,possibleDuplicate:!!same};
+      if(same)same.possibleDuplicate=true;
+      recurring.subscriptions.push(migrated);
+      jointRecurringIds.set(`${owner}:subscription:${x.id}`,migrated.id);
     });
     (r.variable||[]).forEach(x=>{
       const name=String(x.name||"").trim().toLowerCase();
@@ -5914,28 +6037,23 @@ function composeJointBudgetData(britt, christian, existing){
   const incomeWeeks=[];
   sources.forEach(([owner,d])=>(d.incomeWeeks||[]).forEach((x,i)=>incomeWeeks.push({...x,id:`${owner}-week-${x.id||i}`,sourceId:x.isOneTime?null:`${owner}-${x.sourceId}`,sourceProfile:owner,sourceName:x.sourceName||owner})));
   (existing?.incomeWeeks||[]).filter(x=>x.isOneTime&&(x.sourceProfile==="joint"||!x.sourceProfile)).forEach(x=>incomeWeeks.push(x));
-  const oldExpenses=(existing?.expenses||[]).filter(e=>e.type!=="variable"
-    &&!(e.type==="savings"&&e.savingsBucket==="personal")
-    &&!debtJointIds.has(String(e.recurringId))
-    &&!(String(e.recKey||"").startsWith("joint-")&&e.owner!=="joint")
-    &&(e.owner==="joint"||(!e.sourceProfile&&!e.sourceExpenseId)));
+  const oldExpenses=(existing?.expenses||[]).filter(e=>!e.sourceProfile&&!e.sourceExpenseId);
   const sourceExpenses=[];
   sources.forEach(([owner,d])=>(d.expenses||[]).forEach((e,i)=>{
-    if(e.type==="savings"&&e.savingsBucket==="personal")return;
-    if(e.type==="bill"&&(d.recurring.bills||[]).some(b=>b.isDebt&&String(b.id)===String(e.recurringId)))return;
     const recurringId=jointRecurringIds.get(`${owner}:${e.type}:${e.recurringId}`)??e.recurringId;
     const recKey=e.recKey&&recurringId!==e.recurringId?`${recurringId}:${e.date}`:e.recKey;
-    sourceExpenses.push({...e,id:`${owner}-exp-${e.id||i}`,recurringId,recKey,owner,sourceProfile:owner,sourceExpenseId:e.id});
+    const isDebt=e.type==="bill"&&(d.recurring.bills||[]).some(b=>b.isDebt&&String(b.id)===String(e.recurringId));
+    sourceExpenses.push({...e,id:`${owner}-exp-${e.id||i}`,recurringId,recKey,owner,scope:e.scope||(isDebt||e.savingsBucket==="personal"?"personal":"household"),sourceProfile:owner,sourceExpenseId:e.id});
   }));
-  return {
+  return normalizeJointMaster({
     ...(existing||{}),
     _ts:Math.max(existing?._ts||0,britt?._ts||0,christian?._ts||0),
-    recurring,incomeWeeks,
-    expenses:[...sourceExpenses,...oldExpenses],
+    schemaVersion:4,recurring,incomeWeeks,
+    expenses:[...sourceExpenses,...oldExpenses.map(e=>({...e,owner:e.owner||"britt",scope:e.scope||"household"}))],
     periods:existing?.periods||{},
     settings:{...(existing?.settings||{}),varWeeklyDefault:jointVarWeeklyDefault},
-    jointSourcesUpdated:Date.now()
-  };
+    personalPools:existing?.personalPools||{britt:{balance:0},christian:{balance:0}},personalPoolTransfers:existing?.personalPoolTransfers||[],jointSourcesUpdated:Date.now()
+  });
 }
 
 async function loadJointBudgetData(){
@@ -5951,7 +6069,7 @@ async function loadJointBudgetData(){
   const remoteJoint=server?.budgetData_joint;
   if(remoteJoint&&(!existing||(remoteJoint._ts||0)>=(existing._ts||0)))existing=remoteJoint;
   budgetData=composeJointBudgetData(britt,christian,existing);
-  budgetNid=parseInt(localStorage.getItem(getNidKey("joint"))||"1000");
+  budgetNid=Math.max(parseInt(localStorage.getItem(getNidKey("joint"))||"1000"),parseInt(server?.budgetNid_joint||"0"));
   localStorage.setItem(getDataKey("joint"),JSON.stringify(budgetData));
   localStorage.setItem(getNidKey("joint"),String(budgetNid));
   ensureBudgetSettings();
@@ -6562,6 +6680,7 @@ function scheduledSavingsBuckets(start,end,receivedOnly=false){
   const transfers=budgetData.recurring?.savingsTransfers||[];
   const totals={hh:0,pers:0};
   transfers.forEach(transfer=>{
+    if(transfer.bucket==="personal-pool")return;
     let count=0;
     if(savingsTransferScheduleType(transfer)==="paycheck"){
       count=(budgetData.incomeWeeks||[]).filter(w=>
@@ -6640,7 +6759,6 @@ function recurringDueDatesIn(item,start,end){
 // tombstones it so it never comes back.
 function materializeRecurring(){
   if(!budgetData||!budgetData.recurring)return;
-  if(activeBudgetProfile==="joint")return;
   ensureBudgetSettings();
   const s=budgetData.settings;
   const today=fd(new Date());
@@ -6652,7 +6770,7 @@ function materializeRecurring(){
       recurringDueDatesIn(item,s.materializeSince,today).forEach(ds=>{
         const recKey=item.id+":"+ds;
         if(existing.has(recKey)||dismissed.has(recKey))return;
-        budgetData.expenses.push({id:budgetNid++,date:ds,type,category:item.name,amount:item.amount,recKey,recurringId:item.id,note:""});
+        budgetData.expenses.push({id:budgetNid++,date:ds,type,category:item.name,amount:item.amount,recKey,recurringId:item.id,owner:item.owner||"household",scope:item.scope||"household",note:""});
         existing.add(recKey);changed=true;
       });
     });
@@ -6794,6 +6912,21 @@ function computePeriodCore(start,end,periodKey,budgetSb){
     budgExpenses,actualExpenses};
   _bvCache.cp[_ck]=_res;
   return _res;
+}
+
+function jointPeriodBreakdown(start,end){
+  const checks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
+  const income={britt:{budget:0,actual:0},christian:{budget:0,actual:0}};
+  checks.forEach(w=>{const owner=w.owner||w.sourceProfile;if(!income[owner])return;const amt=incomeWeekAmount(w);income[owner].budget+=amt;if(w.status==="received")income[owner].actual+=amt;});
+  const personal=(budgetData.personalPoolTransfers||[]).filter(e=>e.date>=start&&e.date<=end).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  let scheduled=0;
+  (budgetData.recurring?.savingsTransfers||[]).filter(x=>x.bucket==="personal-pool").forEach(transfer=>{
+    let count=0;
+    if(savingsTransferScheduleType(transfer)==="paycheck")count=checks.filter(w=>(transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))).length;
+    else count=intervalOccurrenceCount(transfer,start,end);
+    scheduled+=(parseFloat(transfer.amount)||0)*count;
+  });
+  return{income,personalBudget:scheduled,personalActual:personal};
 }
 
 /* ── Deterministic start-balance chaining ────────────────────── */
@@ -7211,10 +7344,11 @@ function renderBudgetPage(){
 
 function renderBudgetOverview(){
   const jointSavings=activeBudgetProfile==="joint";
-  document.querySelectorAll(".personal-savings-only").forEach(el=>el.style.display=jointSavings?"none":"");
+  document.querySelectorAll(".personal-savings-only").forEach(el=>el.style.display="");
+  document.querySelectorAll(".joint-summary-only").forEach(el=>el.style.display=jointSavings?"grid":"none");
   ["w-savings-grid","m-savings-grid","tracker-savings-grid"].forEach(id=>{
     const el=document.getElementById(id);
-    if(el)el.style.gridTemplateColumns=jointSavings?"1fr":"1fr 1fr";
+    if(el)el.style.gridTemplateColumns="1fr 1fr";
   });
   const mbContainer = document.getElementById("mb-container");
   const isMobile = document.body.classList.contains("mobile-mode");
@@ -7343,6 +7477,12 @@ function renderWeeklyView(){
   // ── Weekly Summary ──
   t("ws-start",$f(budgetSb));  t("wa-start",$f(actualSb));
   t("ws-income",$f(cp.budgIncome)); ta("wa-income",cp.actualIncome,cp.budgIncome,false);
+  if(activeBudgetProfile==="joint"){
+    const jb=jointPeriodBreakdown(ws,we);
+    t("ws-britt-income",$f(jb.income.britt.budget));t("wa-britt-income",$f(jb.income.britt.actual));
+    t("ws-christian-income",$f(jb.income.christian.budget));t("wa-christian-income",$f(jb.income.christian.actual));
+    t("ws-personal-transfers",$f(jb.personalBudget));t("wa-personal-transfers",$f(jb.personalActual));
+  }
   t("ws-fixed",$f(cp.budgExpenses)); ta("wa-fixed",cp.actualExpenses,cp.budgExpenses,true);
   t("ws-subs",$f(cp.budgSubs));  ta("wa-subs",cp.actualSubs,cp.budgSubs,true);
   t("ws-var",$f(cp.budgVar));   ta("wa-var",cp.actualVar,cp.budgVar,true);
@@ -7395,6 +7535,7 @@ function renderWeeklyView(){
   t("w-sav-pers-tbudg",$f(_tbW.pers));
   t("w-sav-hh-total",$f(hhTotal));
   t("w-sav-pers-total",$f(persTotal));
+  if(activeBudgetProfile==="joint"){t("w-sav-pers-tbudg","—");t("w-sav-pers-total","—");}
   }catch(e){console.error("renderWeeklyView crash:",e);document.getElementById("bview-weekly").innerHTML='<div style="color:red;padding:20px">Weekly view error: '+e.message+'</div>';}
 }
 
@@ -7425,6 +7566,12 @@ function renderMonthlyView(){
   // ── Monthly Summary ──
   t("ms-start",$f(budgetSb));  t("ma-start",$f(actualSb));
   t("ms-income",$f(cp.budgIncome)); ta("ma-income",cp.actualIncome,cp.budgIncome,false);
+  if(activeBudgetProfile==="joint"){
+    const jb=jointPeriodBreakdown(monthStart,monthEnd);
+    t("ms-britt-income",$f(jb.income.britt.budget));t("ma-britt-income",$f(jb.income.britt.actual));
+    t("ms-christian-income",$f(jb.income.christian.budget));t("ma-christian-income",$f(jb.income.christian.actual));
+    t("ms-personal-transfers",$f(jb.personalBudget));t("ma-personal-transfers",$f(jb.personalActual));
+  }
   t("ms-exp",$f(cp.budgExpenses)); ta("ma-exp",cp.actualExpenses,cp.budgExpenses,true);
   t("ms-sav-hh",$f(cp.budgSavHH));   t("ma-sav-hh",$f(cp.actualSavHH));
   t("ms-sav-pers",$f(cp.budgSavPers)); t("ma-sav-pers",$f(cp.actualSavPers));
@@ -7466,6 +7613,7 @@ function renderMonthlyView(){
   t("m-sav-pers-tbudg",$f(_tbM.pers));
   t("m-sav-hh-total",$f(totalSavedHH));
   t("m-sav-pers-total",$f(persTotalM));
+  if(activeBudgetProfile==="joint"){t("m-sav-pers-tbudg","—");t("m-sav-pers-total","—");}
   const periodLabel=new Date(y,m-1,15).toLocaleDateString("en-US",{month:"long",year:"numeric"});
   t("m-period-label",periodLabel);
   }catch(e){console.error("renderMonthlyView crash:",e);document.getElementById("bview-monthly").innerHTML='<div style="color:red;padding:20px">Monthly view error: '+e.message+'</div>';}
@@ -7915,16 +8063,12 @@ function pickExpType(type,btn){
   document.getElementById("exp-cat-field").style.display=type==="variable"?"block":"none";
   document.getElementById("exp-sav-field").style.display=type==="savings"?"block":"none";
   const nwF=document.getElementById("exp-nw-field");if(nwF)nwF.style.display=type==="variable"?"block":"none";
-  const ownerF=document.getElementById("exp-owner-field");if(ownerF)ownerF.style.display=activeBudgetProfile==="joint"&&type==="variable"?"block":"none";
+  const ownerF=document.getElementById("exp-owner-field");if(ownerF)ownerF.style.display=type==="variable"?"block":"none";
 }
 function pickExpNW(nw,btn){
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b===btn));
 }
 function pickSavBucket(bucket,btn){
-  if(activeBudgetProfile==="joint"){
-    bucket="household";
-    btn=document.querySelector("#exp-sav-field [data-v='household']");
-  }
   _savBucket=bucket;
   document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b===btn));
 }
@@ -7972,7 +8116,8 @@ function openAddExpenseSheet(){
   document.getElementById("exp-amount").value="";
   document.getElementById("exp-date").value=fd(new Date());
   document.getElementById("exp-note").value="";
-  const ownerSel=document.getElementById("exp-owner");if(ownerSel)ownerSel.value="joint";
+  const ownerSel=document.getElementById("exp-owner");if(ownerSel)ownerSel.value=activeBudgetProfile==="christian"?"christian":"britt";
+  const scopeSel=document.getElementById("exp-scope");if(scopeSel)scopeSel.value=activeBudgetProfile==="joint"?"household":"personal";
   document.getElementById("exp-amazon-links").innerHTML="";
   document.getElementById("exp-amazon-section").style.display="none";
   const subSelR=document.getElementById("exp-subcategory");if(subSelR)subSelR.value="";
@@ -7993,6 +8138,7 @@ function openEditExpense(id){
   document.getElementById("exp-date").value=e.date||fd(new Date());
   document.getElementById("exp-note").value=e.note||"";
   const ownerSel=document.getElementById("exp-owner");if(ownerSel){ownerSel.value=e.owner||"joint";}
+  const scopeSel=document.getElementById("exp-scope");if(scopeSel)scopeSel.value=e.scope||"household";
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b.dataset.nw===(e.nw||"need")));
   setTimeout(()=>{document.getElementById("exp-category").value=e.category||"";showAmazonFields();},10);
   document.getElementById("exp-delete").style.display="flex";
@@ -8032,17 +8178,16 @@ function saveExpenseFromModal(){
   const note=document.getElementById("exp-note").value.trim();
   const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
   const subcategory=category==="Amazon"?(document.getElementById("exp-subcategory")?.value||""):"";
-  const owner=activeBudgetProfile==="joint"&&expType==="variable"
-    ?(document.getElementById("exp-owner")?.value||"joint")
-    :(activeBudgetProfile||"joint");
+  const owner=expType==="variable"?(document.getElementById("exp-owner")?.value||(activeBudgetProfile==="christian"?"christian":"britt")):(activeBudgetProfile==="joint"?"household":activeBudgetProfile);
+  const scope=document.getElementById("exp-scope")?.value||(activeBudgetProfile==="joint"?"household":"personal");
   // effectiveCategory: if Amazon + subcategory set, count toward subcategory in totals
   const effectiveCategory=subcategory||category;
   if(!budgetData.expenses)budgetData.expenses=[];
   if(_editExpenseId){
     const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
-    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner});
+    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner,scope});
   } else {
-    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner});
+    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner,scope});
   }
   saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
 }
@@ -8091,16 +8236,16 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
       const nw=item.nw;
       const chipClr=nw==="need"?"var(--today-color)":nw==="want"?"#e0a040":"var(--muted)";
       const chipBg=nw?"transparent":"var(--tag-bg)";
-      nwChip=`<button onclick="toggleRecNW('${type}',${item.id})" title="Tap to toggle need/want"
+      nwChip=`<button onclick='toggleRecNW(${JSON.stringify(type)},${JSON.stringify(item.id)})' title="Tap to toggle need/want"
         style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;border:1px solid ${chipClr};color:${chipClr};background:${chipBg};cursor:pointer;margin-top:4px">${nw==="need"?"Need":nw==="want"?"Want":"Need/Want?"}</button>`;
     }
     return `<div class="bs-item-card">
-      <div class="bs-item-name">${item.name}${type==="bills"&&item.isDebt?'<span class="bs-item-debt-badge">DEBT</span>':""}</div>
+      <div class="bs-item-name">${item.name}${type==="bills"&&item.isDebt?'<span class="bs-item-debt-badge">DEBT</span>':""}${item.possibleDuplicate?'<span class="bs-item-debt-badge" style="background:rgba(224,160,64,.15);color:#e0a040">CHECK DUPLICATE</span>':""}</div>
       <div class="bs-item-detail">${topLine}</div>
       ${midLine}${dateLine}${nwChip}
       <div class="bs-item-actions">
-        <button class="bs-item-btn" onclick="${onEdit}(${item.id})"><i class="ti ti-pencil"></i></button>
-        <button class="bs-item-btn del" onclick="${onDelete}(${item.id})"><i class="ti ti-x"></i></button>
+        <button class="bs-item-btn" onclick='${onEdit}(${JSON.stringify(item.id)})'><i class="ti ti-pencil"></i></button>
+        <button class="bs-item-btn del" onclick='${onDelete}(${JSON.stringify(item.id)})'><i class="ti ti-x"></i></button>
       </div>
     </div>`;
   }).join("")+'</div>';
@@ -8179,6 +8324,7 @@ function renderBudgetSettings(){
   if(piEl&&profile)piEl.textContent="Currently viewing: "+profile.name+"'s budget";
   const pinSubEl=document.getElementById("bs-pin-sub");
   if(pinSubEl&&profile)pinSubEl.textContent=profile.name+" · PIN set";
+  renderPersonalPoolsSettings();
   // Income sources
   const isEl=document.getElementById("bs-income-sources");
   renderNWTargets();
@@ -8223,7 +8369,7 @@ function renderBudgetSettings(){
             <span class="bs-item-amount">${$f(sv.amount)}</span>
             <span class="bs-item-freq">${schedule}</span>
           </div>
-          <div class="bs-item-date" style="margin-top:3px;font-size:12px;color:var(--muted)">${sv.bucket==="personal"?"Personal":"Household / work"}${sv.startDate?" · starts "+sv.startDate:""}</div>
+          <div class="bs-item-date" style="margin-top:3px;font-size:12px;color:var(--muted)">${sv.bucket==="personal"?"Personal savings":sv.bucket==="personal-pool"?"Personal pool · "+(sv.owner==="christian"?"Christian":"Brittni"):"Household / work"}${sv.startDate?" · starts "+sv.startDate:""}</div>
           <div class="bs-item-actions">
             <button class="bs-item-btn" onclick='openEditSavingsTransfer(${JSON.stringify(sv.id)})'><i class="ti ti-pencil"></i></button>
             <button class="bs-item-btn del" onclick='deleteSavingsTransfer(${JSON.stringify(sv.id)})'><i class="ti ti-x"></i></button>
@@ -8232,6 +8378,27 @@ function renderBudgetSettings(){
       }).join("")+'</div>';
     }
   }
+}
+
+function personalPoolTotals(person){
+  const manual=(budgetData.personalPoolTransfers||[]).filter(x=>x.owner===person).reduce((s,x)=>s+(parseFloat(x.amount)||0),0);
+  const spent=(budgetData.expenses||[]).filter(x=>x.owner===person&&x.scope==="personal").reduce((s,x)=>s+(parseFloat(x.amount)||0),0);
+  return{funded:manual,used:spent,available:manual-spent};
+}
+function renderPersonalPoolsSettings(){
+  const el=document.getElementById("bs-personal-pools");if(!el)return;
+  const people=activeBudgetProfile==="joint"?["britt","christian"]:[activeBudgetProfile];
+  el.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">PERSONAL POOLS</div>'+people.map(person=>{
+    const p=personalPoolTotals(person);const label=person==="britt"?"Brittni":"Christian";
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--tag-bg);border-radius:8px;margin-bottom:6px"><div style="flex:1"><div style="font-size:13px;font-weight:600">${label}</div><div style="font-size:11px;color:var(--muted)">${$f(p.funded)} transferred · ${$f(p.used)} used/saved</div></div><div style="font-family:'DM Mono',monospace;font-weight:700;color:${p.available>=0?'#3db87a':'#e05555'}">${$f(p.available)}</div><button class="btn" style="font-size:11px;padding:4px 8px" onclick="addPersonalPoolTransfer('${person}')">Transfer</button></div>`;
+  }).join("");
+}
+function addPersonalPoolTransfer(person){
+  const amount=parseFloat(prompt(`Transfer how much to ${person==="britt"?"Brittni":"Christian"}'s personal pool?`));
+  if(!amount||amount<=0)return;
+  if(!budgetData.personalPoolTransfers)budgetData.personalPoolTransfers=[];
+  budgetData.personalPoolTransfers.push({id:`pool-${Date.now()}-${person}`,owner:person,amount,date:fd(new Date())});
+  saveBudgetData();renderPersonalPoolsSettings();
 }
 
 function renderRecEditList(elId,items,type,labelFn){
@@ -8276,6 +8443,8 @@ function populateMIS(s){
   document.getElementById("mis-amount").value=parseFloat(s.amount)||"";
   document.getElementById("mis-start").value=s.startDate||fd(new Date());
   document.getElementById("mis-end").value=s.endDate||"";
+  const ownerEl=document.getElementById("mis-owner");if(ownerEl)ownerEl.value=s.owner||(activeBudgetProfile==="christian"?"christian":"britt");
+  const ownerField=document.getElementById("mis-owner-field");if(ownerField)ownerField.style.display=activeBudgetProfile==="joint"?"block":"none";
   const pfEl=document.getElementById("mis-payfreq");if(pfEl)pfEl.value=s.payFrequency||"biweekly";
   const wd=s.payWeekday??4;
   document.querySelectorAll("#b-mis-weekday .badge").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.v)===wd));
@@ -8293,6 +8462,7 @@ function saveIncomeSource(){
   const customdates=(document.getElementById("mis-customdates")?.value||"").split(",").map(s=>parseInt(s.trim())).filter(n=>!isNaN(n));
   const data={
     name,
+    owner:activeBudgetProfile==="joint"?(document.getElementById("mis-owner")?.value||"britt"):activeBudgetProfile,
     incomeType,
     hourlyRate:parseFloat(document.getElementById("mis-rate").value)||49.80,
     defaultHours:parseFloat(document.getElementById("mis-hours").value)||40,
@@ -9088,6 +9258,7 @@ function renderMobileBudget(){
   const actualExpenses=totalBills+totalSubs+totalVar;
   const budgEnd=budgetSb+budgIncome-budgExpenses-budgSav;
   const actualEnd=actualSb+actualIncome-actualExpenses-totalSav;
+  const jointBreakdown=activeBudgetProfile==="joint"&&_mbView!=="daily"?jointPeriodBreakdown(startDate,endDate):null;
 
   // ── Summary card ──
   let summaryHtml;
@@ -9125,9 +9296,11 @@ function renderMobileBudget(){
         <tr><td style="color:var(--muted);padding:3px 0"></td><td style="text-align:right;color:var(--muted);font-size:11px;padding:3px 4px">BUDGET</td><td style="text-align:right;color:var(--muted);font-size:11px;padding:3px 0">ACTUAL</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">+ Start Balance</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgetSb)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(actualSb)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">+ Income</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgIncome)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#3db87a">${$f(actualIncome)}</td></tr>
+        ${jointBreakdown?`<tr><td style="padding:5px 0;color:var(--muted)">Brittni Income</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(jointBreakdown.income.britt.budget)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(jointBreakdown.income.britt.actual)}</td></tr>
+        <tr><td style="padding:5px 0;color:var(--muted)">Christian Income</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(jointBreakdown.income.christian.budget)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(jointBreakdown.income.christian.actual)}</td></tr>`:""}
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− Expenses</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(budgExpenses)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700;color:#e05555">${$f(actualExpenses)}</td></tr>
         <tr style="border-top:1px solid var(--border)"><td style="padding:5px 0;color:var(--muted)">− HH Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavHH:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavHH:0)}</td></tr>
-        ${activeBudgetProfile==="joint"?"":`<tr><td style="padding:5px 0;color:var(--muted)">− Pers. Savings</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(cp?cp.budgSavPers:0)}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(cp?cp.actualSavPers:0)}</td></tr>`}
+        <tr><td style="padding:5px 0;color:var(--muted)">− ${activeBudgetProfile==="joint"?"Personal transfers":"Pers. Savings"}</td><td style="text-align:right;padding:5px 4px;font-family:'DM Mono',monospace">${$f(jointBreakdown?jointBreakdown.personalBudget:(cp?cp.budgSavPers:0))}</td><td style="text-align:right;padding:5px 0;font-family:'DM Mono',monospace;font-weight:700">${$f(jointBreakdown?jointBreakdown.personalActual:(cp?cp.actualSavPers:0))}</td></tr>
         <tr style="border-top:2px solid var(--border)"><td style="padding:6px 0;font-weight:700">END BALANCE</td><td style="text-align:right;padding:6px 4px;font-family:'DM Mono',monospace;font-weight:700">${$f(budgEnd)}</td><td style="text-align:right;padding:6px 0;font-family:'DM Mono',monospace;font-weight:700;color:${ebClr}">${$f(actualEnd)}</td></tr>
       </table>
     </div>`;
@@ -9285,6 +9458,8 @@ function _openRecExpenseModal(title, isEdit, item){
   const typeField=document.getElementById("re-bill-type-field");
   if(typeField)typeField.style.display=_reType==="bills"?"block":"none";
   document.getElementById("re-bill-type").value=item?.isDebt?"debt":"bill";
+  document.getElementById("re-owner").value=item?.owner||(activeBudgetProfile==="joint"?"household":activeBudgetProfile);
+  document.getElementById("re-scope").value=item?.scope||(activeBudgetProfile==="joint"?"household":"personal");
   // Populate day fields
   const dueDay=item?.dueDay||(item?.startDate?new Date(item.startDate+"T12:00:00").getDate():1);
   const dueWeekday=item?.dueWeekday??(item?.startDate?new Date(item.startDate+"T12:00:00").getDay():4);
@@ -9324,12 +9499,14 @@ function saveRecExpense(){
   const nwSel=document.querySelector("#re-nw-badges .badge.active")?.dataset.renw||"unset";
   const nw=nwSel==="unset"?null:nwSel;
   const isDebt=_reType==="bills"&&document.getElementById("re-bill-type").value==="debt";
+  const owner=document.getElementById("re-owner")?.value||(activeBudgetProfile==="joint"?"household":activeBudgetProfile);
+  const scope=document.getElementById("re-scope")?.value||(activeBudgetProfile==="joint"?"household":"personal");
   const arr=budgetData.recurring[_reType]||(budgetData.recurring[_reType]=[]);
   if(_reEditId){
     const item=arr.find(x=>x.id===_reEditId);
-    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw,isDebt});}
+    if(item){Object.assign(item,{name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw,isDebt,owner,scope});}
   } else {
-    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw,isDebt});
+    arr.push({id:budgetNid++,name,amount,frequency,startDate,endDate:endDate||null,dueDay,dueWeekday,nw,isDebt,owner,scope});
   }
   saveBudgetData();
   closeModal("modal-rec-expense");
@@ -9372,6 +9549,7 @@ function openAddSavingsTransfer(){
   document.getElementById("st-startdate").value=fd(new Date());
   document.getElementById("st-enddate").value="";
   document.getElementById("st-bucket").value="household";
+  document.getElementById("st-owner").value=activeBudgetProfile==="joint"?"household":activeBudgetProfile;
   populateSavingsIncomeSources(null);
   updateSavingsScheduleFields();
   document.getElementById("st-delete").style.display="none";
@@ -9391,6 +9569,7 @@ function openEditSavingsTransfer(id){
   document.getElementById("st-startdate").value=sv.startDate||fd(new Date());
   document.getElementById("st-enddate").value=sv.endDate||"";
   document.getElementById("st-bucket").value=sv.bucket||"household";
+  document.getElementById("st-owner").value=sv.owner||(sv.bucket==="personal"?(activeBudgetProfile==="joint"?"britt":activeBudgetProfile):"household");
   populateSavingsIncomeSources(sv.incomeSourceId);
   updateSavingsScheduleFields();
   document.getElementById("st-delete").style.display="flex";
@@ -9407,8 +9586,9 @@ function saveSavingsTransfer(){
   const incomeSourceId=sourceValue===""?null:(budgetData.recurring.incomeSources||[]).find(x=>String(x.id)===sourceValue)?.id??sourceValue;
   const startDate=document.getElementById("st-startdate").value||fd(new Date());
   const endDate=document.getElementById("st-enddate").value||null;
-  const bucket=activeBudgetProfile==="joint"?"household":document.getElementById("st-bucket").value;
-  const data={name,amount,scheduleType,frequency,incomeSourceId,startDate,endDate,bucket};
+  const bucket=document.getElementById("st-bucket").value;
+  const owner=(bucket==="personal"||bucket==="personal-pool")?(document.getElementById("st-owner")?.value||(activeBudgetProfile==="joint"?"britt":activeBudgetProfile)):"household";
+  const data={name,amount,scheduleType,frequency,incomeSourceId,startDate,endDate,bucket,owner};
   if(!budgetData.recurring.savingsTransfers)budgetData.recurring.savingsTransfers=[];
   if(_editSavTransferId){
     const sv=budgetData.recurring.savingsTransfers.find(x=>x.id===_editSavTransferId);
