@@ -929,10 +929,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
 <div id="modal-edit-budg-sav" style="display:none">
   <div class="modal-bg" onclick="bgClose(event,'modal-edit-budg-sav')">
     <div class="modal" onclick="event.stopPropagation()" style="max-width:320px">
-      <div class="modal-hdr"><h3>Budgeted Savings</h3><button class="close-x" onclick="closeModal('modal-edit-budg-sav')"><i class="ti ti-x"></i></button></div>
+      <div class="modal-hdr"><h3 id="ebs-heading">Budgeted Savings</h3><button class="close-x" onclick="closeModal('modal-edit-budg-sav')"><i class="ti ti-x"></i></button></div>
       <div class="modal-body">
         <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="ebs-desc"></div>
-        <div class="field"><label>Budgeted savings ($)</label><input type="number" step="0.01" id="ebs-amount" placeholder="0.00"/></div>
+        <div class="field"><label id="ebs-label">Budgeted savings ($)</label><input type="number" step="0.01" id="ebs-amount" placeholder="0.00"/></div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px" id="ebs-auto-note"></div>
       </div>
       <div class="mfooter">
@@ -1697,7 +1697,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);hei
         <div class="field"><label>Type</label>
           <div class="badges" id="exp-type-badges">
             <button class="badge active" data-v="variable" onclick="pickExpType('variable',this)">Variable Expense</button>
-            <button class="badge" data-v="savings" onclick="pickExpType('savings',this)">Savings Transfer</button>
+            <button class="badge" id="exp-secondary-type" data-v="savings" onclick="pickExpType(this.dataset.v,this)">Savings Transfer</button>
           </div>
         </div>
         <div class="field" id="exp-cat-field"><label>Category</label>
@@ -6909,10 +6909,9 @@ function personalTransferIncome(start,end){
 // Money moved out of Joint into either personal account is a Joint outflow.
 // Keep it separate from savings so it can still be displayed in the Personal
 // summary row without being counted twice as household savings.
-function jointPersonalTransferTotals(start,end){
-  if(activeBudgetProfile!=="joint")return{budget:0,actual:0};
+function scheduledPersonalTransferBudgets(start,end){
   const checks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
-  let budget=0;
+  const totals={britt:0,christian:0};
   (budgetData.recurring?.savingsTransfers||[])
     .filter(x=>x.bucket==="personal-pool"||x.bucket==="personal")
     .forEach(transfer=>{
@@ -6923,12 +6922,27 @@ function jointPersonalTransferTotals(start,end){
           (transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))
         ).length
         :intervalOccurrenceCount(transfer,start,end);
-      budget+=(parseFloat(transfer.amount)||0)*count;
+      if(totals[transfer.owner]!=null)totals[transfer.owner]+=(parseFloat(transfer.amount)||0)*count;
     });
+  return totals;
+}
+
+function jointPersonalBudgetByOwner(start,end,periodKey){
+  const totals=scheduledPersonalTransferBudgets(start,end);
+  const overrides=budgetData.periods?.[periodKey]?.personalBudgetOverrides||{};
+  ["britt","christian"].forEach(person=>{
+    if(overrides[person]!=null)totals[person]=Math.max(0,parseFloat(overrides[person])||0);
+  });
+  return totals;
+}
+
+function jointPersonalTransferTotals(start,end,periodKey){
+  if(activeBudgetProfile!=="joint")return{budget:0,actual:0,byOwner:{britt:0,christian:0}};
+  const byOwner=jointPersonalBudgetByOwner(start,end,periodKey);
   const actual=(budgetData.personalPoolTransfers||[])
     .filter(x=>x.date>=start&&x.date<=end)
     .reduce((sum,x)=>sum+(parseFloat(x.amount)||0),0);
-  return{budget,actual};
+  return{budget:byOwner.britt+byOwner.christian,actual,byOwner};
 }
 
 /* ── THE engine ──────────────────────────────────────────────── */
@@ -6983,7 +6997,7 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const actualSavPers=activeBudgetProfile==="joint"?0:savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const actualSav=actualSavHH+actualSavPers;
-  const jointPersonalTransfers=jointPersonalTransferTotals(start,end);
+  const jointPersonalTransfers=jointPersonalTransferTotals(start,end,periodKey);
 
   // Variable budget default: a flat weekly amount from settings ($350 unless
   // changed). The pool formulas below are opt-in calculators surfaced as
@@ -7021,7 +7035,10 @@ function computePeriodCore(start,end,periodKey,budgetSb){
     });
   }
   const budgVar=Object.values(varBudgets).reduce((s,v)=>s+v,0);
-  const varExps=getExpensesFor(start,end,"variable");
+  // Personal transfers live in the Joint variable tracker, but the Personal
+  // summary row already subtracts them. Exclude them here to avoid charging
+  // the Joint balance twice.
+  const varExps=getExpensesFor(start,end,"variable").filter(e=>!e.isPersonalTransfer);
   const varActuals={};
   (rec.variable||[]).forEach(v=>{varActuals[v.id]=expenseTotalByCat(varExps,v.name);});
   const actualVar=Object.values(varActuals).reduce((s,v)=>s+v,0);
@@ -7047,19 +7064,16 @@ function jointPeriodBreakdown(start,end,periodKey){
   const byPerson=()=>({britt:{budget:0,actual:0},christian:{budget:0,actual:0}});
   const expenses=byPerson(),householdSavings=byPerson(),personal=byPerson();
   const periodExpenses=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&jointExpenseVisible(e));
-  periodExpenses.filter(e=>e.type!=="savings").forEach(e=>{if(expenses[e.owner])expenses[e.owner].actual+=parseFloat(e.amount)||0;});
+  periodExpenses.filter(e=>e.type!=="savings"&&!e.isPersonalTransfer).forEach(e=>{if(expenses[e.owner])expenses[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&(e.savingsBucket||"household")==="household").forEach(e=>{if(householdSavings[e.owner])householdSavings[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").forEach(e=>{if(personal[e.owner])personal[e.owner].actual+=parseFloat(e.amount)||0;});
   (budgetData.personalPoolTransfers||[]).filter(e=>e.date>=start&&e.date<=end).forEach(e=>{if(personal[e.owner])personal[e.owner].actual+=parseFloat(e.amount)||0;});
   const cp=computePeriodCore(start,end,periodKey||getWeekPeriodKey(start),0);
   (cp.billsDue||[]).forEach(({item})=>{if(expenses[item.owner])expenses[item.owner].budget+=parseFloat(item.amount)||0;});
   (cp.subsDue||[]).forEach(({item})=>{if(expenses[item.owner])expenses[item.owner].budget+=parseFloat(item.amount)||0;});
-  (budgetData.recurring?.savingsTransfers||[]).filter(x=>x.bucket==="personal-pool"||x.bucket==="personal").forEach(transfer=>{
-    let count=0;
-    if(savingsTransferScheduleType(transfer)==="paycheck")count=checks.filter(w=>(transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))).length;
-    else count=intervalOccurrenceCount(transfer,start,end);
-    if(personal[transfer.owner])personal[transfer.owner].budget+=(parseFloat(transfer.amount)||0)*count;
-  });
+  const personalBudgets=jointPersonalBudgetByOwner(start,end,periodKey||getWeekPeriodKey(start));
+  personal.britt.budget=personalBudgets.britt;
+  personal.christian.budget=personalBudgets.christian;
   (budgetData.recurring?.savingsTransfers||[]).filter(x=>(x.bucket||"household")==="household").forEach(transfer=>{
     let count=0;
     if(savingsTransferScheduleType(transfer)==="paycheck")count=checks.filter(w=>(transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))).length;
@@ -7095,6 +7109,11 @@ function renderJointPersonSummary(containerId,breakdown,totals){
   const expenses=kind=>kind==="budget"
     ?`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(totals.expensesBudget)}</td>`
     :cells("expenses",kind,totals.expensesActual);
+  const personalCells=kind=>{
+    if(kind!=="budget"||!expanded.budget)return cells("personal",kind);
+    const editable=person=>`<td class="jps-value jps-start-value" onclick="openEditPersonalBudget('${view}','${person}')" title="Edit ${person==="britt"?"Brittni":"Christian"}'s personal budget">${value(breakdown.personal[person].budget)} <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></td>`;
+    return editable("christian")+editable("britt");
+  };
   const start=kind=>`<td colspan="${span(kind)}" class="jps-value jps-start-value" onclick="openOneSb('${kind}','${view}')" title="Edit ${kind} start balance">${$f(kind==="budget"?totals.startBudget:totals.startActual)} <i class="ti ti-pencil" style="font-size:9px;color:var(--muted);opacity:0.5"></i></td>`;
   const balance=kind=>`<td colspan="${span(kind)}" class="jps-value">${$f(kind==="budget"?totals.endBudget:totals.endActual)}</td>`;
   el.innerHTML=`<table class="jps-table">
@@ -7105,7 +7124,7 @@ function renderJointPersonSummary(containerId,breakdown,totals){
       <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
       <tr><th class="jps-label">Expenses</th>${expenses("budget")}${expenses("actual")}</tr>
       <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
-      <tr><th class="jps-label">Personal</th>${cells("personal","budget")}${cells("personal","actual")}</tr>
+      <tr><th class="jps-label">Personal</th>${personalCells("budget")}${personalCells("actual")}</tr>
       <tr class="jps-balance-row"><td class="jps-balance-label">END BALANCE</td>${balance("budget")}${balance("actual")}</tr>
     </tbody></table>`;
 }
@@ -8058,7 +8077,10 @@ function selectAllVisibleExpenses(){
 function deleteSelectedExpenses(){
   const count=_selectedExpenseIds.size;if(!count)return;
   if(!confirm("Delete "+count+" selected expense"+(count===1?"":"s")+"?"))return;
-  (budgetData.expenses||[]).filter(e=>_selectedExpenseIds.has(String(e.id))).forEach(e=>_tombstoneRecExpense(e.id));
+  const deleting=(budgetData.expenses||[]).filter(e=>_selectedExpenseIds.has(String(e.id)));
+  deleting.forEach(e=>_tombstoneRecExpense(e.id));
+  const transferExpenseIds=new Set(deleting.filter(e=>e.isPersonalTransfer).map(e=>String(e.id)));
+  if(transferExpenseIds.size)budgetData.personalPoolTransfers=(budgetData.personalPoolTransfers||[]).filter(x=>!transferExpenseIds.has(String(x.expenseId)));
   budgetData.expenses=(budgetData.expenses||[]).filter(e=>!_selectedExpenseIds.has(String(e.id)));
   _selectedExpenseIds.clear();
   saveBudgetData();renderBudgetOverview();renderTrackerView();
@@ -8273,7 +8295,9 @@ function pickExpType(type,btn){
   document.getElementById("exp-cat-field").style.display=type==="variable"?"block":"none";
   document.getElementById("exp-sav-field").style.display=type==="savings"?"block":"none";
   const nwF=document.getElementById("exp-nw-field");if(nwF)nwF.style.display=type==="variable"?"block":"none";
-  const ownerF=document.getElementById("exp-owner-field");if(ownerF)ownerF.style.display=type==="variable"?"block":"none";
+  const ownerF=document.getElementById("exp-owner-field");if(ownerF)ownerF.style.display=(type==="variable"||type==="transfer")?"block":"none";
+  const ownerLabel=ownerF?.querySelector("label");if(ownerLabel)ownerLabel.textContent=type==="transfer"?"Transfer to":"Spent by";
+  const scopeF=document.getElementById("exp-scope-field");if(scopeF)scopeF.style.display=type==="transfer"?"none":"block";
 }
 function pickExpNW(nw,btn){
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b===btn));
@@ -8320,6 +8344,11 @@ function addAmazonLinkField(url){
 
 function openAddExpenseSheet(){
   _editExpenseId=null;
+  const secondary=document.getElementById("exp-secondary-type");
+  if(secondary){
+    secondary.dataset.v=activeBudgetProfile==="joint"?"transfer":"savings";
+    secondary.textContent=activeBudgetProfile==="joint"?"Personal Transfer":"Savings Transfer";
+  }
   populateExpCategories();
   document.querySelectorAll("[data-nw]").forEach(b=>b.classList.toggle("active",b.dataset.nw==="need"));
   document.getElementById("exp-title").value="";
@@ -8342,6 +8371,9 @@ function openAddExpenseSheet(){
 function openEditExpense(id){
   const e=(budgetData.expenses||[]).find(x=>x.id===id);if(!e)return;
   _editExpenseId=id;
+  const modalType=e.isPersonalTransfer?"transfer":e.type;
+  const secondary=document.getElementById("exp-secondary-type");
+  if(secondary){secondary.dataset.v=modalType==="transfer"?"transfer":"savings";secondary.textContent=modalType==="transfer"?"Personal Transfer":"Savings Transfer";}
   populateExpCategories();
   document.getElementById("exp-title").value=e.title||"";
   document.getElementById("exp-amount").value=e.amount||"";
@@ -8356,8 +8388,8 @@ function openEditExpense(id){
   document.getElementById("exp-amazon-links").innerHTML="";
   (e.amazonLinks||[]).forEach(url=>addAmazonLinkField(url));
   setTimeout(()=>{const ss=document.getElementById("exp-subcategory");if(ss)ss.value=e.subcategory||"";},20);
-  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.type));
-  pickExpType(e.type,null);
+  document.querySelectorAll("#exp-type-badges .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===modalType));
+  pickExpType(modalType,null);
   if(e.savingsBucket){document.querySelectorAll("#exp-sav-field .badge").forEach(b=>b.classList.toggle("active",b.dataset.v===e.savingsBucket));}
   document.getElementById("modal-add-expense").style.display="block";
 }
@@ -8372,8 +8404,10 @@ function _tombstoneRecExpense(id){
 function deleteExpenseFromModal(){
   if(!_editExpenseId||!confirm("Delete this expense?"))return;
   _tombstoneRecExpense(_editExpenseId);
+  const deleted=(budgetData.expenses||[]).find(x=>x.id===_editExpenseId);
+  if(deleted?.isPersonalTransfer)budgetData.personalPoolTransfers=(budgetData.personalPoolTransfers||[]).filter(x=>String(x.expenseId)!==String(deleted.id));
   budgetData.expenses=(budgetData.expenses||[]).filter(x=>x.id!==_editExpenseId);
-  saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
+  saveBudgetData();closeModal("modal-add-expense");renderBudgetOverview();renderTrackerView();
 }
 
 function saveExpenseFromModal(){
@@ -8381,25 +8415,39 @@ function saveExpenseFromModal(){
   if(!amount||amount<=0)return;
   const title=document.getElementById("exp-title").value.trim();
   const expType=document.querySelector("#exp-type-badges .badge.active")?.dataset.v||"variable";
-  const category=document.getElementById("exp-category")?.value||"";
+  const isPersonalTransfer=activeBudgetProfile==="joint"&&expType==="transfer";
+  const category=isPersonalTransfer?"Personal":(document.getElementById("exp-category")?.value||"");
   const bucket=expType==="savings"?(document.querySelector("#exp-sav-field .badge.active")?.dataset.v||"household"):null;
   const nw=expType==="variable"?(document.querySelector("#exp-nw-field .badge.active")?.dataset.nw||"need"):null;
   const date=document.getElementById("exp-date").value||fd(new Date());
   const note=document.getElementById("exp-note").value.trim();
   const amazonLinks=[...document.querySelectorAll("#exp-amazon-links input[type=url]")].map(i=>i.value.trim()).filter(Boolean);
   const subcategory=category==="Amazon"?(document.getElementById("exp-subcategory")?.value||""):"";
-  const owner=expType==="variable"?(document.getElementById("exp-owner")?.value||(activeBudgetProfile==="christian"?"christian":"britt")):(activeBudgetProfile==="joint"?"household":activeBudgetProfile);
-  const scope=document.getElementById("exp-scope")?.value||(activeBudgetProfile==="joint"?"household":"personal");
+  const owner=(expType==="variable"||isPersonalTransfer)?(document.getElementById("exp-owner")?.value||(activeBudgetProfile==="christian"?"christian":"britt")):(activeBudgetProfile==="joint"?"household":activeBudgetProfile);
+  const scope=isPersonalTransfer?"household":(document.getElementById("exp-scope")?.value||(activeBudgetProfile==="joint"?"household":"personal"));
   // effectiveCategory: if Amazon + subcategory set, count toward subcategory in totals
-  const effectiveCategory=subcategory||category;
+  const effectiveCategory=isPersonalTransfer?"Personal":(subcategory||category);
   if(!budgetData.expenses)budgetData.expenses=[];
+  if(!budgetData.personalPoolTransfers)budgetData.personalPoolTransfers=[];
   if(_editExpenseId){
     const ex=budgetData.expenses.find(x=>x.id===_editExpenseId);
-    if(ex)Object.assign(ex,{title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner,scope});
+    if(ex){
+      const wasTransfer=!!ex.isPersonalTransfer;
+      Object.assign(ex,{title,type:isPersonalTransfer?"variable":expType,category,subcategory:isPersonalTransfer?"":subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks:isPersonalTransfer?[]:amazonLinks,owner,scope,isPersonalTransfer});
+      const linked=budgetData.personalPoolTransfers.find(x=>String(x.expenseId)===String(ex.id));
+      if(isPersonalTransfer){
+        if(linked)Object.assign(linked,{owner,amount,date,note:title||note||"Personal transfer"});
+        else budgetData.personalPoolTransfers.push({id:`pool-${Date.now()}-${owner}`,expenseId:ex.id,owner,amount,date,note:title||note||"Personal transfer"});
+      }else if(wasTransfer){
+        budgetData.personalPoolTransfers=budgetData.personalPoolTransfers.filter(x=>String(x.expenseId)!==String(ex.id));
+      }
+    }
   } else {
-    budgetData.expenses.push({id:budgetNid++,title,type:expType,category,subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks,owner,scope});
+    const expense={id:budgetNid++,title,type:isPersonalTransfer?"variable":expType,category,subcategory:isPersonalTransfer?"":subcategory,effectiveCategory,savingsBucket:bucket,nw,amount,date,note,amazonLinks:isPersonalTransfer?[]:amazonLinks,owner,scope,isPersonalTransfer};
+    budgetData.expenses.push(expense);
+    if(isPersonalTransfer)budgetData.personalPoolTransfers.push({id:`pool-${Date.now()}-${owner}`,expenseId:expense.id,owner,amount,date,note:title||note||"Personal transfer"});
   }
-  saveBudgetData();closeModal("modal-add-expense");renderTrackerView();
+  saveBudgetData();closeModal("modal-add-expense");renderBudgetOverview();renderTrackerView();
 }
 
 let _editExpenseId=null;
@@ -8407,6 +8455,8 @@ let _editExpenseId=null;
 
 function deleteExpenseB(id){
   _tombstoneRecExpense(id);
+  const deleted=(budgetData.expenses||[]).find(e=>e.id===id);
+  if(deleted?.isPersonalTransfer)budgetData.personalPoolTransfers=(budgetData.personalPoolTransfers||[]).filter(x=>String(x.expenseId)!==String(deleted.id));
   budgetData.expenses=budgetData.expenses.filter(e=>e.id!==id);
   saveBudgetData();renderBudgetOverview();renderTrackerView();
 }
@@ -8609,8 +8659,12 @@ function addPersonalPoolTransfer(person){
   const amount=parseFloat(prompt(`Transfer how much to ${person==="britt"?"Brittni":"Christian"}'s personal pool?`));
   if(!amount||amount<=0)return;
   if(!budgetData.personalPoolTransfers)budgetData.personalPoolTransfers=[];
-  budgetData.personalPoolTransfers.push({id:`pool-${Date.now()}-${person}`,owner:person,amount,date:fd(new Date())});
-  saveBudgetData();renderPersonalPoolsSettings();
+  const date=fd(new Date());
+  const expense={id:budgetNid++,title:`Transfer to ${person==="britt"?"Brittni":"Christian"}`,type:"variable",category:"Personal",effectiveCategory:"Personal",amount,date,note:"Personal transfer",owner:person,scope:"household",isPersonalTransfer:true};
+  budgetData.expenses=budgetData.expenses||[];
+  budgetData.expenses.push(expense);
+  budgetData.personalPoolTransfers.push({id:`pool-${Date.now()}-${person}`,expenseId:expense.id,owner:person,amount,date,note:expense.title});
+  saveBudgetData();renderPersonalPoolsSettings();renderBudgetOverview();
 }
 
 function renderRecEditList(elId,items,type,labelFn){
@@ -9256,8 +9310,9 @@ function avbApplyOption(mode){
 // Click the budget savings number in the summary — same UX as start balance.
 let _ebsView="weekly";
 let _ebsBucket="household";
+let _ebsOwner=null;
 function openEditBudgSav(view,bucket){
-  _ebsView=view;_ebsBucket=bucket||"household";
+  _ebsView=view;_ebsBucket=bucket||"household";_ebsOwner=null;
   const key=view==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   const period=getPeriod(key);
   const periodName=view==="monthly"
@@ -9270,9 +9325,33 @@ function openEditBudgSav(view,bucket){
     :{start:budgetCurrentWeekStart,end:fd(new Date(new Date(budgetCurrentWeekStart+"T12:00:00").getTime()+6*86400000))};
   const scheduled=scheduledSavingsBuckets(range.start,range.end);
   const auto=_ebsBucket==="personal"?scheduled.pers:scheduled.hh;
+  document.getElementById("ebs-heading").textContent="Budgeted Savings";
+  document.getElementById("ebs-label").textContent="Budgeted savings ($)";
   document.getElementById("ebs-desc").textContent="Override the budgeted "+bl+" savings for "+periodName+".";
   document.getElementById("ebs-amount").value=cur!=null?cur:"";
   document.getElementById("ebs-auto-note").textContent="Leave blank to reset to the scheduled amount ("+$f(auto)+").";
+  document.getElementById("modal-edit-budg-sav").style.display="block";
+  setTimeout(()=>document.getElementById("ebs-amount").focus(),50);
+}
+
+function openEditPersonalBudget(view,owner){
+  _ebsView=view;_ebsBucket="personal-transfer";_ebsOwner=owner;
+  const key=view==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
+  const period=getPeriod(key);
+  const periodName=view==="monthly"
+    ?new Date(budgetCurrentMonth+"-15").toLocaleDateString("en-US",{month:"long",year:"numeric"})
+    :"week of "+budgetCurrentWeekStart;
+  const range=view==="monthly"
+    ?{start:budgetCurrentMonth+"-01",end:fd(new Date(parseInt(budgetCurrentMonth.slice(0,4)),parseInt(budgetCurrentMonth.slice(5,7)),0))}
+    :{start:budgetCurrentWeekStart,end:fd(new Date(new Date(budgetCurrentWeekStart+"T12:00:00").getTime()+6*86400000))};
+  const scheduled=scheduledPersonalTransferBudgets(range.start,range.end)[owner]||0;
+  const cur=period.personalBudgetOverrides?.[owner];
+  const name=owner==="britt"?"Brittni":"Christian";
+  document.getElementById("ebs-heading").textContent=name+" Personal Budget";
+  document.getElementById("ebs-label").textContent="Budgeted personal amount ($)";
+  document.getElementById("ebs-desc").textContent="Set how much Joint plans to transfer to "+name+" for "+periodName+".";
+  document.getElementById("ebs-amount").value=cur!=null?cur:"";
+  document.getElementById("ebs-auto-note").textContent="Leave blank to reset to the scheduled amount ("+$f(scheduled)+").";
   document.getElementById("modal-edit-budg-sav").style.display="block";
   setTimeout(()=>document.getElementById("ebs-amount").focus(),50);
 }
@@ -9282,7 +9361,10 @@ function saveBudgSav(){
   const period=getPeriod(key);
   const v=document.getElementById("ebs-amount").value;
   const val=v.trim()===""?null:Math.max(0,parseFloat(v)||0);
-  if(_ebsBucket==="personal")period.overrideBudgSavPers=val;
+  if(_ebsBucket==="personal-transfer"){
+    if(!period.personalBudgetOverrides)period.personalBudgetOverrides={};
+    period.personalBudgetOverrides[_ebsOwner]=val;
+  }else if(_ebsBucket==="personal")period.overrideBudgSavPers=val;
   else{period.overrideBudgSavHH=val;period.overrideBudgSav=null;} // clear legacy total override
   saveBudgetData();
   closeModal("modal-edit-budg-sav");
@@ -9292,7 +9374,11 @@ function saveBudgSav(){
 function clearBudgSav(){
   const key=_ebsView==="monthly"?getMonthPeriodKey(budgetCurrentMonth):getWeekPeriodKey(budgetCurrentWeekStart);
   const p=budgetData.periods?.[key];
-  if(p){if(_ebsBucket==="personal")p.overrideBudgSavPers=null;else{p.overrideBudgSavHH=null;p.overrideBudgSav=null;}}
+  if(p){
+    if(_ebsBucket==="personal-transfer"&&p.personalBudgetOverrides)delete p.personalBudgetOverrides[_ebsOwner];
+    else if(_ebsBucket==="personal")p.overrideBudgSavPers=null;
+    else{p.overrideBudgSavHH=null;p.overrideBudgSav=null;}
+  }
   saveBudgetData();
   closeModal("modal-edit-budg-sav");
   renderBudgetOverview();
