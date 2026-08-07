@@ -5981,10 +5981,32 @@ function normalizeJointMaster(master){
   return master;
 }
 
-// Personal profiles are account ledgers, not household rollups. An item only
-// belongs in a personal ledger when it is explicitly assigned to that person;
-// household scope controls Joint reporting, not personal-account visibility.
+// The Joint profile stores every record, but its UI and calculations only show
+// household activity. Person-assigned bills/subscriptions are personal by
+// definition. Variable expenses use their explicit scope because Joint still
+// needs to show which person made a household purchase.
+function jointRecurringItemVisible(item){return (item?.owner||"household")==="household";}
+function jointExpenseVisible(expense){
+  if(!expense)return false;
+  if(expense.type==="bill"||expense.type==="subscription"){
+    const items=expense.type==="bill"?(budgetData.recurring?.bills||[]):(budgetData.recurring?.subscriptions||[]);
+    const recurring=items.find(item=>String(item.id)===String(expense.recurringId));
+    return jointRecurringItemVisible(recurring||expense);
+  }
+  if(expense.type==="variable")return (expense.scope||"household")==="household";
+  if(expense.type==="savings")return (expense.savingsBucket||"household")==="household";
+  return (expense.scope||"household")==="household";
+}
+function activeExpenseVisible(expense){return activeBudgetProfile!=="joint"||jointExpenseVisible(expense);}
+function activeExpenses(){return (budgetData.expenses||[]).filter(activeExpenseVisible);}
 function personalItemVisible(item,person){return item?.owner===person;}
+function personalExpenseVisible(expense,person){
+  if(!personalItemVisible(expense,person))return false;
+  if(expense.type==="bill"||expense.type==="subscription")return true;
+  if(expense.type==="variable")return expense.scope==="personal";
+  if(expense.type==="savings")return expense.savingsBucket==="personal";
+  return expense.scope==="personal";
+}
 function filterJointBudgetForPerson(master,person){
   master=normalizeJointMaster(structuredClone(master));
   const r=master.recurring;
@@ -5995,7 +6017,7 @@ function filterJointBudgetForPerson(master,person){
   r.savings_household=[];
   r.savings_personal=r.savings_personal.filter(x=>!x.owner||x.owner===person);
   master.incomeWeeks=master.incomeWeeks.filter(x=>(x.owner||x.sourceProfile)===person);
-  master.expenses=master.expenses.filter(x=>personalItemVisible(x,person));
+  master.expenses=master.expenses.filter(x=>personalExpenseVisible(x,person));
   master.personalPoolTransfers=master.personalPoolTransfers.filter(x=>x.owner===person);
   master.activePersonalPool=master.personalPools?.[person]||{balance:0};
   return master;
@@ -6909,8 +6931,10 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 
   // Bills & subs: budgeted from due dates in range, actuals from materialized expense records
   const dueOf=items=>items.flatMap(item=>recurringDueDatesIn(item,start,end).map(ds=>({item,dueDate:ds})));
-  const billsDue=dueOf(rec.bills||[]);
-  const subsDue=dueOf(rec.subscriptions||[]);
+  const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
+  const visibleSubs=activeBudgetProfile==="joint"?(rec.subscriptions||[]).filter(jointRecurringItemVisible):(rec.subscriptions||[]);
+  const billsDue=dueOf(visibleBills);
+  const subsDue=dueOf(visibleSubs);
   const budgBills=billsDue.reduce((s,d)=>s+d.item.amount,0);
   const budgSubs=subsDue.reduce((s,d)=>s+d.item.amount,0);
   const billExps=getExpensesFor(start,end,"bill");
@@ -6994,7 +7018,7 @@ function jointPeriodBreakdown(start,end,periodKey){
   checks.forEach(w=>{const owner=w.owner||w.sourceProfile;if(!income[owner])return;const amt=incomeWeekAmount(w);if(isPlannedIncomeWeek(w))income[owner].budget+=amt;if(w.status==="received")income[owner].actual+=amt;});
   const byPerson=()=>({britt:{budget:0,actual:0},christian:{budget:0,actual:0}});
   const expenses=byPerson(),householdSavings=byPerson(),personal=byPerson();
-  const periodExpenses=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
+  const periodExpenses=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&jointExpenseVisible(e));
   periodExpenses.filter(e=>e.type!=="savings").forEach(e=>{if(expenses[e.owner])expenses[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&(e.savingsBucket||"household")==="household").forEach(e=>{if(householdSavings[e.owner])householdSavings[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").forEach(e=>{if(personal[e.owner])personal[e.owner].actual+=parseFloat(e.amount)||0;});
@@ -7111,7 +7135,7 @@ function chainedStartBalances(view,anchor){
 }
 
 function getExpensesFor(start,end,type){
-  return(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&(!type||e.type===type));
+  return activeExpenses().filter(e=>e.date>=start&&e.date<=end&&(!type||e.type===type));
 }
 function expenseTotalByCat(exps,cat){return exps.filter(e=>(e.effectiveCategory||e.category)===cat).reduce((s,e)=>s+e.amount,0);}
 function $f(n){const v=parseFloat(n)||0;const s=v<0?"-":"";return s+"$"+Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",");}
@@ -7184,7 +7208,7 @@ function renderBudgetDashboard(){
   for(let d2=1;d2<=daysIn;d2++){
     const ds=fd(new Date(y,m-1,d2));
     if(ds>fd(new Date()))break;
-    cum+=(budgetData.expenses||[]).filter(e=>e.date===ds&&e.type!=="savings").reduce((s,e)=>s+e.amount,0);
+    cum+=activeExpenses().filter(e=>e.date===ds&&e.type!=="savings").reduce((s,e)=>s+e.amount,0);
     pts.push([d2,cum]);
   }
   let spark="";
@@ -7218,7 +7242,7 @@ function renderBudgetDashboard(){
   // Target $ = your settings % x this month's income (all paychecks landing
   // in the month). Actuals come from the need/want classifications.
   const tg=budgetData.settings.nwTargets||{need:50,want:30,savings:20};
-  const monthAllP=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
+  const monthAllP=activeExpenses().filter(e=>e.date>=start&&e.date<=end);
   const nwActP={need:0,want:0,savings:0,unset:0};
   monthAllP.forEach(e=>{nwActP[classifyNW(e)]+=e.amount;});
   const inc=cp.budgIncome;
@@ -7316,13 +7340,14 @@ function renderBudgetDashboard(){
 
   /* ── Panel 4: top expenses — category totals + biggest single hits ── */
   const catTotals=[];
-  (rec.bills||[]).forEach(b=>{const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);catTotals.push({n:b.name,a,b:recurringDueDatesIn(b,start,end).length*b.amount});});
+  const dashboardBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
+  dashboardBills.forEach(b=>{const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);catTotals.push({n:b.name,a,b:recurringDueDatesIn(b,start,end).length*b.amount});});
   catTotals.push({n:"Subscriptions",a:cp.actualSubs,b:cp.budgSubs});
   (rec.variable||[]).forEach(v=>catTotals.push({n:v.name,a:cp.varActuals[v.id]||0,b:cp.varBudgets[v.id]||0}));
   catTotals.push({n:"Savings",a:cp.actualSav,b:cp.budgSav});
   catTotals.sort((x,z)=>z.a-x.a);
   const maxCat=Math.max(1,...catTotals.map(c=>Math.max(c.a,c.b)));
-  const monthExps=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end).sort((x,z)=>z.amount-x.amount).slice(0,8);
+  const monthExps=activeExpenses().filter(e=>e.date>=start&&e.date<=end).sort((x,z)=>z.amount-x.amount).slice(0,8);
   const barRow=c=>`<div style="display:grid;grid-template-columns:90px 1fr 52px;gap:6px;align-items:center;margin-bottom:5px">
     <span style="font-size:10.5px;color:var(--text);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.n}</span>
     <div style="position:relative;height:10px">
@@ -7344,7 +7369,7 @@ function renderBudgetDashboard(){
   /* ── Panel 5: distribution stacked bars ── */
   const groups=["Bills & Debt","Subscriptions","Variable","Savings"];
   const gClr=[BDASH_COLORS[0],BDASH_COLORS[1],BDASH_COLORS[2],BDASH_COLORS[3]];
-  const allExp=budgetData.expenses||[];
+  const allExp=activeExpenses();
   const allB=allExp.filter(e=>e.type==="bill").reduce((s,e)=>s+e.amount,0);
   const allS=allExp.filter(e=>e.type==="subscription").reduce((s,e)=>s+e.amount,0);
   const allV=allExp.filter(e=>e.type==="variable").reduce((s,e)=>s+e.amount,0);
@@ -7362,10 +7387,10 @@ function renderBudgetDashboard(){
     exps.forEach(e=>{o[classifyNW(e)]+=e.amount;});
     return[o.need,o.want,o.savings,o.unset];
   };
-  const monthAll=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
+  const monthAll=activeExpenses().filter(e=>e.date>=start&&e.date<=end);
   const nwRows=[
     {lbl:"Actual this month",vals:nwSum(monthAll)},
-    {lbl:"All-time actual",vals:nwSum(budgetData.expenses||[])},
+    {lbl:"All-time actual",vals:nwSum(activeExpenses())},
   ];
   const stackBar=(r,clrs)=>{
     const tot=r.vals.reduce((s,v)=>s+v,0);
@@ -7605,6 +7630,7 @@ function renderWeeklyView(){
 
   // ── All flows from the one engine (pool includes start balance) ──
   const cp=computePeriodCore(ws,we,key,budgetSb);
+  const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
 
   const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
   const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
@@ -7652,7 +7678,7 @@ function renderWeeklyView(){
   const donutLabels=[];const donutValues=[];const donutColors=[];
   const BILL_COLORS=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
   const VAR_COLORS=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
-  rec.bills.forEach((b,i)=>{
+  visibleBills.forEach((b,i)=>{
     const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);
     if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BILL_COLORS[i%BILL_COLORS.length]);}
   });
@@ -7663,7 +7689,7 @@ function renderWeeklyView(){
 
   // ── Detail panels ──
   renderBudgetDailyStrip(ws,cp.varExps,"w-daily-strip","w-daily-total");
-  renderDueLines("w-bills-lines","w-bills-total",allWeeklyBillEntries(rec.bills,cp.billsDue,ws),cp.billExps);
+  renderDueLines("w-bills-lines","w-bills-total",allWeeklyBillEntries(visibleBills,cp.billsDue,ws),cp.billExps);
   renderDueLines("w-subs-lines","w-subs-total",cp.subsDue,cp.subExps);
   renderVarLines("w-var-lines","w-var-total",rec.variable,cp.varActuals,"weekly");
   const allSavExps=budgetData.expenses?.filter(e=>e.type==="savings")||[];
@@ -7702,6 +7728,7 @@ function renderMonthlyView(){
 
   // ── All flows from the one engine (pool includes start balance) ──
   const cp=computePeriodCore(monthStart,monthEnd,key,budgetSb);
+  const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
 
   const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
   const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
@@ -7732,7 +7759,7 @@ function renderMonthlyView(){
   const donutLabelsM=[];const donutValuesM=[];const donutColorsM=[];
   const BILL_COLORS_M=["#e05555","#e07755","#e0a055","#c75555","#c77755"];
   const VAR_COLORS_M=["#378add","#5599dd","#77aadd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa"];
-  rec.bills.forEach((b,i)=>{
+  visibleBills.forEach((b,i)=>{
     const a=cp.billExps.filter(e=>e.recurringId===b.id).reduce((s,e)=>s+e.amount,0);
     if(a>0){donutLabelsM.push(b.name);donutValuesM.push(a);donutColorsM.push(BILL_COLORS_M[i%BILL_COLORS_M.length]);}
   });
@@ -8011,7 +8038,7 @@ function deleteSelectedExpenses(){
 
 function buildTvFilterBar(){
   const bar=document.getElementById("tv-filter-bar");if(!bar)return;
-  const cats=[...new Set((budgetData.expenses||[]).filter(e=>e.type==="variable").map(e=>e.category))].sort();
+  const cats=[...new Set(activeExpenses().filter(e=>e.type==="variable").map(e=>e.category))].sort();
   bar.innerHTML=`<button class="filter-btn${_tvFilter==="all"?" active":""}" data-cat="all" onclick="setTvFilter('all',this)">All</button>`
     +cats.map(c=>`<button class="filter-btn${_tvFilter===c?" active":""}" data-cat="${c}" onclick="setTvFilter('${c}',this)" style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${catColor(c)};display:inline-block"></span>${c}</button>`).join("");
 }
@@ -8026,7 +8053,7 @@ function renderTrackerVariable(){
   }
   t("tv-period-label",period.label);
   buildTvFilterBar();
-  let exps=[...(budgetData.expenses||[]).filter(e=>e.type==="variable"&&e.date>=period.start&&e.date<=period.end)];
+  let exps=[...activeExpenses().filter(e=>e.type==="variable"&&e.date>=period.start&&e.date<=period.end)];
   if(activeBudgetProfile==="joint"&&_tvPersonFilter!=="all")exps=exps.filter(e=>e.owner===_tvPersonFilter);
   if(_tvFilter!=="all")exps=exps.filter(e=>e.category===_tvFilter);
   exps.sort((a,b)=>b.date.localeCompare(a.date));
@@ -8474,6 +8501,8 @@ function bsToggle(id){
 
 function renderBudgetSettings(){
   const rec=budgetData.recurring;
+  const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
+  const visibleSubs=activeBudgetProfile==="joint"?(rec.subscriptions||[]).filter(jointRecurringItemVisible):(rec.subscriptions||[]);
   const profile=BUDGET_PROFILES.find(p=>p.id===activeBudgetProfile);
   const piEl=document.getElementById("bs-profile-info");
   if(piEl&&profile)piEl.textContent="Currently viewing: "+profile.name+"'s budget";
@@ -8484,25 +8513,25 @@ function renderBudgetSettings(){
   const isEl=document.getElementById("bs-income-sources");
   renderNWTargets();
   renderBsItemCards("bs-income-sources",rec.incomeSources,"income","openEditIncomeSource","deleteIncomeSourceById");
-  renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
-  renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
+  renderBsItemCards("bs-bills-list",visibleBills,"bills","openEditBillItem","deleteBillItem");
+  renderBsItemCards("bs-subs-list",visibleSubs,"subscriptions","openEditSubItem","deleteSubItem");
   renderBsVarCards("bs-var-list",rec.variable);
 
   // Sub-labels for accordion rows
   const incomeSub=document.getElementById("bs-income-sub");
   if(incomeSub){const s=rec.incomeSources||[];incomeSub.textContent=s.length?s.length+" source"+(s.length!==1?"s":"")+" · "+$f(s.reduce((t,s2)=>t+incomeSourceAmount(s2),0))+" expected per pay period":"No income sources";}
   const billsSub=document.getElementById("bs-bills-sub");
-  if(billsSub){const b=rec.bills||[];const tot=b.reduce((t,x)=>t+x.amount,0);billsSub.textContent=b.length?b.length+" bill"+(b.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No bills";}
+  if(billsSub){const b=visibleBills;const tot=b.reduce((t,x)=>t+x.amount,0);billsSub.textContent=b.length?b.length+" bill"+(b.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No bills";}
   const subsSub=document.getElementById("bs-subs-sub");
-  if(subsSub){const s=rec.subscriptions||[];const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
+  if(subsSub){const s=visibleSubs;const tot=s.reduce((t,x)=>t+x.amount,0);subsSub.textContent=s.length?s.length+" subscription"+(s.length!==1?"s":"")+" · "+$f(tot)+"/mo total":"No subscriptions";}
   const savSub=document.getElementById("bs-savings-sub");
   if(savSub){const transfers=rec.savingsTransfers||[];savSub.textContent=transfers.length?transfers.length+" recurring transfer"+(transfers.length!==1?"s":""):"No recurring transfers";}
   const varSub=document.getElementById("bs-var-sub");
   if(varSub){const v=rec.variable||[];varSub.textContent=v.length?v.length+" categor"+(v.length!==1?"ies":"y"):"No categories";}
 
   // Render list content
-  renderBsItemCards("bs-bills-list",rec.bills,"bills","openEditBillItem","deleteBillItem");
-  renderBsItemCards("bs-subs-list",rec.subscriptions,"subscriptions","openEditSubItem","deleteSubItem");
+  renderBsItemCards("bs-bills-list",visibleBills,"bills","openEditBillItem","deleteBillItem");
+  renderBsItemCards("bs-subs-list",visibleSubs,"subscriptions","openEditSubItem","deleteSubItem");
   renderBsVarCards("bs-var-list",rec.variable);
   // Savings transfers can independently follow a paycheck or a fixed cadence.
   const svEl=document.getElementById("bs-savings-list");
@@ -9515,7 +9544,8 @@ function renderMbChart(){
     const donutLabels=[],donutValues=[],donutColors=[];
     const BCOLS=["#e05555","#e07755","#c75555"];
     const VCOLS=["#378add","#5599dd","#44bbcc","#3377cc","#2255aa","#55aacc","#7799bb","#3388bb","#4466aa","#77aadd"];
-    rec.bills.forEach((b,i)=>{const a=totalBills/Math.max(rec.bills.length,1);if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BCOLS[i%BCOLS.length]);}});
+    const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
+    visibleBills.forEach((b,i)=>{const a=totalBills/Math.max(visibleBills.length,1);if(a>0){donutLabels.push(b.name);donutValues.push(a);donutColors.push(BCOLS[i%BCOLS.length]);}});
     if(totalSubs>0){donutLabels.push("Subscriptions");donutValues.push(totalSubs);donutColors.push("#7b68ee");}
     rec.variable.forEach((v,i)=>{const a=varActuals[v.id]||0;if(a>0){donutLabels.push(v.name);donutValues.push(a);donutColors.push(VCOLS[i%VCOLS.length]);}});
     if(totalSav>0){donutLabels.push("Savings");donutValues.push(totalSav);donutColors.push("#e0a040");}
@@ -9561,7 +9591,7 @@ function renderMbSection(){
   } else if(_mbSection==="bills"){
     el.innerHTML='<div class="bcompact-title">BILLS & DEBT</div><div id="mb-bills-lines"></div>';
     const _cpB=window._mbCtx?.cp;
-    if(_cpB)renderDueLines("mb-bills-lines",null,_mbView==="weekly"?allWeeklyBillEntries(rec.bills,_cpB.billsDue,window._mbCtx.startDate):_cpB.billsDue,_cpB.billExps);
+    if(_cpB){const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);renderDueLines("mb-bills-lines",null,_mbView==="weekly"?allWeeklyBillEntries(visibleBills,_cpB.billsDue,window._mbCtx.startDate):_cpB.billsDue,_cpB.billExps);}
   } else if(_mbSection==="subs"){
     el.innerHTML='<div class="bcompact-title">SUBSCRIPTIONS</div><div id="mb-subs-lines"></div>';
     const _cpS=window._mbCtx?.cp;
