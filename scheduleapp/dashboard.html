@@ -6906,6 +6906,31 @@ function personalTransferIncome(start,end){
   return{budget,actual};
 }
 
+// Money moved out of Joint into either personal account is a Joint outflow.
+// Keep it separate from savings so it can still be displayed in the Personal
+// summary row without being counted twice as household savings.
+function jointPersonalTransferTotals(start,end){
+  if(activeBudgetProfile!=="joint")return{budget:0,actual:0};
+  const checks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
+  let budget=0;
+  (budgetData.recurring?.savingsTransfers||[])
+    .filter(x=>x.bucket==="personal-pool"||x.bucket==="personal")
+    .forEach(transfer=>{
+      const count=savingsTransferScheduleType(transfer)==="paycheck"
+        ?checks.filter(w=>
+          (!transfer.startDate||w.payDate>=transfer.startDate)&&
+          (!transfer.endDate||w.payDate<=transfer.endDate)&&
+          (transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId))
+        ).length
+        :intervalOccurrenceCount(transfer,start,end);
+      budget+=(parseFloat(transfer.amount)||0)*count;
+    });
+  const actual=(budgetData.personalPoolTransfers||[])
+    .filter(x=>x.date>=start&&x.date<=end)
+    .reduce((sum,x)=>sum+(parseFloat(x.amount)||0),0);
+  return{budget,actual};
+}
+
 /* ── THE engine ──────────────────────────────────────────────── */
 // Computes every number a budget view needs for [start,end].
 // Does NOT compute start balances (see chainedStartBalances).
@@ -6958,6 +6983,7 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   const actualSavHH=savExps.filter(e=>(e.savingsBucket||"household")==="household").reduce((s,e)=>s+e.amount,0);
   const actualSavPers=activeBudgetProfile==="joint"?0:savExps.filter(e=>e.savingsBucket==="personal").reduce((s,e)=>s+e.amount,0);
   const actualSav=actualSavHH+actualSavPers;
+  const jointPersonalTransfers=jointPersonalTransferTotals(start,end);
 
   // Variable budget default: a flat weekly amount from settings ($350 unless
   // changed). The pool formulas below are opt-in calculators surfaced as
@@ -7006,7 +7032,9 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 
   const _res={start,end,periodKey,period,paychecks,budgIncome,actualIncome,sbForPool,weeklyDefault,leftoverNoSb,leftover20Sb,
     billsDue,subsDue,budgBills,budgSubs,actualBills,actualSubs,billExps,subExps,
-    budgSav,budgSavHH,budgSavPers,actualSav,actualSavHH,actualSavPers,savExps,autoVarTotal,varTotal,varBudgets,varActuals,budgVar,actualVar,varExps,
+    budgSav,budgSavHH,budgSavPers,actualSav,actualSavHH,actualSavPers,savExps,
+    jointPersonalBudget:jointPersonalTransfers.budget,jointPersonalActual:jointPersonalTransfers.actual,
+    autoVarTotal,varTotal,varBudgets,varActuals,budgVar,actualVar,varExps,
     budgExpenses,actualExpenses};
   _bvCache.cp[_ck]=_res;
   return _res;
@@ -7128,8 +7156,8 @@ function chainedStartBalances(view,anchor){
     if(i===chain.length-1){const _r={budgetSb:sbB,actualSb:sbA};_bvCache.sb[_ck]=_r;return _r;}
     // Pass the running budget SB so each period's var pool includes carried-over money
     const cp=computePeriodCore(r.start,r.end,r.key,sbB);
-    sbB=sbB+cp.budgIncome-cp.budgExpenses-cp.budgSav;
-    sbA=sbA+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+    sbB=sbB+cp.budgIncome-cp.budgExpenses-cp.budgSav-cp.jointPersonalBudget;
+    sbA=sbA+cp.actualIncome-cp.actualExpenses-cp.actualSav-cp.jointPersonalActual;
   }
   const _r2={budgetSb:sbB,actualSb:sbA};_bvCache.sb[_ck]=_r2;return _r2;
 }
@@ -7290,10 +7318,10 @@ function renderBudgetDashboard(){
   /* ── Panel 3: stats + 12-month budget vs actual chart ── */
   const prevYm=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,"0")}`;
   const prev=bdashMonth(prevYm);
-  const net=cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const net=cp.actualIncome-cp.actualExpenses-cp.actualSav-cp.jointPersonalActual;
   const variance=cp.budgExpenses-cp.actualExpenses;
   const delta=cp.actualExpenses-prev.cp.actualExpenses;
-  const endBal=sb.actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const endBal=sb.actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav-cp.jointPersonalActual;
   const stat=(v,lbl,clr)=>`<div style="display:flex;gap:6px;align-items:baseline"><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${clr||"var(--text)"}">${v}</span><span style="font-size:10px;color:var(--muted);font-style:italic">${lbl}</span></div>`;
   document.getElementById("bdash-stats").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px">
     ${stat($f(cp.actualIncome),"Income this month")}
@@ -7632,8 +7660,8 @@ function renderWeeklyView(){
   const cp=computePeriodCore(ws,we,key,budgetSb);
   const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
 
-  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
-  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav-cp.jointPersonalBudget;
+  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav-cp.jointPersonalActual;
 
   // ── Weekly Summary ──
   t("ws-start",$f(budgetSb));  t("wa-start",$f(actualSb));
@@ -7730,8 +7758,8 @@ function renderMonthlyView(){
   const cp=computePeriodCore(monthStart,monthEnd,key,budgetSb);
   const visibleBills=activeBudgetProfile==="joint"?(rec.bills||[]).filter(jointRecurringItemVisible):(rec.bills||[]);
 
-  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav;
-  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav;
+  const budgEnd=budgetSb+cp.budgIncome-cp.budgExpenses-cp.budgSav-cp.jointPersonalBudget;
+  const actualEnd=actualSb+cp.actualIncome-cp.actualExpenses-cp.actualSav-cp.jointPersonalActual;
 
   // ── Monthly Summary ──
   t("ms-start",$f(budgetSb));  t("ma-start",$f(actualSb));
