@@ -5981,14 +5981,18 @@ function normalizeJointMaster(master){
   return master;
 }
 
-function personalItemVisible(item,person){return item?.scope==="household"||item?.owner==="household"||item?.owner===person;}
+// Personal profiles are account ledgers, not household rollups. An item only
+// belongs in a personal ledger when it is explicitly assigned to that person;
+// household scope controls Joint reporting, not personal-account visibility.
+function personalItemVisible(item,person){return item?.owner===person;}
 function filterJointBudgetForPerson(master,person){
   master=normalizeJointMaster(structuredClone(master));
   const r=master.recurring;
   r.incomeSources=r.incomeSources.filter(x=>x.owner===person);
   r.bills=r.bills.filter(x=>personalItemVisible(x,person));
   r.subscriptions=r.subscriptions.filter(x=>personalItemVisible(x,person));
-  r.savingsTransfers=r.savingsTransfers.filter(x=>x.owner==="household"||x.owner===person);
+  r.savingsTransfers=r.savingsTransfers.filter(x=>x.owner===person);
+  r.savings_household=[];
   r.savings_personal=r.savings_personal.filter(x=>!x.owner||x.owner===person);
   master.incomeWeeks=master.incomeWeeks.filter(x=>(x.owner||x.sourceProfile)===person);
   master.expenses=master.expenses.filter(x=>personalItemVisible(x,person));
@@ -6851,6 +6855,27 @@ function computeMonthlySavFromWeeks(monthStart,monthEnd){
   return scheduledSavingsBuckets(monthStart,monthEnd);
 }
 
+// Joint paychecks fund the household account. Personal-account income is only
+// money transferred into that person's pool, never their gross paycheck.
+function personalTransferIncome(start,end){
+  if(activeBudgetProfile==="joint")return null;
+  const person=activeBudgetProfile;
+  const checks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
+  let budget=0;
+  (budgetData.recurring?.savingsTransfers||[])
+    .filter(x=>x.owner===person&&(x.bucket==="personal-pool"||x.bucket==="personal"))
+    .forEach(transfer=>{
+      const count=savingsTransferScheduleType(transfer)==="paycheck"
+        ?checks.filter(w=>transfer.incomeSourceId==null||String(w.sourceId)===String(transfer.incomeSourceId)).length
+        :intervalOccurrenceCount(transfer,start,end);
+      budget+=(parseFloat(transfer.amount)||0)*count;
+    });
+  const actual=(budgetData.personalPoolTransfers||[])
+    .filter(x=>x.owner===person&&x.date>=start&&x.date<=end)
+    .reduce((sum,x)=>sum+(parseFloat(x.amount)||0),0);
+  return{budget,actual};
+}
+
 /* ── THE engine ──────────────────────────────────────────────── */
 // Computes every number a budget view needs for [start,end].
 // Does NOT compute start balances (see chainedStartBalances).
@@ -6869,8 +6894,9 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 
   // Income: every paycheck landing in range counts toward budget; received ones toward actual
   const paychecks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
-  const budgIncome=paychecks.reduce((s,w)=>s+incomeWeekAmount(w),0);
-  const actualIncome=paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const personalIncome=personalTransferIncome(start,end);
+  const budgIncome=personalIncome?personalIncome.budget:paychecks.reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const actualIncome=personalIncome?personalIncome.actual:paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+incomeWeekAmount(w),0);
 
   // Bills & subs: budgeted from due dates in range, actuals from materialized expense records
   const dueOf=items=>items.flatMap(item=>recurringDueDatesIn(item,start,end).map(ds=>({item,dueDate:ds})));
@@ -8028,7 +8054,7 @@ function renderTrackerVariable(){
       +'</div>'
       +(hasNotes?'<div style="font-size:12px;color:var(--muted);max-width:180px;text-align:right;line-height:1.4;padding-left:8px;flex-shrink:0">'+e.note+'</div>':"")
       +'<div class="exp-amt" style="flex-shrink:0">'+$f(e.amount)+'</div>'
-      +(activeBudgetProfile==="joint"?"":'<button class="bs-item-btn" style="flex-shrink:0" onclick="openEditExpense('+e.id+')" title="Edit"><i class="ti ti-pencil"></i></button>')
+      +`<button class="bs-item-btn" style="flex-shrink:0" onclick='openEditExpense(${JSON.stringify(e.id)})' title="Edit"><i class="ti ti-pencil"></i></button>`
     +'</div>';
     }).join("");
     return '<div class="tv-month-group">'
@@ -8070,8 +8096,8 @@ function renderSavExpList(listId,totalId,exps){
     <input class="expense-select" type="checkbox" aria-label="Select savings expense" data-expense-id="${e.id}" onchange="toggleExpenseSelection(this.dataset.expenseId,this.checked)"${_selectedExpenseIds.has(String(e.id))?" checked":""}>
     <div class="exp-info"><div class="exp-desc">${e.note||"Transfer"}</div><div class="exp-meta">${e.date}</div></div>
     <div class="exp-amt">${$f(e.amount)}</div>
-    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="openEditExpense(${e.id})" title="Edit"><i class="ti ti-pencil"></i></button>
-    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick="deleteExpenseB(${e.id})"><i class="ti ti-trash"></i></button>
+    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick='openEditExpense(${JSON.stringify(e.id)})' title="Edit"><i class="ti ti-pencil"></i></button>
+    <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;opacity:0.6" onclick='deleteExpenseB(${JSON.stringify(e.id)})'><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
 
@@ -8111,7 +8137,7 @@ function renderTrackerIncome(){
   const renderWeekList=(elId,list)=>{
     const el=document.getElementById(elId);if(!el)return;
     if(!list.length){el.innerHTML='<div class="empty-msg">None</div>';return;}
-    el.innerHTML=list.map(w=>`<div class="income-week-row" onclick="openEditIncomeWeek(${w.id})">
+    el.innerHTML=list.map(w=>`<div class="income-week-row" onclick='openEditIncomeWeek(${JSON.stringify(w.id)})'>
       <div class="iw-status ${w.status}"></div>
       <div style="flex:1">
         <div class="iw-week">Week of ${w.weekStartDate}</div>
@@ -8119,6 +8145,7 @@ function renderTrackerIncome(){
       </div>
       <span class="iw-hours">${(w.incomeType||"hourly")==="lump-sum"?"Lump sum":w.hours+"h"}</span>
       <div class="iw-amount ${w.status}">${$f(incomeWeekAmount(w))}</div>
+      <button class="bs-item-btn" type="button" onclick='event.stopPropagation();openEditIncomeWeek(${JSON.stringify(w.id)})' title="Edit income"><i class="ti ti-pencil"></i></button>
     </div>`).join("");
   };
   renderWeekList("ti-received-list",recent);
@@ -8359,7 +8386,7 @@ function renderBsItemCards(containerId, items, type, onEdit, onDelete){
         style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;border:1px solid ${chipClr};color:${chipClr};background:${chipBg};cursor:pointer;margin-top:4px">${nw==="need"?"Need":nw==="want"?"Want":"Need/Want?"}</button>`;
     }
     return `<div class="bs-item-card">
-      <div class="bs-item-name">${item.name}${type==="bills"&&item.isDebt?'<span class="bs-item-debt-badge">DEBT</span>':""}${item.possibleDuplicate?'<span class="bs-item-debt-badge" style="background:rgba(224,160,64,.15);color:#e0a040">CHECK DUPLICATE</span>':""}</div>
+      <div class="bs-item-name">${item.name}${type==="bills"&&item.isDebt?'<span class="bs-item-debt-badge">DEBT</span>':""}</div>
       <div class="bs-item-detail">${topLine}</div>
       ${midLine}${dateLine}${nwChip}
       <div class="bs-item-actions">
