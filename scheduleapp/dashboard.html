@@ -7064,13 +7064,13 @@ function jointPeriodBreakdown(start,end,periodKey){
   const byPerson=()=>({britt:{budget:0,actual:0},christian:{budget:0,actual:0}});
   const expenses=byPerson(),householdSavings=byPerson(),personal=byPerson();
   const periodExpenses=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end&&jointExpenseVisible(e));
-  periodExpenses.filter(e=>e.type!=="savings"&&!e.isPersonalTransfer).forEach(e=>{if(expenses[e.owner])expenses[e.owner].actual+=parseFloat(e.amount)||0;});
+  // Bills and subscriptions belong to the household, never to either person.
+  // Only variable spending is split by the person who made the purchase.
+  periodExpenses.filter(e=>e.type==="variable"&&!e.isPersonalTransfer).forEach(e=>{if(expenses[e.owner])expenses[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&(e.savingsBucket||"household")==="household").forEach(e=>{if(householdSavings[e.owner])householdSavings[e.owner].actual+=parseFloat(e.amount)||0;});
   periodExpenses.filter(e=>e.type==="savings"&&e.savingsBucket==="personal").forEach(e=>{if(personal[e.owner])personal[e.owner].actual+=parseFloat(e.amount)||0;});
   (budgetData.personalPoolTransfers||[]).filter(e=>e.date>=start&&e.date<=end).forEach(e=>{if(personal[e.owner])personal[e.owner].actual+=parseFloat(e.amount)||0;});
   const cp=computePeriodCore(start,end,periodKey||getWeekPeriodKey(start),0);
-  (cp.billsDue||[]).forEach(({item})=>{if(expenses[item.owner])expenses[item.owner].budget+=parseFloat(item.amount)||0;});
-  (cp.subsDue||[]).forEach(({item})=>{if(expenses[item.owner])expenses[item.owner].budget+=parseFloat(item.amount)||0;});
   const personalBudgets=jointPersonalBudgetByOwner(start,end,periodKey||getWeekPeriodKey(start));
   personal.britt.budget=personalBudgets.britt;
   personal.christian.budget=personalBudgets.christian;
@@ -7103,6 +7103,7 @@ function renderJointPersonSummary(containerId,breakdown,totals){
     return`<td class="jps-value">${value(breakdown[category].christian[field])}</td><td class="jps-value">${value(breakdown[category].britt[field])}</td>`;
   };
   const household=kind=>`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(kind==="budget"?totals.hhBudget:totals.hhActual)}</td>`;
+  const bills=kind=>`<td colspan="${span(kind)}" class="jps-value jps-household-value">${value(kind==="budget"?totals.billsBudget:totals.billsActual)}</td>`;
   // Variable-expense budgets are household pools, so they cannot be assigned
   // truthfully to either person. Show the complete budget total across the
   // Budget group; Actual expenses remain split by the selected spender.
@@ -7122,6 +7123,7 @@ function renderJointPersonSummary(containerId,breakdown,totals){
       <tr><th class="jps-label"></th>${personHeads("budget")}${personHeads("actual")}</tr></thead>
     <tbody>
       <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
+      <tr><th class="jps-label">Bills</th>${bills("budget")}${bills("actual")}</tr>
       <tr><th class="jps-label">Expenses</th>${expenses("budget")}${expenses("actual")}</tr>
       <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
       <tr><th class="jps-label">Personal</th>${personalCells("budget")}${personalCells("actual")}</tr>
@@ -7693,7 +7695,8 @@ function renderWeeklyView(){
     renderJointPersonSummary("weekly-joint-person-summary",jb,{
       startBudget:budgetSb,startActual:actualSb,
       incomeBudget:cp.budgIncome,incomeActual:cp.actualIncome,
-      expensesBudget:cp.budgExpenses,expensesActual:cp.actualExpenses,
+      billsBudget:cp.budgBills+cp.budgSubs,billsActual:cp.actualBills+cp.actualSubs,
+      expensesBudget:cp.budgVar,expensesActual:cp.actualVar,
       hhBudget:cp.budgSavHH,hhActual:cp.actualSavHH,
       personalBudget:jb.personalBudget,personalActual:jb.personalActual,
       endBudget:budgEnd,endActual:actualEnd
@@ -7791,7 +7794,8 @@ function renderMonthlyView(){
     renderJointPersonSummary("monthly-joint-person-summary",jb,{
       startBudget:budgetSb,startActual:actualSb,
       incomeBudget:cp.budgIncome,incomeActual:cp.actualIncome,
-      expensesBudget:cp.budgExpenses,expensesActual:cp.actualExpenses,
+      billsBudget:cp.budgBills+cp.budgSubs,billsActual:cp.actualBills+cp.actualSubs,
+      expensesBudget:cp.budgVar,expensesActual:cp.actualVar,
       hhBudget:cp.budgSavHH,hhActual:cp.actualSavHH,
       personalBudget:jb.personalBudget,personalActual:jb.personalActual,
       endBudget:budgEnd,endActual:actualEnd
