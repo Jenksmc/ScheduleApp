@@ -6595,6 +6595,14 @@ function incomeSourceAmount(src){
     :(parseFloat(src.hourlyRate)||0)*(parseFloat(src.defaultHours)||40);
 }
 
+// Budget income comes only from income sources planned in Settings. Entries
+// added directly in the tracker are extra income and affect Actual only.
+function isPlannedIncomeWeek(week){
+  if(week.isOneTime||week.sourceId==null)return false;
+  return (budgetData.recurring?.incomeSources||[])
+    .some(source=>String(source.id)===String(week.sourceId));
+}
+
 function incomeWeekAmount(w){
   return (w.incomeType||"hourly")==="lump-sum"
     ?(parseFloat(w.amount)||0)
@@ -6892,10 +6900,11 @@ function computePeriodCore(start,end,periodKey,budgetSb){
   if(!period.varBudgetOverrides)period.varBudgetOverrides={};
   ensureBudgetSettings();
 
-  // Income: every paycheck landing in range counts toward budget; received ones toward actual
+  // Income: only Settings-planned paychecks count toward budget. Any extra
+  // income added in the tracker counts toward actual once it is received.
   const paychecks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
   const personalIncome=personalTransferIncome(start,end);
-  const budgIncome=personalIncome?personalIncome.budget:paychecks.reduce((s,w)=>s+incomeWeekAmount(w),0);
+  const budgIncome=personalIncome?personalIncome.budget:paychecks.filter(isPlannedIncomeWeek).reduce((s,w)=>s+incomeWeekAmount(w),0);
   const actualIncome=personalIncome?personalIncome.actual:paychecks.filter(w=>w.status==="received").reduce((s,w)=>s+incomeWeekAmount(w),0);
 
   // Bills & subs: budgeted from due dates in range, actuals from materialized expense records
@@ -6982,7 +6991,7 @@ function computePeriodCore(start,end,periodKey,budgetSb){
 function jointPeriodBreakdown(start,end,periodKey){
   const checks=(budgetData.incomeWeeks||[]).filter(w=>w.payDate>=start&&w.payDate<=end);
   const income={britt:{budget:0,actual:0},christian:{budget:0,actual:0}};
-  checks.forEach(w=>{const owner=w.owner||w.sourceProfile;if(!income[owner])return;const amt=incomeWeekAmount(w);income[owner].budget+=amt;if(w.status==="received")income[owner].actual+=amt;});
+  checks.forEach(w=>{const owner=w.owner||w.sourceProfile;if(!income[owner])return;const amt=incomeWeekAmount(w);if(isPlannedIncomeWeek(w))income[owner].budget+=amt;if(w.status==="received")income[owner].actual+=amt;});
   const byPerson=()=>({britt:{budget:0,actual:0},christian:{budget:0,actual:0}});
   const expenses=byPerson(),householdSavings=byPerson(),personal=byPerson();
   const periodExpenses=(budgetData.expenses||[]).filter(e=>e.date>=start&&e.date<=end);
