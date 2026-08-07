@@ -7118,9 +7118,9 @@ function renderJointPersonSummary(containerId,breakdown,totals){
   const balance=kind=>`<td colspan="${span(kind)}" class="jps-value">${$f(kind==="budget"?totals.endBudget:totals.endActual)}</td>`;
   el.innerHTML=`<table class="jps-table">
     <thead><tr><th class="jps-label"></th>${groupHead("budget")}${groupHead("actual")}</tr>
+      <tr><th class="jps-label">Start Balance</th>${start("budget")}${start("actual")}</tr>
       <tr><th class="jps-label"></th>${personHeads("budget")}${personHeads("actual")}</tr></thead>
     <tbody>
-      <tr><th class="jps-label">Start Balance</th>${start("budget")}${start("actual")}</tr>
       <tr><th class="jps-label">Income</th>${cells("income","budget")}${cells("income","actual")}</tr>
       <tr><th class="jps-label">Expenses</th>${expenses("budget")}${expenses("actual")}</tr>
       <tr><th class="jps-label">HH Savings</th>${household("budget")}${household("actual")}</tr>
