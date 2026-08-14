@@ -7940,6 +7940,17 @@ function openTrackerAdd(){
     setTimeout(()=>document.getElementById("oti-name").focus(),50);
     return;
   }
+  if(trackerView==="savings"){
+    openAddExpenseSheet();
+    const savingsBtn=document.getElementById("exp-secondary-type");
+    if(savingsBtn){
+      savingsBtn.dataset.v="savings";
+      savingsBtn.textContent="Savings Transfer";
+      pickExpType("savings",savingsBtn);
+    }
+    document.getElementById("exp-modal-heading").textContent="Log Savings";
+    return;
+  }
   openAddExpenseSheet();
 }
 
